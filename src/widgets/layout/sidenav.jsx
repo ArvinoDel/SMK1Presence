@@ -27,14 +27,23 @@ export function Sidenav({ brandImg, brandName, routes }) {
       <div
         className={`relative`}
       >
-        <Link to="/" className="py-6 px-8 text-center">
-          <Typography
-            variant="h6"
-            color={sidenavType === "dark" ? "white" : "blue-gray"}
-          >
-            {brandName}
-          </Typography>
-        </Link>
+<Link to="/" className="py-6 px-8 text-center flex items-center gap-2">
+  {/* Brand Image */}
+  <img 
+    src={brandImg} 
+    alt="Brand Logo" 
+    className="h-8 w-auto mx-3"
+  />
+
+  {/* Brand Name */}
+  <Typography
+    variant="h6"
+    color={sidenavType === "dark" ? "white" : "blue-gray"}
+  >
+    {brandName}
+  </Typography>
+</Link>
+
         <IconButton
           variant="text"
           color="white"
@@ -43,7 +52,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
           className="absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden"
           onClick={() => setOpenSidenav(dispatch, false)}
         >
-          <XMarkIcon strokeWidth={2.5} className="h-5 w-5 text-white" />
+          <XMarkIcon strokeWidth={2.5} className="h-5 w-5 text-black" />
         </IconButton>
       </div>
       <div className="m-4">
@@ -97,7 +106,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
 
 Sidenav.defaultProps = {
   brandImg: "/img/logo-ct.png",
-  brandName: "Material Tailwind React",
+  brandName: "SMK1Presence",
 };
 
 Sidenav.propTypes = {
