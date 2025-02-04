@@ -4,6 +4,9 @@ import {
   Card,
   CardHeader,
   CardBody,
+  Tabs,
+  TabsHeader,
+  Tab,
   IconButton,
   Menu,
   MenuHandler,
@@ -16,6 +19,13 @@ import {
 import {
   EllipsisVerticalIcon,
   ArrowUpIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  EnvelopeIcon,
+  ChevronDownIcon,
+  UserCircleIcon,
+  PhotoIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
@@ -26,8 +36,29 @@ import {
   ordersOverviewData,
 } from "@/data";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
+
 
 export function Home() {
+
+  const [image, setImage] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(URL.createObjectURL(file)); // Buat URL sementara untuk ditampilkan
+    }
+  };
+
+  const [previewImage, setPreviewImage] = useState(null); // Nama const berbeda
+
+  const handleImageChange = (e) => {
+    const uploadedFile = e.target.files[0]; // Nama variabel berbeda
+    if (uploadedFile) {
+      setPreviewImage(URL.createObjectURL(uploadedFile)); // Menyimpan URL sementara
+    }
+  };
+
   return (
     <div className="mt-12">
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
@@ -48,7 +79,7 @@ export function Home() {
           />
         ))}
       </div>
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+      {/* <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         {statisticsChartsData.map((props) => (
           <StatisticsChart
             key={props.title}
@@ -64,9 +95,9 @@ export function Home() {
             }
           />
         ))}
-      </div>
-      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
+      </div> */}
+      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Card className="overflow-hidden xl:col-span-4 border border-blue-gray-100 shadow-sm">
           <CardHeader
             floated={false}
             shadow={false}
@@ -126,11 +157,10 @@ export function Home() {
               <tbody>
                 {projectsTableData.map(
                   ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
+                    const className = `py-3 px-5 ${key === projectsTableData.length - 1
+                      ? ""
+                      : "border-b border-blue-gray-50"
+                      }`;
 
                     return (
                       <tr key={name}>
@@ -154,9 +184,8 @@ export function Home() {
                                 alt={name}
                                 size="xs"
                                 variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
+                                className={`cursor-pointer border-2 border-white ${key === 0 ? "" : "-ml-2.5"
+                                  }`}
                               />
                             </Tooltip>
                           ))}
@@ -193,7 +222,7 @@ export function Home() {
             </table>
           </CardBody>
         </Card>
-        <Card className="border border-blue-gray-100 shadow-sm">
+        {/* <Card className="border border-blue-gray-100 shadow-sm">
           <CardHeader
             floated={false}
             shadow={false}
@@ -248,6 +277,139 @@ export function Home() {
                 </div>
               )
             )}
+          </CardBody>
+        </Card> */}
+      </div>
+
+      <div className="w-full">
+        <Tabs value="app">
+          <TabsHeader>
+            <Tab value="app">
+              <ClipboardDocumentCheckIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+              Absen
+            </Tab>
+
+            <Tab value="settings">
+              <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+              Izin/Sakit
+            </Tab>
+          </TabsHeader>
+        </Tabs>
+
+        <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+          <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
+        </div>
+        <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
+          <CardBody className="p-4">
+
+
+            <div className="px-4 pb-4">
+
+              <form>
+                <div className="space-y-12">
+                  <div className="border-b border-gray-900/10 pb-12">
+
+                    <div className="border-b border-gray-900/10 pb-12">
+                      <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+                        <div className="col-span-full">
+                          <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
+                            Keperluan Izin (Deskripsikan)
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              id="description"
+                              name="description"
+                              type="text"
+                              autoComplete="description"
+                              className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label htmlFor="country" className="block text-sm/6 font-medium text-gray-900">
+                            Country
+                          </label>
+                          <div className="mt-2 grid grid-cols-1">
+                            <select
+                              id="country"
+                              name="country"
+                              autoComplete="country-name"
+                              className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            >
+                              <option>United States</option>
+                              <option>Canada</option>
+                              <option>Mexico</option>
+                            </select>
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="pointer-events-none col-start-1 row-start-1 mr-2 size-1 self-center justify-self-end text-gray-500 sm:size-4"
+                            />
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+
+                      <div className="col-span-full">
+                        <label htmlFor="cover-photo" className="block text-sm/6 font-medium text-gray-900">
+                          Cover photo
+                        </label>
+                        <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                          <div className="text-center">
+                            <div
+                              className="border-gray-300 p-6 rounded-md text-center cursor-pointer hover:bg-gray-50"
+                              onClick={() => document.getElementById("image-upload-input").click()} // ID unik
+                            >
+                              {previewImage ? (
+                                <img src={previewImage} alt="Selected Preview" className="mx-auto size-24 rounded-md object-cover" />
+                              ) : (
+                                <PhotoIcon className="mx-auto size-12 text-gray-300" />
+                              )}
+
+                              <div className="mt-4 flex justify-center text-sm text-gray-600">
+                                <label
+                                  htmlFor="image-upload-input"
+                                  className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
+                                >
+                                  <span>Upload a file</span>
+                                  <input
+                                    id="image-upload-input" // ID unik agar tidak bentrok
+                                    name="image-upload"
+                                    type="file"
+                                    className="sr-only"
+                                    accept="image/*"
+                                    onChange={handleImageChange} // Handler berbeda
+                                  />
+                                </label>
+                                <p className="pl-1">or drag and drop</p>
+                              </div>
+                            </div>
+                            <p className="text-xs/5 text-gray-600">PNG, JPG, GIF up to 10MB</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end gap-x-6">
+                  <button type="button" className="text-sm/6 font-semibold text-gray-900">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
           </CardBody>
         </Card>
       </div>
