@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const authSchema = new mongoose.Schema({
-  nisn: {
+  nis: {
     type: String,
     required: true,
     unique: true

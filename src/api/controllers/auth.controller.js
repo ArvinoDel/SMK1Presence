@@ -6,44 +6,45 @@ import jwt from 'jsonwebtoken';
 // Register siswa
 export const register = async (req, res) => {
   try {
-    const { nisn, password, nis, nama, kelas } = req.body;
+    const { nis, nisn, password, nama, kelas } = req.body;
 
     // Validasi input
-    if (!nisn || !password || !nis || !nama || !kelas) {
+    if (!nis || !nisn || !password || !nama || !kelas) {
       return res.status(400).json({
         success: false,
         message: 'Semua field harus diisi'
       });
     }
 
-    // Cek apakah NISN sudah terdaftar
-    const existingAuth = await Auth.findOne({ nisn });
+    // Cek apakah NIS atau NISN sudah terdaftar
+    const existingAuth = await Auth.findOne({ nis });
     if (existingAuth) {
-      return res.status(400).json({
-        success: false,
-        message: 'NISN sudah terdaftar'
-      });
-    }
-
-    // Cek apakah NIS sudah terdaftar
-    const existingSiswa = await Siswa.findOne({ nis });
-    if (existingSiswa) {
       return res.status(400).json({
         success: false,
         message: 'NIS sudah terdaftar'
       });
     }
 
-    // Buat akun auth
+    const existingSiswa = await Siswa.findOne({ 
+      $or: [{ nis }, { nisn }] 
+    });
+    if (existingSiswa) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIS atau NISN sudah terdaftar'
+      });
+    }
+
+    // Buat akun auth dengan NIS
     const auth = new Auth({
-      nisn,
+      nis,
       password
     });
 
     // Buat data siswa
     const siswa = new Siswa({
-      nisn,
       nis,
+      nisn,
       nama,
       kelas
     });
@@ -55,7 +56,7 @@ export const register = async (req, res) => {
       success: true,
       message: 'Registrasi berhasil',
       data: {
-        nisn: siswa.nisn,
+        nis: siswa.nis,
         nama: siswa.nama,
         kelas: siswa.kelas
       }
@@ -70,25 +71,25 @@ export const register = async (req, res) => {
   }
 };
 
-// Login siswa
+// Login siswa dengan NIS
 export const login = async (req, res) => {
   try {
-    const { nisn, password } = req.body;
+    const { nis, password } = req.body;
 
     // Validasi input
-    if (!nisn || !password) {
+    if (!nis || !password) {
       return res.status(400).json({
         success: false,
-        message: 'NISN dan password harus diisi'
+        message: 'NIS dan password harus diisi'
       });
     }
 
-    // Cek akun
-    const auth = await Auth.findOne({ nisn });
+    // Cek akun dengan NIS
+    const auth = await Auth.findOne({ nis });
     if (!auth) {
       return res.status(401).json({
         success: false,
-        message: 'NISN atau password salah'
+        message: 'NIS atau password salah'
       });
     }
 
@@ -97,18 +98,19 @@ export const login = async (req, res) => {
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
-        message: 'NISN atau password salah'
+        message: 'NIS atau password salah'
       });
     }
 
     // Ambil data siswa
-    const siswa = await Siswa.findOne({ nisn });
+    const siswa = await Siswa.findOne({ nis });
 
-    // Generate token
+    // Generate token dengan NISN untuk QR code
     const token = jwt.sign(
       { 
-        nisn: auth.nisn,
-        role: auth.role
+        nis: auth.nis,
+        nisn: siswa.nisn, // Simpan NISN di token untuk generate QR code
+        role: 'siswa'
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -120,7 +122,7 @@ export const login = async (req, res) => {
       data: {
         token,
         user: {
-          nisn: siswa.nisn,
+          nis: siswa.nis,
           nama: siswa.nama,
           kelas: siswa.kelas
         }
