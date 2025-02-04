@@ -111,7 +111,7 @@ export function Profile() {
                   <div className="border-b border-gray-900/10 pb-12">
                     <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
-                    <div className="col-span-full">
+                      <div className="col-span-full">
                         <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
                           NISN
                         </label>
