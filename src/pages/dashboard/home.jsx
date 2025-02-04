@@ -99,7 +99,7 @@ export function Home() {
         ))}
       </div> */}
       <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Card className="overflow-hidden xl:col-span-4 border border-blue-gray-100 shadow-sm">
+        {/* <Card className="overflow-hidden xl:col-span-4 border border-blue-gray-100 shadow-sm">
           <CardHeader
             floated={false}
             shadow={false}
@@ -223,7 +223,7 @@ export function Home() {
               </tbody>
             </table>
           </CardBody>
-        </Card>
+        </Card> */}
         {/* <Card className="border border-blue-gray-100 shadow-sm">
           <CardHeader
             floated={false}
@@ -337,7 +337,7 @@ export function Home() {
                                 <img
                                   src="data:image/png;base64,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"
                                   alt="QR Code"
-                                  className="w-[300px] h-[300px] object-cover"
+                                  className="w-[300px] h-[300px] object-fit"
                                 />
                               </div>
                             </div>
@@ -421,7 +421,7 @@ export function Home() {
 
                           <div className="col-span-full">
                             <label htmlFor="cover-photo" className="block text-sm/6 font-medium text-gray-900">
-                              Cover photo
+                              Sertakan Surat Izin
                             </label>
                             <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
                               <div className="text-center">

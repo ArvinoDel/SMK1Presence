@@ -86,12 +86,9 @@ Navbar.defaultProps = {
   brandName: "SMK1Presence",
   action: (
     <a
-      href="https://www.creative-tim.com/product/material-tailwind-dashboard-react"
+      href="http://smkn1-cirebon.sch.id/"
       target="_blank"
     >
-      <Button variant="gradient" size="sm" fullWidth>
-        free download
-      </Button>
     </a>
   ),
 };
