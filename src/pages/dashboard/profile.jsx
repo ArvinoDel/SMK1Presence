@@ -258,7 +258,7 @@ export function Profile() {
 
                         <div className="flex flex-col items-center gap-2">
                           {image ? (
-                            <img src={image} alt="Preview" className="size-12 rounded-full object-cover" />
+                            <img src={image} alt="Preview" className="size-12 rounded-lg object-cover" />
                           ) : (
                             <UserCircleIcon className="size-12 text-gray-300" />
                           )}
