@@ -93,16 +93,16 @@ export function DashboardNavbar() {
               />
             </MenuHandler>
             <MenuList>
-              <Typography variant="medium" className="font-medium">
+              <Typography variant="medium" className="font-medium text-black">
                 Andika Supriyadi Nur Maulana
 
               </Typography>
 
-              <Typography variant="small" className="font-medium">
+              <Typography variant="small" className="font-medium text-black">
                 Kelas XII RPL 2
               </Typography>
 
-              <Typography variant="small" className="font-medium">
+              <Typography variant="small" className="font-medium text-black">
                 Siswa SMKN 1 Cirebon
               </Typography>
 

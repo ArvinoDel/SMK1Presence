@@ -33,7 +33,7 @@ function DigitalClock() {
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-white overflow-hidden">
       {/* Background Animation */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 opacity-90"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-500 via-blue-gray-100 to-gray-500 opacity-90"></div>
         <div className="absolute inset-0 bg-noise opacity-10"></div>
       </div>
 
