@@ -5,10 +5,40 @@ import {
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { authAPI } from '@/services/api';
 
 export function SignIn() {
+  const [formData, setFormData] = useState({
+    nis: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await authAPI.login(formData);
+      if (response.data.success) {
+        login(response.data.data.user, response.data.data.token);
+        navigate('/dashboard/home');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   return (
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
@@ -16,7 +46,7 @@ export function SignIn() {
           <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
           <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Masukkan NIS dan Password untuk Sign In</Typography>
         </div>
-        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2" onSubmit={handleSubmit}>
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               NIS
@@ -28,6 +58,9 @@ export function SignIn() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              name="nis"
+              value={formData.nis}
+              onChange={handleChange}
             />
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               Password
@@ -40,6 +73,9 @@ export function SignIn() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
             />
           </div>
           <Checkbox
