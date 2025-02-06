@@ -16,19 +16,30 @@ export function SignIn() {
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+    
     try {
       const response = await authAPI.login(formData);
+      console.log('Login response:', response);
+      
       if (response.data.success) {
         login(response.data.data.user, response.data.data.token);
         navigate('/dashboard/home');
+      } else {
+        setError(response.data.message || 'Login failed');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,9 +55,16 @@ export function SignIn() {
       <div className="w-full lg:w-3/5 mt-24">
         <div className="text-center">
           <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Masukkan NIS dan Password untuk Sign In</Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
+            Masukkan NIS dan Password untuk Sign In
+          </Typography>
+          {error && (
+            <Typography variant="small" color="red" className="mt-2">
+              {error}
+            </Typography>
+          )}
         </div>
-        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               NIS
@@ -54,13 +72,14 @@ export function SignIn() {
             <Input
               size="lg"
               placeholder="12345678"
-              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
               name="nis"
               value={formData.nis}
               onChange={handleChange}
+              required
+              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
             />
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               Password
@@ -69,13 +88,14 @@ export function SignIn() {
               type="password"
               size="lg"
               placeholder="********"
-              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
               name="password"
               value={formData.password}
               onChange={handleChange}
+              required
+              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
             />
           </div>
           <Checkbox
@@ -102,8 +122,13 @@ export function SignIn() {
   </Typography>
 </div>
 
-          <Button className="mt-6" fullWidth>
-            Sign In
+          <Button 
+            type="submit" 
+            className="mt-6" 
+            fullWidth
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
 
 
