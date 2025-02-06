@@ -1,12 +1,11 @@
-import QRCode from 'qrcode';
+import JsBarcode from 'jsbarcode';
+import { createCanvas } from 'canvas';
 import Siswa from '../models/Siswa.models.js';
 
-export const generateQRCode = async (req, res) => {
+export const generateBarcode = async (req, res) => {
   try {
-    // Ambil NISN dari user yang sedang login
-    const { nisn } = req.user; // Asumsi data user tersedia dari middleware auth
+    const { nisn } = req.user;
 
-    // Cari data siswa dari database
     const siswa = await Siswa.findOne({ nisn });
     
     if (!siswa) {
@@ -16,42 +15,46 @@ export const generateQRCode = async (req, res) => {
       });
     }
 
-    // Generate QR code yang hanya berisi NISN
-    const qrData = JSON.stringify({ nisn });
+    // Create canvas for barcode
+    const canvas = createCanvas(300, 100);
     
-    const qrCode = await QRCode.toDataURL(qrData, {
-      errorCorrectionLevel: 'H',
-      margin: 1,
-      width: 300
+    // Generate barcode
+    JsBarcode(canvas, siswa.nisn, {
+      format: "CODE128",
+      width: 2,
+      height: 100,
+      displayValue: false
     });
 
-    // Update QR code di database
-    siswa.qrCode = qrCode;
+    // Convert to base64
+    const barcode = canvas.toDataURL();
+
+    // Update barcode in database
+    siswa.barcode = barcode;
     await siswa.save();
 
     res.status(200).json({
       success: true,
-      message: 'QR Code berhasil digenerate',
+      message: 'Barcode berhasil digenerate',
       data: {
         nama: siswa.nama,
         kelas: siswa.kelas,
-        qrCode: qrCode
+        barcode: barcode
       }
     });
 
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Gagal generate QR Code',
+      message: 'Gagal generate Barcode',
       error: error.message
     });
   }
 };
 
-// Mendapatkan QR code yang sudah di-generate sebelumnya
-export const getMyQRCode = async (req, res) => {
+export const getMyBarcode = async (req, res) => {
   try {
-    const { nisn } = req.user; // Ambil dari user yang login
+    const { nisn } = req.user;
 
     const siswa = await Siswa.findOne({ nisn });
     
@@ -62,10 +65,10 @@ export const getMyQRCode = async (req, res) => {
       });
     }
 
-    if (!siswa.qrCode) {
+    if (!siswa.barcode) {
       return res.status(404).json({
         success: false,
-        message: 'QR Code belum digenerate'
+        message: 'Barcode belum digenerate'
       });
     }
 
@@ -74,14 +77,14 @@ export const getMyQRCode = async (req, res) => {
       data: {
         nama: siswa.nama,
         kelas: siswa.kelas,
-        qrCode: siswa.qrCode
+        barcode: siswa.barcode
       }
     });
 
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Gagal mengambil QR Code',
+      message: 'Gagal mengambil Barcode',
       error: error.message
     });
   }

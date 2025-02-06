@@ -3,11 +3,14 @@ import Absensi from '../models/Absensi.models.js';
 
 export const prosesAbsensi = async (req, res) => {
   try {
-    // Data dari scan gun (sekarang hanya berisi nis)
-    const { nis } = JSON.parse(req.body.qrData);
-
-    // Cari siswa berdasarkan NIS saja
-    const siswa = await Siswa.findOne({ nis });
+    // Data dari WSR-2200 scanner (berisi NISN dengan prefix dan suffix)
+    let { nisn } = req.body;
+    
+    // Bersihkan prefix dan suffix dari scanner WSR-2200
+    nisn = nisn.replace(/[\]C\r]/g, '').trim();
+    
+    // Cari siswa berdasarkan NISN
+    const siswa = await Siswa.findOne({ nisn });
     if (!siswa) {
       return res.status(404).json({
         success: false,
@@ -53,16 +56,13 @@ export const prosesAbsensi = async (req, res) => {
       siswa: siswa._id,
       tanggal: tanggal,
       jamMasuk: jamMasuk,
-      status: status
+      status: status,
+      keterangan: status === 'TERLAMBAT' ? 
+        `Terlambat ${Math.floor((jamMasuk - batasWaktu) / (1000 * 60))} menit` : 
+        'Tepat waktu'
     });
 
     await absensi.save();
-
-    // Format waktu ke format yang lebih readable
-    const waktuAbsen = jamMasuk.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
 
     res.status(200).json({
       success: true,
@@ -70,11 +70,12 @@ export const prosesAbsensi = async (req, res) => {
       data: {
         nama: siswa.nama,
         kelas: siswa.kelas,
-        waktuAbsen: waktuAbsen,
+        waktuAbsen: jamMasuk.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
         status: status,
-        keterangan: status === 'TERLAMBAT' ? 
-          `Terlambat ${Math.floor((jamMasuk - batasWaktu) / (1000 * 60))} menit` : 
-          'Tepat waktu'
+        keterangan: absensi.keterangan
       }
     });
 
