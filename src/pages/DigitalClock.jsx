@@ -39,16 +39,16 @@ function DigitalClock() {
 
       {/* Digital Clock Card */}
       <div className="relative z-10 bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20 text-center">
-        <h2 className="text-lg font-semibold text-gray-300 tracking-widest">
+        <h2 className="text-lg font-semibold text-gray-900 tracking-widest">
           Waktu Saat Ini
         </h2>
         <div className="text-7xl md:text-8xl font-bold mt-3 mb-5 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 animate-glow">
           {formattedTime}
         </div>
-        <h2 className="text-lg font-semibold text-gray-300 tracking-widest">
+        <h2 className="text-lg font-semibold text-gray-900 tracking-widest">
           Tanggal Hari ini
         </h2>
-        <div className="text-xl md:text-2xl mt-3 text-gray-200">
+        <div className="text-xl font-bold font-sans md:text-2xl mt-3 text-gray-900">
           {formattedDate}
         </div>
       </div>
