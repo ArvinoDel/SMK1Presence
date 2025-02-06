@@ -16,13 +16,19 @@ const absensiSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['HADIR', 'TERLAMBAT'],
+    enum: ['HADIR', 'TERLAMBAT', 'SAKIT', 'IZIN'],
     required: true
   },
   keterangan: {
     type: String,
     default: ''
+  },
+  suratIzin: {
+    url: String,
+    publicId: String
   }
+}, {
+  timestamps: true
 });
 
 // Mencegah duplikasi absensi di hari yang sama

@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
-import qrcodeRoutes from './routes/qrcode.routes.js';
-
+import barcodeRoutes from './routes/barcode.routes.js';
+import absensiRoutes from './routes/absensi.routes.js';
 dotenv.config();
 
 const app = express();
@@ -16,7 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/qrcode', qrcodeRoutes);
+app.use('/api/barcode', barcodeRoutes);
+app.use('/api/absensi', absensiRoutes);
+
 
 // Test route
 app.get('/test', (req, res) => {

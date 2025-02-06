@@ -84,9 +84,13 @@ export const login = async (req, res) => {
       });
     }
 
-    // Cek akun dengan NIS
-    const auth = await Auth.findOne({ nis });
-    if (!auth) {
+    // Cek akun dengan NIS dan ambil data siswa sekaligus
+    const [auth, siswa] = await Promise.all([
+      Auth.findOne({ nis }),
+      Siswa.findOne({ nis })
+    ]);
+
+    if (!auth || !siswa) {
       return res.status(401).json({
         success: false,
         message: 'NIS atau password salah'
@@ -102,15 +106,12 @@ export const login = async (req, res) => {
       });
     }
 
-    // Ambil data siswa
-    const siswa = await Siswa.findOne({ nis });
-
-    // Generate token dengan NISN untuk QR code
+    // Generate token dengan NISN
     const token = jwt.sign(
       { 
         nis: auth.nis,
-        nisn: siswa.nisn, // Simpan NISN di token untuk generate QR code
-        role: 'siswa'
+        nisn: siswa.nisn,
+        role: auth.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -123,6 +124,7 @@ export const login = async (req, res) => {
         token,
         user: {
           nis: siswa.nis,
+          nisn: siswa.nisn,
           nama: siswa.nama,
           kelas: siswa.kelas
         }

@@ -19,14 +19,14 @@ const siswaSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  qrCode: {
-    type: String  // Menyimpan string base64 QR code
+  barcode: {
+    type: String  // Menyimpan string base64 barcode
   },
-  // Field opsional
+  // Modified field
   jenisKelamin: {
     type: String,
-    enum: ['L', 'P'],
-    default: ''
+    enum: ['L', 'P', null],
+    default: null
   },
   tanggalLahir: {
     type: Date
