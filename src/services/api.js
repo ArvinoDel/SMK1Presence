@@ -19,7 +19,14 @@ api.interceptors.request.use((config) => {
 });
 
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
   register: (userData) => api.post('/auth/register', userData),
 };
 

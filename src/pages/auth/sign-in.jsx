@@ -9,8 +9,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { authAPI } from '@/services/api';
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
 export function SignIn() {
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     nis: '',
     password: ''
@@ -84,44 +86,29 @@ export function SignIn() {
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
               Password
             </Typography>
-            <Input
-              type="password"
-              size="lg"
-              placeholder="********"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
-            />
+            <input
+        type={showPassword ? "text" : "password"}
+        size="lg"
+        placeholder="********"
+        name="password"
+        value={formData.password}
+        onChange={handleChange}
+        required
+        className="w-full px-4 py-2 border rounded-md !border-t-blue-gray-200 focus:!border-t-gray-900 pr-12"
+      />
+      {/* Icon mata untuk toggle password */}
+      <button
+        type="button"
+        className="absolute inset-y-0 right-3 flex items-center text-gray-600"
+        onClick={() => setShowPassword(!showPassword)}
+      >
+        {showPassword ? (
+          <EyeSlashIcon className="w-5 h-5" />
+        ) : (
+          <EyeIcon className="w-5 h-5" />
+        )}
+      </button>
           </div>
-          <Checkbox
-            label={
-              <Typography
-                variant="small"
-                color="gray"
-                className="flex items-center justify-start font-medium"
-              >
-                I agree the&nbsp;
-                <a
-                  href="#"
-                  className="font-normal text-black transition-colors hover:text-gray-900 underline"
-                >
-                  Terms and Conditions
-                </a>
-              </Typography>
-            }
-            containerProps={{ className: "-ml-2.5" }}
-          />
-           <div className="flex justify-end mt-5">
-  <Typography variant="small" className="font-medium text-gray-900">
-    <a href="#">Forgot Password</a>
-  </Typography>
-</div>
-
           <Button 
             type="submit" 
             className="mt-6" 
@@ -130,18 +117,7 @@ export function SignIn() {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
-
-
-          <div className="space-y-4 mt-8">
-         
-    
-          </div>
-          <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
-            Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Create account</Link>
-          </Typography>
         </form>
-
       </div>
       <div className="w-2/5 h-full hidden lg:block">
         <img
@@ -149,7 +125,6 @@ export function SignIn() {
           className="h-full w-full object-cover rounded-3xl"
         />
       </div>
-
     </section>
   );
 }
