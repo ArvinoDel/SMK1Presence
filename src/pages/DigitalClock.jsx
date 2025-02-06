@@ -2,12 +2,84 @@ import React, { useState, useEffect } from "react";
 
 function DigitalClock() {
   const [time, setTime] = useState(new Date());
+  const [scanResult, setScanResult] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date());
     }, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Handle barcode scan
+  const handleScan = async (scanData) => {
+    try {
+      console.log('Raw scan data:', scanData); // Debugging
+
+      const response = await fetch('http://localhost:3000/api/absensi/scan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          nisn: scanData.toString().trim() // Pastikan data dalam bentuk string dan bersih
+        })
+      });
+
+      const data = await response.json();
+      console.log('Response:', data); // Debugging
+
+      if (data.success) {
+        setScanResult(data.data);
+        // Play success sound
+        new Audio('/sounds/success.mp3').play();
+      } else {
+        setError(data.message);
+        // Play error sound
+        new Audio('/sounds/error.mp3').play();
+      }
+    } catch (err) {
+      console.error('Error:', err); // Debugging
+      setError('Gagal memproses absensi');
+      // Play error sound
+      new Audio('/sounds/error.mp3').play();
+    }
+
+    // Clear messages after 3 seconds
+    setTimeout(() => {
+      setScanResult(null);
+      setError(null);
+    }, 3000);
+  };
+
+  // Listen for barcode scanner input
+  useEffect(() => {
+    let scannedData = '';
+    let lastScanTime = 0;
+
+    const handleKeyPress = (e) => {
+      const currentTime = new Date().getTime();
+      
+      // Reset jika jeda terlalu lama
+      if (currentTime - lastScanTime > 100) {
+        scannedData = '';
+      }
+      
+      lastScanTime = currentTime;
+      
+      // Kumpulkan data scan
+      if (e.key !== 'Enter') {
+        scannedData += e.key;
+      } else if (scannedData) {
+        console.log('Scanned data before processing:', scannedData); // Debugging
+        handleScan(scannedData);
+        scannedData = '';
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    return () => window.removeEventListener('keypress', handleKeyPress);
   }, []);
 
   // Format Time (HH:MM:SS)
@@ -27,9 +99,6 @@ function DigitalClock() {
   });
 
   return (
-
-    
-
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-white overflow-hidden">
       {/* Background Animation */}
       <div className="absolute inset-0 z-0">
@@ -50,6 +119,28 @@ function DigitalClock() {
         </h2>
         <div className="text-xl font-bold font-sans md:text-2xl mt-3 text-gray-900">
           {formattedDate}
+        </div>
+
+        {/* Scan Result Display */}
+        {scanResult && (
+          <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-lg">
+            <p className="font-bold">{scanResult.nama}</p>
+            <p>Kelas: {scanResult.kelas}</p>
+            <p>Status: {scanResult.status}</p>
+            <p>{scanResult.keterangan}</p>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="mt-6 p-4 bg-red-100 text-red-800 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* Scanner Instructions */}
+        <div className="mt-6 text-gray-600">
+          Silakan scan kartu ID untuk melakukan absensi
         </div>
       </div>
 
