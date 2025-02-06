@@ -1,7 +1,7 @@
 import React from "react";
 import { Typography, Button } from "@material-tailwind/react";
 import { FlagIcon } from "@heroicons/react/24/solid";
-
+import { Navigate } from "react-router-dom";
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
                             Don&apos;t worry, our team is already on it.Please try refreshing
                             the page or come back later.
                         </Typography>
-                        <Button color="gray" onClick={<Navigate to="/dashboard/home" replace />} className="w-full px-4 md:w-[8rem]">
+                        <Button color="gray" onClick={<Navigate to="/clock" />} className="w-full px-4 md:w-[8rem]">
                             back home
                         </Button>
                     </div>
