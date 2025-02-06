@@ -53,8 +53,8 @@ app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").then(() => {
-    console.log("Service Worker Registered");
-  });
-}
+// if ("serviceWorker" in navigator) {
+//   navigator.serviceWorker.register("/sw.js").then(() => {
+//     console.log("Service Worker Registered");
+//   });
+// }
