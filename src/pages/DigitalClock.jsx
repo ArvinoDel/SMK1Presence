@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css"; // Tambahkan ini
 
 function DigitalClock() {
   const [time, setTime] = useState(new Date());
@@ -22,7 +24,7 @@ function DigitalClock() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           nisn: scanData.toString().trim() // Pastikan data dalam bentuk string dan bersih
         })
       });
@@ -32,16 +34,52 @@ function DigitalClock() {
 
       if (data.success) {
         setScanResult(data.data);
+        
+        Swal.fire({
+          html: `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <h2 style="margin-bottom: 10px; font-size: 22px; color: #333;">
+                <strong>Halo, Selamat Pagi!</strong>
+              </h2>
+              <img src="${data.data.foto || '../img/team-1.jpeg'}" 
+                   alt="Foto Siswa" 
+                   style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">
+              <strong style="font-size: 18px; color: #2c3e50;">${data.data.nama}</strong>
+              <p style="margin: 5px 0; font-size: 16px; color: #444;">Kelas: <b>${data.data.kelas}</b></p>
+              <p style="margin: 5px 0; font-size: 16px; color: #444;">Status: <b>${data.data.status}</b></p>
+              <p style="margin-top: 10px; font-size: 15px; color: #555;">${data.data.keterangan}</p>
+            </div>
+          `,
+          background: "#f9f9f9",
+          padding: "20px",
+          timer: 6000,
+          showConfirmButton: false,
+        });
+
         // Play success sound
         new Audio('/sounds/success.mp3').play();
       } else {
         setError(data.message);
+        Swal.fire({
+          title: "Anda Sudah Absen!",
+          text: data.message,
+          icon: "error",
+          timer: 3000, // Timer 2 detik (2000ms)
+          showConfirmButton: false,
+        });
         // Play error sound
         new Audio('/sounds/error.mp3').play();
       }
     } catch (err) {
       console.error('Error:', err); // Debugging
       setError('Gagal memproses absensi');
+      Swal.fire({
+        title: "Error!",
+        text: "Gagal memproses absensi",
+        icon: "error",
+        timer: 4000,
+        showConfirmButton: false,
+      });
       // Play error sound
       new Audio('/sounds/error.mp3').play();
     }
@@ -60,14 +98,14 @@ function DigitalClock() {
 
     const handleKeyPress = (e) => {
       const currentTime = new Date().getTime();
-      
+
       // Reset jika jeda terlalu lama
       if (currentTime - lastScanTime > 100) {
         scannedData = '';
       }
-      
+
       lastScanTime = currentTime;
-      
+
       // Kumpulkan data scan
       if (e.key !== 'Enter') {
         scannedData += e.key;
