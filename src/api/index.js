@@ -5,6 +5,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import absensiRoutes from './routes/absensi.routes.js';
+import siswaRoutes from './routes/siswa.routes.js';
 dotenv.config();
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/barcode', barcodeRoutes);
 app.use('/api/absensi', absensiRoutes);
+app.use('/api/siswa', siswaRoutes);
 
 
 // Test route

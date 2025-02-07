@@ -26,6 +26,7 @@ import {
   setOpenSidenav,
 } from "@/context";
 import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from "react";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -35,6 +36,30 @@ export function DashboardNavbar() {
   const isAuthenticated = localStorage.getItem("token") ? true : false;
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/siswa/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUserData();
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -107,12 +132,11 @@ export function DashboardNavbar() {
               </MenuHandler>
               <MenuList>
                 <Typography variant="medium" className="font-medium text-black">
-                  Andika Supriyadi Nur Maulana
-
+                  {userData?.nama || 'Loading...'}
                 </Typography>
 
                 <Typography variant="small" className="font-medium text-black">
-                  Kelas XII RPL 2
+                  {userData?.kelas ? `Kelas ${userData.kelas}` : 'Loading...'}
                 </Typography>
 
                 <Typography variant="small" className="font-medium text-black">

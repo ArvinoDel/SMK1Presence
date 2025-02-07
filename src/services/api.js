@@ -39,4 +39,9 @@ export const absensiAPI = {
   scan: (qrData) => api.post('/absensi/scan', { qrData }),
 };
 
+export const siswaAPI = {
+  getProfile: () => api.get('/siswa/profile'),
+  updateProfile: (data) => api.put('/siswa/profile', data)
+};
+
 export default api; 
