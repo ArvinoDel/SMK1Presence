@@ -61,7 +61,7 @@ function DigitalClock() {
       } else {
         setError(data.message);
         Swal.fire({
-          title: "Anda Sudah Login!",
+          title: "Anda Sudah Absen!",
           text: data.message,
           icon: "error",
           timer: 3000, // Timer 2 detik (2000ms)
