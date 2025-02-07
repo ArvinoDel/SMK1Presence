@@ -20,10 +20,18 @@ export const getProfile = async (req, res) => {
         nisn: siswa.nisn,
         nama: siswa.nama,
         kelas: siswa.kelas,
-        jenisKelamin: siswa.jenisKelamin,
-        tanggalLahir: siswa.tanggalLahir,
-        alamat: siswa.alamat,
-        noTelp: siswa.noTelp
+        barcode: siswa.barcode,
+        firstName: siswa.firstName,
+        lastName: siswa.lastName,
+        email: siswa.email,
+        alamat: {
+          street: siswa.alamat?.street,
+          city: siswa.alamat?.city,
+          state: siswa.alamat?.state,
+          postalCode: siswa.alamat?.postalCode
+        },
+        photo: siswa.photo,
+        coverPhoto: siswa.coverPhoto
       }
     });
 
@@ -40,18 +48,44 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { nis } = req.user;
-    const updateData = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      jenisKelamin,
+      street,
+      city,
+      state,
+      postalCode,
+      photo,
+      coverPhoto
+    } = req.body;
 
-    // Remove fields that shouldn't be updated
-    delete updateData.nis;
-    delete updateData.nisn;
+    // Fields that can be updated
+    const updateData = {
+      firstName,
+      lastName,
+      email,
+      jenisKelamin,
+      alamat: {
+        street,
+        city,
+        state,
+        postalCode
+      },
+      photo,
+      coverPhoto,
+      updatedAt: new Date()
+    };
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => 
+      updateData[key] === undefined && delete updateData[key]
+    );
 
     const siswa = await Siswa.findOneAndUpdate(
       { nis },
-      { 
-        ...updateData,
-        updatedAt: new Date()
-      },
+      { $set: updateData },
       { new: true }
     );
 
@@ -70,10 +104,17 @@ export const updateProfile = async (req, res) => {
         nisn: siswa.nisn,
         nama: siswa.nama,
         kelas: siswa.kelas,
-        jenisKelamin: siswa.jenisKelamin,
-        tanggalLahir: siswa.tanggalLahir,
-        alamat: siswa.alamat,
-        noTelp: siswa.noTelp
+        firstName: siswa.firstName,
+        lastName: siswa.lastName,
+        email: siswa.email,
+        alamat: {
+          street: siswa.alamat?.street,
+          city: siswa.alamat?.city,
+          state: siswa.alamat?.state,
+          postalCode: siswa.alamat?.postalCode
+        },
+        photo: siswa.photo,
+        coverPhoto: siswa.coverPhoto
       }
     });
 

@@ -22,12 +22,28 @@ import {
   ChevronDownIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
 import { platformSettingsData, conversationsData, projectsData } from "@/data";
+import { useAuth } from '@/context/AuthContext';
 
 export function Profile() {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    jenisKelamin: '',
+    street: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    photo: null,
+    coverPhoto: null
+  });
 
   const [image, setImage] = useState(null);
 
@@ -45,6 +61,86 @@ export function Profile() {
     if (uploadedFile) {
       setPreviewImage(URL.createObjectURL(uploadedFile)); // Menyimpan URL sementara
     }
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/siswa/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.data);
+          setFormData({
+            firstName: data.data.firstName || '',
+            lastName: data.data.lastName || '',
+            email: data.data.email || '',
+            jenisKelamin: data.data.jenisKelamin || '',
+            street: data.data.alamat?.street || '',
+            city: data.data.alamat?.city || '',
+            state: data.data.alamat?.state || '',
+            postalCode: data.data.alamat?.postalCode || '',
+            photo: data.data.photo || null,
+            coverPhoto: data.data.coverPhoto || null
+          });
+        } else {
+          setError('Failed to fetch user data');
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/siswa/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          jenisKelamin: formData.jenisKelamin,
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          postalCode: formData.postalCode,
+          photo: image,
+          coverPhoto: previewImage
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data.data);
+        alert('Profile updated successfully!');
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error) {
+      alert('Error updating profile: ' + error.message);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
@@ -65,13 +161,13 @@ export function Profile() {
               />
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1">
-                  Andika Supriyadi Nur Maulana
+                  {userData?.nama || 'Loading...'}
                 </Typography>
                 <Typography
                   variant="small"
                   className="font-normal text-blue-gray-600"
                 >
-                  Siswa XII RPL 2
+                  Siswa {userData?.kelas || 'Loading...'}
                 </Typography>
               </div>
             </div>
@@ -104,7 +200,7 @@ export function Profile() {
             </Typography>
             <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-12">
                 <div className="border-b border-gray-900/10 pb-12">
 
@@ -112,7 +208,7 @@ export function Profile() {
                     <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
                       <div className="col-span-full">
-                        <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
+                        <label htmlFor="nisn" className="block text-sm/6 font-medium text-gray-900">
                           NISN
                         </label>
                         <div className="mt-2">
@@ -120,14 +216,15 @@ export function Profile() {
                             id="nisn"
                             name="nisn"
                             type="text"
-                            autoComplete="nisn"
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            value={userData?.nisn || ''}
+                            disabled
+                            className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
                       </div>
 
                       <div className="col-span-full">
-                        <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
+                        <label htmlFor="nis" className="block text-sm/6 font-medium text-gray-900">
                           NIS
                         </label>
                         <div className="mt-2">
@@ -135,8 +232,9 @@ export function Profile() {
                             id="nis"
                             name="nis"
                             type="text"
-                            autoComplete="nis"
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            value={userData?.nis || ''}
+                            disabled
+                            className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
                       </div>
@@ -148,9 +246,10 @@ export function Profile() {
                         <div className="mt-2">
                           <input
                             id="first-name"
-                            name="first-name"
+                            name="firstName"
                             type="text"
-                            autoComplete="given-name"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
@@ -163,9 +262,10 @@ export function Profile() {
                         <div className="mt-2">
                           <input
                             id="last-name"
-                            name="last-name"
+                            name="lastName"
                             type="text"
-                            autoComplete="family-name"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
@@ -180,12 +280,12 @@ export function Profile() {
                             id="email"
                             name="email"
                             type="email"
-                            autoComplete="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
                       </div>
-
 
                       <div className="col-span-full">
                         <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
@@ -194,9 +294,10 @@ export function Profile() {
                         <div className="mt-2">
                           <input
                             id="street-address"
-                            name="street-address"
+                            name="street"
                             type="text"
-                            autoComplete="street-address"
+                            value={formData.street}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
@@ -211,7 +312,8 @@ export function Profile() {
                             id="city"
                             name="city"
                             type="text"
-                            autoComplete="address-level2"
+                            value={formData.city}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
@@ -224,9 +326,10 @@ export function Profile() {
                         <div className="mt-2">
                           <input
                             id="region"
-                            name="region"
+                            name="state"
                             type="text"
-                            autoComplete="address-level1"
+                            value={formData.state}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         </div>
@@ -239,11 +342,63 @@ export function Profile() {
                         <div className="mt-2">
                           <input
                             id="postal-code"
-                            name="postal-code"
+                            name="postalCode"
                             type="text"
-                            autoComplete="postal-code"
+                            value={formData.postalCode}
+                            onChange={handleInputChange}
                             className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-full">
+                        <label htmlFor="nama" className="block text-sm/6 font-medium text-gray-900">
+                          Nama Lengkap
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            id="nama"
+                            name="nama"
+                            type="text"
+                            value={userData?.nama || ''}
+                            disabled
+                            className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-full">
+                        <label htmlFor="kelas" className="block text-sm/6 font-medium text-gray-900">
+                          Kelas
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            id="kelas"
+                            name="kelas"
+                            type="text"
+                            value={userData?.kelas || ''}
+                            disabled
+                            className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label htmlFor="jenisKelamin" className="block text-sm/6 font-medium text-gray-900">
+                          Jenis Kelamin
+                        </label>
+                        <div className="mt-2">
+                          <select
+                            id="jenisKelamin"
+                            name="jenisKelamin"
+                            value={formData.jenisKelamin}
+                            onChange={handleInputChange}
+                            className="block w-full rounded-md border border-gray-400 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          >
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                          </select>
                         </div>
                       </div>
                     </div>

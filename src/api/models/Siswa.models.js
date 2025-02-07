@@ -19,32 +19,28 @@ const siswaSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  barcode: {
-    type: String  // Menyimpan string base64 barcode
+  barcode: String,
+  firstName: String,
+  lastName: String,
+  email: String,
+  alamat: {
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String
   },
-  // Modified field
+  photo: String,
+  coverPhoto: String,
   jenisKelamin: {
     type: String,
-    enum: ['L', 'P', null],
-    default: null
-  },
-  tanggalLahir: {
-    type: Date
-  },
-  alamat: {
-    type: String
-  },
-  noTelp: {
-    type: String
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+    enum: ['L', 'P']
   },
   updatedAt: {
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 // Tambahkan pre-save middleware untuk update timestamps
