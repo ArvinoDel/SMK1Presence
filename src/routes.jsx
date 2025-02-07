@@ -44,7 +44,8 @@ export const routes = [
     ],
   },
   {
-    title: "auth pages",
+    title: "",
+    hidden: true,
     layout: "auth",
     pages: [
       {
@@ -52,12 +53,14 @@ export const routes = [
         name: "sign in",
         path: "/sign-in",
         element: <SignIn />,
+        hidden: true,
       },
       {
         icon: <RectangleStackIcon {...icon} />,
         name: "sign up",
         path: "/sign-up",
         element: <SignUp />,
+        hidden: true,
       },
     ],
   },
