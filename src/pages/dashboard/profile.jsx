@@ -102,34 +102,50 @@ export function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setImage(null); // Reset preview setelah submit
-    document.getElementById("fileUpload").value = ""; // Reset input file
+    
     try {
+      // Create FormData
+      const formData = new FormData();
+      
+      // Add all form fields
+      formData.append('firstName', formData.firstName);
+      formData.append('lastName', formData.lastName);
+      formData.append('email', formData.email);
+      formData.append('jenisKelamin', formData.jenisKelamin);
+      formData.append('street', formData.street);
+      formData.append('city', formData.city);
+      formData.append('state', formData.state);
+      formData.append('postalCode', formData.postalCode);
+      
+      // Add images if present
+      const photoInput = document.getElementById('fileUpload');
+      const coverPhotoInput = document.getElementById('image-upload-input');
+      
+      if (photoInput.files[0]) {
+        formData.append('photo', photoInput.files[0]);
+      }
+      if (coverPhotoInput.files[0]) {
+        formData.append('coverPhoto', coverPhotoInput.files[0]);
+      }
+
       const response = await fetch('/api/siswa/profile', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          jenisKelamin: formData.jenisKelamin,
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          postalCode: formData.postalCode,
-          photo: image,
-          coverPhoto: previewImage
-        })
+        body: formData
       });
 
       if (response.ok) {
         const data = await response.json();
         setUserData(data.data);
+        
+        // Reset file inputs and previews
+        setImage(null);
+        setPreviewImage(null);
+        photoInput.value = '';
+        coverPhotoInput.value = '';
 
-        // SweetAlert2 success message
         Swal.fire({
           title: "Success!",
           text: "Profile updated successfully!",
@@ -140,7 +156,6 @@ export function Profile() {
         throw new Error("Failed to update profile");
       }
     } catch (error) {
-      // SweetAlert2 error message
       Swal.fire({
         title: "Error!",
         text: `Error updating profile: ${error.message}`,
@@ -148,7 +163,6 @@ export function Profile() {
         confirmButtonText: "OK",
       });
     }
-
   };
 
   const handleInputChange = (e) => {
