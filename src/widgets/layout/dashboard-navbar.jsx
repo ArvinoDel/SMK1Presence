@@ -139,10 +139,9 @@ export function DashboardNavbar() {
               <MenuHandler>
                 <Avatar
                   variant="circular"
-                  alt="tania andrew"
+                  alt="User"
                   className="cursor-pointer"
                   src={userData?.photo || 'https://www.gravatar.com/avatar/?d=mp'}
-
                 />
               </MenuHandler>
               <MenuList>

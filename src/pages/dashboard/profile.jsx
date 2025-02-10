@@ -23,6 +23,8 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
+
 import { Link } from "react-router-dom";
 import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
 import { platformSettingsData, conversationsData, projectsData } from "@/data";
