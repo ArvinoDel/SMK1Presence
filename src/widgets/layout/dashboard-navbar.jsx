@@ -1,4 +1,5 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
 import {
   Navbar,
   Typography,
@@ -62,8 +63,21 @@ export function DashboardNavbar() {
   }, [isAuthenticated]);
 
   const handleLogout = () => {
-    logout();
-    navigate('/auth/sign-in');
+    Swal.fire({
+      title: 'Apakah Anda yakin ingin logout?',
+      text: 'Anda akan keluar dari sesi ini!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, logout!',
+      cancelButtonText: 'Batal'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+        navigate('/auth/sign-in');
+      }
+    });
   };
 
   return (
