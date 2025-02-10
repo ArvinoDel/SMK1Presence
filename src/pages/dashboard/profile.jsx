@@ -71,7 +71,7 @@ export function Profile() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setUserData(data.data);
@@ -102,6 +102,8 @@ export function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setImage(null); // Reset preview setelah submit
+    document.getElementById("fileUpload").value = ""; // Reset input file
     try {
       const response = await fetch('/api/siswa/profile', {
         method: 'PUT',
@@ -126,13 +128,27 @@ export function Profile() {
       if (response.ok) {
         const data = await response.json();
         setUserData(data.data);
-        alert('Profile updated successfully!');
+
+        // SweetAlert2 success message
+        Swal.fire({
+          title: "Success!",
+          text: "Profile updated successfully!",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
       } else {
-        throw new Error('Failed to update profile');
+        throw new Error("Failed to update profile");
       }
     } catch (error) {
-      alert('Error updating profile: ' + error.message);
+      // SweetAlert2 error message
+      Swal.fire({
+        title: "Error!",
+        text: `Error updating profile: ${error.message}`,
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     }
+
   };
 
   const handleInputChange = (e) => {
@@ -153,8 +169,8 @@ export function Profile() {
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-6">
               <Avatar
-                src="/img/bruce-mars.jpeg"
-                alt="bruce-mars"
+                src={userData?.photo || 'https://www.gravatar.com/avatar/?d=mp'}
+                alt=""
                 size="xl"
                 variant="rounded"
                 className="rounded-lg shadow-lg shadow-blue-gray-500/40"
@@ -177,11 +193,6 @@ export function Profile() {
                   <Tab value="app">
                     <UserIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
                     Profile
-                  </Tab>
-
-                  <Tab value="settings">
-                    <Cog6ToothIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Settings
                   </Tab>
                 </TabsHeader>
               </Tabs>
@@ -419,13 +430,25 @@ export function Profile() {
                           )}
 
                           <input type="file" accept="image/*" className="hidden" id="fileUpload" onChange={handleFileChange} />
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById("fileUpload").click()}
-                            className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50"
-                          >
-                            Change
-                          </button>
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById("fileUpload").click()}
+                              className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50"
+                            >
+                              Change
+                            </button>
+                            {image && (
+                              <button
+                                type="button"
+                                onClick={handleSubmit}
+                                className="rounded-md bg-red-500 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-red-600"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
