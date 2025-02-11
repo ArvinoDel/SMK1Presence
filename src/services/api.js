@@ -37,6 +37,7 @@ export const qrcodeAPI = {
 
 export const absensiAPI = {
   scan: (qrData) => api.post('/absensi/scan', { qrData }),
+  getMyAbsensi: () => api.get('/absensi/fetch'),
 };
 
 export const siswaAPI = {

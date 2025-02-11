@@ -6,12 +6,12 @@ export const prosesAbsensi = async (req, res) => {
   try {
     // Data dari WSR-2200 scanner (berisi NISN dengan prefix ]C0)
     let { nisn } = req.body;
-    
+
     // Bersihkan prefix ]C0 dari scanner WSR-2200
     nisn = nisn.replace(/^\]C0/, '').trim();
-    
+
     console.log('NISN after cleaning:', nisn); // Untuk debugging
-    
+
     // Cari siswa berdasarkan NISN
     const siswa = await Siswa.findOne({ nisn });
     if (!siswa) {
@@ -23,7 +23,7 @@ export const prosesAbsensi = async (req, res) => {
 
     // Gunakan waktu scan langsung tanpa offset timezone
     const jamMasuk = new Date();
-    
+
     // Set tanggal hari ini (reset jam ke 00:00:00)
     const tanggal = new Date(jamMasuk);
     tanggal.setHours(0, 0, 0, 0);
@@ -63,8 +63,8 @@ export const prosesAbsensi = async (req, res) => {
       tanggal: tanggal,
       jamMasuk: jamMasuk,
       status: status,
-      keterangan: status === 'TERLAMBAT' ? 
-        `Terlambat ${Math.floor((jamMasuk - batasWaktu) / (1000 * 60))} menit` : 
+      keterangan: status === 'TERLAMBAT' ?
+        `Terlambat ${Math.floor((jamMasuk - batasWaktu) / (1000 * 60))} menit` :
         'Tepat waktu'
     });
 
@@ -181,6 +181,41 @@ export const prosesIzin = async (req, res) => {
     });
   }
 };
+
+export const getMyAbsensi = async (req, res) => {
+  try {
+    const { nis } = req.user;
+
+    // Cari data absensi berdasarkan nis
+    const absensi = await Absensi.findOne({ nis }).populate('siswa', 'nama nis photo'); // Pastikan ada hubungan dengan model siswa
+
+    if (!absensi) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data absensi tidak ditemukan'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        siswa: absensi.siswa ? absensi.siswa.nama : "Tidak ditemukan",
+        tanggal: absensi.tanggal,
+        jamMasuk: absensi.jamMasuk,
+        status: absensi.status,
+        keterangan: absensi.keterangan,
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data absensi',
+      error: error.message
+    });
+  }
+};
+
 
 export const getRiwayatAbsensi = async (req, res) => {
   try {
