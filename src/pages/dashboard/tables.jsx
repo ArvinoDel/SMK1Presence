@@ -7,6 +7,7 @@ import {
   Chip,
   Tooltip,
   Progress,
+  Button,
 } from "@material-tailwind/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
@@ -14,44 +15,25 @@ import { useState, useEffect } from "react";
 
 
 export function Tables() {
-  const [absensiData, setAbsensiData] = useState(null);
-  const [error, setError] = useState(null);
+  const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
   const [loading, setLoading] = useState(true);
-  console.log(localStorage.getItem("token"));
-
-  const [tableData, setTableData] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchAbsensiData = async () => {
+    const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch('/api/absensi/fetch', {
+        const response = await fetch('/api/absensi/riwayat', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
 
-        const result = await response.json();
-
         if (!response.ok) {
-          throw new Error(result.message || 'Gagal mengambil data absensi');
+          throw new Error('Failed to fetch attendance history');
         }
 
-        if (result.success) {
-          const formattedData = [{
-            img: result.data.siswa.photo || 'https://www.gravatar.com/avatar/?d=mp',  // Ambil foto profil siswa jika ada
-            nama: result.data.siswa.name, // Nama siswa
-            email: result.data.siswa.email, // Email siswa
-            tanggal: new Date(result.data.tanggal).toLocaleDateString('id-ID'), // Format tanggal
-            jamMasuk: new Date(result.data.jamMasuk).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), // Format jam
-            status: result.data.status, // Status absensi (HADIR, TERLAMBAT, dll.)
-            keterangan: result.data.keterangan || "-", // Keterangan absensi
-            suratIzin: result.data.suratIzin?.url ? "Ada" : "Tidak Ada" // Cek apakah ada surat izin
-          }];
-
-          setTableData(formattedData);
-        } else {
-          throw new Error(result.message);
-        }
+        const result = await response.json();
+        setRiwayatAbsensi(result.data);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -59,8 +41,26 @@ export function Tables() {
       }
     };
 
-    fetchAbsensiData();
+    fetchRiwayatAbsensi();
   }, []);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'HADIR':
+        return 'green';
+      case 'TERLAMBAT':
+        return 'orange';
+      case 'IZIN':
+        return 'blue';
+      case 'SAKIT':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
@@ -74,7 +74,7 @@ export function Tables() {
           <table className="w-full min-w-[640px] table-auto">
             <thead>
               <tr>
-                {["Siswa", "Keterangan", "Status", "Tanggal", "Jam Masuk"].map((el) => (
+                {["Siswa", "Tanggal", "Jam Masuk", "Status", "Keterangan", "Surat Izin"].map((el) => (
                   <th
                     key={el}
                     className="border-b border-blue-gray-50 py-3 px-5 text-left"
@@ -90,73 +90,80 @@ export function Tables() {
               </tr>
             </thead>
             <tbody>
-              {tableData.map(({ img, nama, email, tanggal, jamMasuk, status, keterangan, suratIzin }, key) => {
-                const className = `py-3 px-5 ${key === tableData.length - 1 ? "" : "border-b border-blue-gray-50"
-                  }`;
+              {riwayatAbsensi.map((absen, key) => {
+                const className = `py-3 px-5 ${
+                  key === riwayatAbsensi.length - 1
+                    ? ""
+                    : "border-b border-blue-gray-50"
+                }`;
 
                 return (
-                  <tr key={nama}>
-                    {/* Kolom Siswa */}
+                  <tr key={absen.id}>
                     <td className={className}>
                       <div className="flex items-center gap-4">
-                        <Avatar src={img} alt={nama} size="sm" variant="rounded" />
+                        <Avatar 
+                          src={absen.photo || "https://www.gravatar.com/avatar/?d=mp"} 
+                          alt={absen.nama} 
+                          size="sm" 
+                          variant="rounded" 
+                        />
                         <div>
-                          <Typography variant="small" color="blue-gray" className="font-semibold">
-                            {nama}
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-semibold"
+                          >
+                            {absen.nama}
                           </Typography>
                           <Typography className="text-xs font-normal text-blue-gray-500">
-                            {email}
+                            {absen.kelas}
                           </Typography>
                         </div>
                       </div>
                     </td>
-
-                    {/* Kolom Tanggal */}
                     <td className={className}>
                       <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {tanggal}
+                        {absen.tanggal}
                       </Typography>
                     </td>
-
-                    {/* Kolom Jam Masuk */}
                     <td className={className}>
                       <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {jamMasuk}
+                        {absen.jamMasuk}
                       </Typography>
                     </td>
-
-                    {/* Kolom Status */}
+                    <td className={className}>
+                      <Chip
+                        variant="gradient"
+                        color={getStatusColor(absen.status)}
+                        value={absen.status}
+                        className="py-0.5 px-2 text-[11px] font-medium"
+                      />
+                    </td>
                     <td className={className}>
                       <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {status}
+                        {absen.keterangan}
                       </Typography>
                     </td>
-
-                    {/* Kolom Keterangan */}
                     <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {keterangan}
-                      </Typography>
-                    </td>
-
-                    {/* Kolom Surat Izin */}
-                    <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {suratIzin}
-                      </Typography>
-                    </td>
-
-                    {/* Kolom Edit */}
-                    <td className={className}>
-                      <Typography as="a" href="#" className="text-xs font-semibold text-blue-gray-600">
-                        Edit
-                      </Typography>
+                      {absen.suratIzin ? (
+                        <Button
+                          variant="text"
+                          color="blue"
+                          size="sm"
+                          onClick={() => window.open(absen.suratIzin, '_blank')}
+                        >
+                          Lihat
+                        </Button>
+                      ) : (
+                        <Typography className="text-xs font-semibold text-blue-gray-600">
+                          -
+                        </Typography>
+                      )}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-
           </table>
         </CardBody>
       </Card>
