@@ -19,6 +19,15 @@ export function Tables() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState("");
+
+  const openModal = (src) => {
+    setImageSrc(src);
+    setIsOpen(true);
+  };
+
+
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
@@ -97,20 +106,19 @@ export function Tables() {
             </thead>
             <tbody>
               {riwayatAbsensi.map((absen, key) => {
-                const className = `py-3 px-5 ${
-                  key === riwayatAbsensi.length - 1
-                    ? ""
-                    : "border-b border-blue-gray-50"
-                }`;
+                const className = `py-3 px-5 ${key === riwayatAbsensi.length - 1
+                  ? ""
+                  : "border-b border-blue-gray-50"
+                  }`;
 
                 return (
                   <tr key={absen.id}>
                     <td className={className}>
                       <div className="flex items-center gap-4">
-                        <Avatar 
+                        <Avatar
                           src={getPhotoUrl(absen.photo)}
-                          alt={absen.nama} 
-                          size="sm" 
+                          alt={absen.nama}
+                          size="sm"
                           variant="rounded"
                           className="object-cover"
                         />
@@ -151,22 +159,45 @@ export function Tables() {
                         {absen.keterangan}
                       </Typography>
                     </td>
-                    <td className={className}>
-                      {absen.suratIzin ? (
-                        <Button
-                          variant="text"
-                          color="blue"
-                          size="sm"
-                          onClick={() => window.open(absen.suratIzin, '_blank')}
-                        >
-                          Lihat
-                        </Button>
-                      ) : (
-                        <Typography className="text-xs font-semibold text-blue-gray-600">
-                          -
-                        </Typography>
+                    <>
+                      {/* Tabel Data */}
+                      <td className={className}>
+                        {absen.suratIzin ? (
+                          <Button
+                            variant="text"
+                            color="primary"
+                            size="small"
+                            onClick={() => openModal(absen.suratIzin)}
+                          >
+                            Lihat
+                          </Button>
+                        ) : (
+                          <Typography className="text-xs font-semibold text-gray-600">-</Typography>
+                        )}
+                      </td>
+
+                      {/* Modal */}
+                      {isOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                          <div className="bg-white p-4 rounded-lg shadow-lg relative max-w-lg">
+                            {/* Close button */}
+                            <button
+                              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+                              onClick={() => setIsOpen(false)}
+                            >
+                              ✖
+                            </button>
+
+                            {/* Gambar Surat Izin */}
+                            <img
+                              src={imageSrc}
+                              alt="Surat Izin"
+                              className="max-w-full max-h-[80vh] rounded-lg"
+                            />
+                          </div>
+                        </div>
                       )}
-                    </td>
+                    </>
                   </tr>
                 );
               })}
