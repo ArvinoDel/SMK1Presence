@@ -247,18 +247,18 @@ export const getRiwayatAbsensi = async (req, res) => {
     const riwayat = await Absensi.find(query)
       .sort({ tanggal: -1, jamMasuk: -1 });
 
-    // Format response
+    // Format response dengan format tanggal Indonesia
     const formattedRiwayat = riwayat.map(absen => ({
-      tanggal: absen.tanggal.toLocaleDateString('id-ID', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      _id: absen._id,
+      siswa: absen.siswa,
+      tanggal: new Date(absen.tanggal).toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
       }),
-      waktuAbsen: absen.jamMasuk.toLocaleTimeString('id-ID', {
+      jamMasuk: new Date(absen.jamMasuk).toLocaleTimeString('id-ID', {
         hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        minute: '2-digit'
       }),
       status: absen.status,
       keterangan: absen.keterangan,

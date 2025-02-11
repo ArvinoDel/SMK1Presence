@@ -1,4 +1,6 @@
 import Siswa from '../models/Siswa.models.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Get profile data
 export const getProfile = async (req, res) => {
@@ -12,6 +14,11 @@ export const getProfile = async (req, res) => {
         message: 'Data siswa tidak ditemukan'
       });
     }
+
+    // Create full URLs for photos
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const photoUrl = siswa.photo ? `${baseUrl}${siswa.photo}` : null;
+    const coverPhotoUrl = siswa.coverPhoto ? `${baseUrl}${siswa.coverPhoto}` : null;
 
     res.status(200).json({
       success: true,
@@ -30,8 +37,8 @@ export const getProfile = async (req, res) => {
           state: siswa.alamat?.state,
           postalCode: siswa.alamat?.postalCode
         },
-        photo: siswa.photo,
-        coverPhoto: siswa.coverPhoto
+        photo: photoUrl,
+        coverPhoto: coverPhotoUrl
       }
     });
 
@@ -48,77 +55,79 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { nis } = req.user;
-    const {
-      firstName,
-      lastName,
-      email,
-      jenisKelamin,
-      street,
-      city,
-      state,
-      postalCode,
-      photo,
-      coverPhoto
-    } = req.body;
-
-    // Fields that can be updated
+    
+    // Parse form data and alamat object
+    const alamat = req.body.alamat ? JSON.parse(req.body.alamat) : {};
+    
     const updateData = {
-      firstName,
-      lastName,
-      email,
-      jenisKelamin,
+      firstName: req.body.firstName || '',
+      lastName: req.body.lastName || '',
+      email: req.body.email || '',
+      jenisKelamin: req.body.jenisKelamin || '',
       alamat: {
-        street,
-        city,
-        state,
-        postalCode
+        street: alamat.street || '',
+        city: alamat.city || '',
+        state: alamat.state || '',
+        postalCode: alamat.postalCode || ''
       },
-      photo,
-      coverPhoto,
       updatedAt: new Date()
     };
 
-    // Remove undefined fields
-    Object.keys(updateData).forEach(key => 
-      updateData[key] === undefined && delete updateData[key]
-    );
-
-    const siswa = await Siswa.findOneAndUpdate(
-      { nis },
-      { $set: updateData },
-      { new: true }
-    );
-
-    if (!siswa) {
+    // Get existing user data
+    const existingUser = await Siswa.findOne({ nis });
+    if (!existingUser) {
       return res.status(404).json({
         success: false,
         message: 'Data siswa tidak ditemukan'
       });
     }
 
+    // Handle photo uploads with correct path
+    if (req.files?.photo) {
+      updateData.photo = '/uploads/' + req.files.photo[0].filename;
+      
+      // Delete old photo if exists
+      if (existingUser.photo) {
+        const oldPhotoPath = path.join(process.cwd(), 'public', existingUser.photo);
+        try {
+          await fs.access(oldPhotoPath);
+          await fs.unlink(oldPhotoPath);
+        } catch (error) {
+          console.log('Old photo not found:', error.message);
+        }
+      }
+    }
+
+    if (req.files?.coverPhoto) {
+      updateData.coverPhoto = '/uploads/' + req.files.coverPhoto[0].filename;
+      
+      // Delete old cover photo if exists
+      if (existingUser.coverPhoto) {
+        const oldCoverPath = path.join(process.cwd(), 'public', existingUser.coverPhoto);
+        try {
+          await fs.access(oldCoverPath);
+          await fs.unlink(oldCoverPath);
+        } catch (error) {
+          console.log('Old cover photo not found:', error.message);
+        }
+      }
+    }
+
+    // Update user data
+    const updatedSiswa = await Siswa.findOneAndUpdate(
+      { nis },
+      { $set: updateData },
+      { new: true }
+    );
+
     res.status(200).json({
       success: true,
       message: 'Profile berhasil diupdate',
-      data: {
-        nis: siswa.nis,
-        nisn: siswa.nisn,
-        nama: siswa.nama,
-        kelas: siswa.kelas,
-        firstName: siswa.firstName,
-        lastName: siswa.lastName,
-        email: siswa.email,
-        alamat: {
-          street: siswa.alamat?.street,
-          city: siswa.alamat?.city,
-          state: siswa.alamat?.state,
-          postalCode: siswa.alamat?.postalCode
-        },
-        photo: siswa.photo,
-        coverPhoto: siswa.coverPhoto
-      }
+      data: updatedSiswa
     });
 
   } catch (error) {
+    console.error('Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal mengupdate profile',

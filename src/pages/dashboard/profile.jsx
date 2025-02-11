@@ -52,17 +52,78 @@ export function Profile() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file)); // Buat URL sementara untuk ditampilkan
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          title: "Error!",
+          text: "File size should not exceed 5MB",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        Swal.fire({
+          title: "Error!",
+          text: "Only image files are allowed",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setImage(URL.createObjectURL(file));
+      setFormData(prev => ({
+        ...prev,
+        photo: file
+      }));
     }
   };
 
   const [previewImage, setPreviewImage] = useState(null); // Nama const berbeda
 
-  const handleImageChange = (e) => {
-    const uploadedFile = e.target.files[0]; // Nama variabel berbeda
-    if (uploadedFile) {
-      setPreviewImage(URL.createObjectURL(uploadedFile)); // Menyimpan URL sementara
+  const handleCoverPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          title: "Error!",
+          text: "File size should not exceed 5MB",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        Swal.fire({
+          title: "Error!",
+          text: "Only image files are allowed",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setPreviewImage(URL.createObjectURL(file));
+      setFormData(prev => ({
+        ...prev,
+        coverPhoto: file
+      }));
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   useEffect(() => {
@@ -89,6 +150,16 @@ export function Profile() {
             photo: data.data.photo || null,
             coverPhoto: data.data.coverPhoto || null
           });
+          
+          // If there's a photo, set the preview
+          if (data.data.photo) {
+            setImage(data.data.photo);
+          }
+          
+          // If there's a cover photo, set the preview
+          if (data.data.coverPhoto) {
+            setPreviewImage(data.data.coverPhoto);
+          }
         } else {
           setError('Failed to fetch user data');
         }
@@ -106,28 +177,41 @@ export function Profile() {
     e.preventDefault();
     
     try {
-      // Create FormData
-      const formData = new FormData();
+      const formDataToSend = new FormData();
       
-      // Add all form fields
-      formData.append('firstName', formData.firstName);
-      formData.append('lastName', formData.lastName);
-      formData.append('email', formData.email);
-      formData.append('jenisKelamin', formData.jenisKelamin);
-      formData.append('street', formData.street);
-      formData.append('city', formData.city);
-      formData.append('state', formData.state);
-      formData.append('postalCode', formData.postalCode);
+      // Add text fields
+      Object.keys(formData).forEach(key => {
+        if (!['photo', 'coverPhoto', 'street', 'city', 'state', 'postalCode'].includes(key)) {
+          let value = formData[key];
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          formDataToSend.append(key, value || '');
+        }
+      });
       
-      // Add images if present
-      const photoInput = document.getElementById('fileUpload');
-      const coverPhotoInput = document.getElementById('image-upload-input');
+      // Add address fields as a single JSON object
+      const alamatData = {
+        street: formData.street || '',
+        city: formData.city || '',
+        state: formData.state || '',
+        postalCode: formData.postalCode || ''
+      };
       
-      if (photoInput.files[0]) {
-        formData.append('photo', photoInput.files[0]);
+      formDataToSend.append('alamat', JSON.stringify(alamatData));
+      
+      // Add files if they exist
+      if (formData.photo instanceof File) {
+        formDataToSend.append('photo', formData.photo);
       }
-      if (coverPhotoInput.files[0]) {
-        formData.append('coverPhoto', coverPhotoInput.files[0]);
+      
+      if (formData.coverPhoto instanceof File) {
+        formDataToSend.append('coverPhoto', formData.coverPhoto);
+      }
+
+      // Debug log
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value instanceof File ? value.name : value);
       }
 
       const response = await fetch('/api/siswa/profile', {
@@ -135,49 +219,50 @@ export function Profile() {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: formData
+        body: formDataToSend
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setUserData(data.data);
-        
-        // Reset file inputs and previews
-        setImage(null);
-        setPreviewImage(null);
-        photoInput.value = '';
-        coverPhotoInput.value = '';
+      const result = await response.json();
 
-        Swal.fire({
-          title: "Success!",
-          text: "Profile updated successfully!",
-          icon: "success",
-          confirmButtonText: "OK",
-        });
-      } else {
-        throw new Error("Failed to update profile");
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update profile');
       }
+
+      setUserData(result.data);
+      
+      Swal.fire({
+        title: "Success!",
+        text: "Profile updated successfully!",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+      
+      // Refresh the page to show updated images
+      window.location.reload();
+      
     } catch (error) {
+      console.error('Error updating profile:', error);
       Swal.fire({
         title: "Error!",
-        text: `Error updating profile: ${error.message}`,
+        text: error.message,
         icon: "error",
         confirmButtonText: "OK",
       });
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   return (
     <>
       <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+        {formData.coverPhoto && (
+          <img 
+            src={formData.coverPhoto instanceof File ? 
+              URL.createObjectURL(formData.coverPhoto) : 
+              formData.coverPhoto}
+            alt="Cover" 
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 h-full w-full bg-gray-900/75" />
       </div>
       <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
@@ -185,8 +270,10 @@ export function Profile() {
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-6">
               <Avatar
-                src={userData?.photo || 'https://www.gravatar.com/avatar/?d=mp'}
-                alt=""
+                src={formData.photo instanceof File ? 
+                  URL.createObjectURL(formData.photo) : 
+                  (formData.photo || 'https://www.gravatar.com/avatar/?d=mp')}
+                alt="Profile"
                 size="xl"
                 variant="rounded"
                 className="rounded-lg shadow-lg shadow-blue-gray-500/40"
@@ -272,12 +359,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="first-name"
-                            name="firstName"
                             type="text"
-                            value={formData.firstName}
+                            name="firstName"
+                            value={formData.firstName || ''}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -288,12 +374,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="last-name"
-                            name="lastName"
                             type="text"
+                            name="lastName"
                             value={formData.lastName}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -304,12 +389,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="email"
-                            name="email"
                             type="email"
+                            name="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -320,12 +404,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="street-address"
-                            name="street"
                             type="text"
+                            name="street"
                             value={formData.street}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -336,12 +419,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="city"
-                            name="city"
                             type="text"
+                            name="city"
                             value={formData.city}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -352,12 +434,11 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="region"
-                            name="state"
                             type="text"
+                            name="state"
                             value={formData.state}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -368,12 +449,12 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            id="postal-code"
-                            name="postalCode"
                             type="text"
+                            name="postalCode"
+                            id="postalCode"
                             value={formData.postalCode}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -445,7 +526,14 @@ export function Profile() {
                             <UserCircleIcon className="size-12 text-gray-300" />
                           )}
 
-                          <input type="file" accept="image/*" className="hidden" id="fileUpload" onChange={handleFileChange} />
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            className="hidden" 
+                            id="fileUpload" 
+                            name="photo" 
+                            onChange={handleFileChange}
+                          />
 
                           <div className="flex gap-2">
                             <button
@@ -458,7 +546,10 @@ export function Profile() {
                             {image && (
                               <button
                                 type="button"
-                                onClick={handleSubmit}
+                                onClick={() => {
+                                  setImage(null);
+                                  document.getElementById("fileUpload").value = '';
+                                }}
                                 className="rounded-md bg-red-500 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-red-600"
                               >
                                 Remove
@@ -492,12 +583,12 @@ export function Profile() {
                               >
                                 <span>Upload a file</span>
                                 <input
-                                  id="image-upload-input" // ID unik agar tidak bentrok
-                                  name="image-upload"
+                                  id="image-upload-input"
+                                  name="coverPhoto"
                                   type="file"
                                   className="sr-only"
                                   accept="image/*"
-                                  onChange={handleImageChange} // Handler berbeda
+                                  onChange={handleCoverPhotoChange}
                                 />
                               </label>
                               <p className="pl-1">or drag and drop</p>
