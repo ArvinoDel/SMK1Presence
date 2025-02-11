@@ -6,9 +6,14 @@ import authRoutes from './routes/auth.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import absensiRoutes from './routes/absensi.routes.js';
 import siswaRoutes from './routes/siswa.routes.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 dotenv.config();
 
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors());
@@ -21,6 +26,17 @@ app.use('/api/barcode', barcodeRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/siswa', siswaRoutes);
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'public/uploads');
+if (!fs.existsSync(uploadsDir)){
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files from public directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+
+// Serve static files from the public directory
+app.use('/api/public', express.static(path.join(__dirname, 'public')));
 
 // Test route
 app.get('/test', (req, res) => {
