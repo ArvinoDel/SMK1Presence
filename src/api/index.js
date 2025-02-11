@@ -32,16 +32,14 @@ if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve static files from public directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
 // Serve static files from the public directory
 app.use('/api/public', express.static(path.join(__dirname, 'public')));
 
-// Test route
-app.get('/test', (req, res) => {
-  res.json({ message: 'Server is working' });
-});
+// Serve static files dari subfolder
+app.use('/uploads/profilepicture', express.static(path.join(process.cwd(), 'public/uploads/profilepicture')));
+app.use('/uploads/surat', express.static(path.join(process.cwd(), 'public/uploads/surat')));
+
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)

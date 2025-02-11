@@ -49,11 +49,11 @@ export function Tables() {
       case 'HADIR':
         return 'green';
       case 'TERLAMBAT':
-        return 'orange';
+        return 'red';
       case 'IZIN':
         return 'blue';
       case 'SAKIT':
-        return 'red';
+        return 'orange';
       default:
         return 'gray';
     }

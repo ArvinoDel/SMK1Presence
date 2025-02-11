@@ -182,11 +182,7 @@ export function Profile() {
       // Add text fields
       Object.keys(formData).forEach(key => {
         if (!['photo', 'coverPhoto', 'street', 'city', 'state', 'postalCode'].includes(key)) {
-          let value = formData[key];
-          if (Array.isArray(value)) {
-            value = value[0];
-          }
-          formDataToSend.append(key, value || '');
+          formDataToSend.append(key, formData[key] || '');
         }
       });
       
@@ -200,18 +196,13 @@ export function Profile() {
       
       formDataToSend.append('alamat', JSON.stringify(alamatData));
       
-      // Add files if they exist
+      // Add files if they exist and are new
       if (formData.photo instanceof File) {
         formDataToSend.append('photo', formData.photo);
       }
       
       if (formData.coverPhoto instanceof File) {
         formDataToSend.append('coverPhoto', formData.coverPhoto);
-      }
-
-      // Debug log
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value instanceof File ? value.name : value);
       }
 
       const response = await fetch('/api/siswa/profile', {
@@ -228,6 +219,21 @@ export function Profile() {
         throw new Error(result.message || 'Failed to update profile');
       }
 
+      // Update displayed image URLs
+      if (result.data.photo) {
+        setImage(result.data.photo.startsWith('http') ? 
+          result.data.photo : 
+          `/uploads/profilepicture/${result.data.photo.split('/').pop()}`
+        );
+      }
+
+      if (result.data.coverPhoto) {
+        setPreviewImage(result.data.coverPhoto.startsWith('http') ? 
+          result.data.coverPhoto : 
+          `/uploads/profilepicture/${result.data.coverPhoto.split('/').pop()}`
+        );
+      }
+
       setUserData(result.data);
       
       Swal.fire({
@@ -236,9 +242,6 @@ export function Profile() {
         icon: "success",
         confirmButtonText: "OK",
       });
-      
-      // Refresh the page to show updated images
-      window.location.reload();
       
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -258,7 +261,10 @@ export function Profile() {
           <img 
             src={formData.coverPhoto instanceof File ? 
               URL.createObjectURL(formData.coverPhoto) : 
-              formData.coverPhoto}
+              (formData.coverPhoto.startsWith('http') ? 
+                formData.coverPhoto : 
+                `/uploads/profilepicture/${formData.coverPhoto.split('/').pop()}`
+              )}
             alt="Cover" 
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -272,7 +278,13 @@ export function Profile() {
               <Avatar
                 src={formData.photo instanceof File ? 
                   URL.createObjectURL(formData.photo) : 
-                  (formData.photo || 'https://www.gravatar.com/avatar/?d=mp')}
+                  (formData.photo ? 
+                    (formData.photo.startsWith('http') ? 
+                      formData.photo : 
+                      `/uploads/profilepicture/${formData.photo.split('/').pop()}`
+                    ) : 
+                    'https://www.gravatar.com/avatar/?d=mp'
+                  )}
                 alt="Profile"
                 size="xl"
                 variant="rounded"

@@ -97,8 +97,18 @@ export const prosesAbsensi = async (req, res) => {
 
 export const prosesIzin = async (req, res) => {
   try {
-    const { nisn, status, keterangan } = req.body;
-    const suratIzin = req.file; // Opsional
+    const { nisn } = req.body;
+    const { status, keterangan } = req.body;
+    const suratIzin = req.file;
+
+    // Cari siswa berdasarkan NISN
+    const siswa = await Siswa.findOne({ nisn });
+    if (!siswa) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data siswa tidak ditemukan'
+      });
+    }
 
     // Validasi status
     if (!['SAKIT', 'IZIN'].includes(status)) {
@@ -108,27 +118,23 @@ export const prosesIzin = async (req, res) => {
       });
     }
 
-    // Validasi keterangan
-    if (!keterangan) {
-      return res.status(400).json({
-        success: false,
-        message: 'Keterangan harus diisi'
-      });
-    }
-
-    // Cari siswa
-    const siswa = await Siswa.findOne({ nisn });
-    if (!siswa) {
-      return res.status(404).json({
-        success: false,
-        message: 'Data siswa tidak ditemukan'
-      });
-    }
-
     // Set tanggal hari ini
     const jamMasuk = new Date();
     const tanggal = new Date(jamMasuk);
     tanggal.setHours(0, 0, 0, 0);
+
+    // Cek apakah sudah ada absensi hari ini
+    const absensiExists = await Absensi.findOne({
+      siswa: siswa._id,
+      tanggal: tanggal
+    });
+
+    if (absensiExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Sudah ada absensi untuk hari ini'
+      });
+    }
 
     // Persiapkan data absensi
     const absensiData = {
@@ -139,14 +145,11 @@ export const prosesIzin = async (req, res) => {
       keterangan
     };
 
-    // Jika ada surat, upload ke Cloudinary
+    // Jika ada surat izin, simpan path-nya
     if (suratIzin) {
-      const result = await cloudinary.uploader.upload(suratIzin.path, {
-        folder: 'surat-izin'
-      });
       absensiData.suratIzin = {
-        url: result.secure_url,
-        publicId: result.public_id
+        url: `/uploads/surat/${suratIzin.filename}`,
+        publicId: suratIzin.filename
       };
     }
 
@@ -154,23 +157,16 @@ export const prosesIzin = async (req, res) => {
     const absensi = new Absensi(absensiData);
     await absensi.save();
 
-    // Siapkan response data
-    const responseData = {
-      nama: siswa.nama,
-      kelas: siswa.kelas,
-      status,
-      keterangan
-    };
-
-    // Tambahkan URL surat jika ada
-    if (suratIzin) {
-      responseData.suratIzin = absensiData.suratIzin.url;
-    }
-
     res.status(200).json({
       success: true,
       message: 'Izin berhasil diproses',
-      data: responseData
+      data: {
+        nama: siswa.nama,
+        kelas: siswa.kelas,
+        status,
+        keterangan,
+        suratIzin: absensiData.suratIzin?.url
+      }
     });
 
   } catch (error) {

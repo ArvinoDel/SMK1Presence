@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Card,
@@ -36,12 +36,13 @@ import {
   ordersOverviewData,
 } from "@/data";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import Swal from 'sweetalert2';
 
 
 export function Home() {
 
   const [image, setImage] = useState(null);
+  const [userData, setUserData] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -54,10 +55,98 @@ export function Home() {
 
   const [previewImage, setPreviewImage] = useState(null); // Nama const berbeda
 
+  const [formData, setFormData] = useState({
+    keterangan: '',
+    description: '',
+    suratIzin: null
+  });
+
+  // Tambahkan useEffect untuk mengambil data user
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/siswa/profile', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const handleImageChange = (e) => {
-    const uploadedFile = e.target.files[0]; // Nama variabel berbeda
-    if (uploadedFile) {
-      setPreviewImage(URL.createObjectURL(uploadedFile)); // Menyimpan URL sementara
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({...prev, suratIzin: file}));
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({...prev, [name]: value}));
+  };
+
+  const handleSubmitIzin = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (!userData) {
+        throw new Error('Data siswa tidak tersedia');
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('nisn', userData.nisn); // Tambahkan NISN
+      formDataToSend.append('status', formData.keterangan === 'sakit' ? 'SAKIT' : 'IZIN');
+      formDataToSend.append('keterangan', formData.description);
+      if (formData.suratIzin) {
+        formDataToSend.append('suratIzin', formData.suratIzin);
+      }
+
+      const response = await fetch('/api/absensi/izin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          title: "Berhasil!",
+          text: "Izin berhasil disubmit",
+          icon: "success",
+          confirmButtonText: "OK"
+        });
+
+        // Reset form
+        setFormData({
+          keterangan: '',
+          description: '',
+          suratIzin: null
+        });
+        setPreviewImage(null);
+      } else {
+        throw new Error(result.message || 'Gagal submit izin');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text: error.message,
+        icon: "error",
+        confirmButtonText: "OK"
+      });
     }
   };
 
@@ -365,7 +454,7 @@ export function Home() {
 
                 <div className="px-4 pb-4">
 
-                  <form>
+                  <form onSubmit={handleSubmitIzin}>
                     <div className="space-y-12">
                       <div className="border-b border-gray-900/10 pb-12">
 
@@ -385,10 +474,12 @@ export function Home() {
                                 <select
                                   id="keterangan"
                                   name="keterangan"
-                                  autoComplete="keterangan-name"
-                                  className="peer w-full appearance-none rounded-md border border-gray-300 bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                                  value={formData.keterangan}
+                                  onChange={handleInputChange}
+                                  className="peer w-full rounded-md border border-gray-300 bg-white py-1.5 px-3 text-gray-900"
+                                  required
                                 >
-                                  <option value="" disabled selected hidden>Pilih Keterangan</option>
+                                  <option value="" disabled>Pilih Keterangan</option>
                                   <option value="sakit">Izin Sakit</option>
                                   <option value="keperluan">Izin Keperluan</option>
                                 </select>
@@ -400,7 +491,7 @@ export function Home() {
                             </div>
 
                             <div className="col-span-full">
-                              <label htmlFor="street-address" className="block text-sm/6 font-medium text-gray-900">
+                              <label htmlFor="description" className="block text-sm/6 font-medium text-gray-900">
                                 Keperluan Izin (Deskripsikan)
                               </label>
                               <div className="mt-2">
@@ -408,8 +499,10 @@ export function Home() {
                                   id="description"
                                   name="description"
                                   type="text"
-                                  autoComplete="description"
-                                  className="block w-full rounded-md border border-gray-400 bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                  value={formData.description}
+                                  onChange={handleInputChange}
+                                  className="block w-full rounded-md border border-gray-400 px-3 py-1.5"
+                                  required
                                 />
                               </div>
                             </div>
@@ -464,9 +557,9 @@ export function Home() {
                     <div className="mt-6 flex items-center justify-end gap-x-6">
                       <button
                         type="submit"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
                       >
-                        Save
+                        Submit Izin
                       </button>
                     </div>
                   </form>

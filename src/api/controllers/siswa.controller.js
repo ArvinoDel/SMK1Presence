@@ -83,32 +83,33 @@ export const updateProfile = async (req, res) => {
     }
 
     // Handle photo uploads with correct path
-    if (req.files?.photo) {
-      updateData.photo = '/uploads/' + req.files.photo[0].filename;
-      
-      // Delete old photo if exists
-      if (existingUser.photo) {
-        const oldPhotoPath = path.join(process.cwd(), 'public', existingUser.photo);
-        try {
-          await fs.access(oldPhotoPath);
-          await fs.unlink(oldPhotoPath);
-        } catch (error) {
-          console.log('Old photo not found:', error.message);
+    if (req.files) {
+      if (req.files.photo) {
+        updateData.photo = `/uploads/profilepicture/${req.files.photo[0].filename}`;
+        
+        // Delete old photo if exists
+        if (existingUser.photo) {
+          const oldPhotoPath = path.join(process.cwd(), 'public', existingUser.photo);
+          try {
+            await fs.access(oldPhotoPath);
+            await fs.unlink(oldPhotoPath);
+          } catch (error) {
+            console.log('Old photo not found:', error.message);
+          }
         }
       }
-    }
-
-    if (req.files?.coverPhoto) {
-      updateData.coverPhoto = '/uploads/' + req.files.coverPhoto[0].filename;
-      
-      // Delete old cover photo if exists
-      if (existingUser.coverPhoto) {
-        const oldCoverPath = path.join(process.cwd(), 'public', existingUser.coverPhoto);
-        try {
-          await fs.access(oldCoverPath);
-          await fs.unlink(oldCoverPath);
-        } catch (error) {
-          console.log('Old cover photo not found:', error.message);
+      if (req.files.coverPhoto) {
+        updateData.coverPhoto = `/uploads/profilepicture/${req.files.coverPhoto[0].filename}`;
+        
+        // Delete old cover photo if exists
+        if (existingUser.coverPhoto) {
+          const oldCoverPath = path.join(process.cwd(), 'public', existingUser.coverPhoto);
+          try {
+            await fs.access(oldCoverPath);
+            await fs.unlink(oldCoverPath);
+          } catch (error) {
+            console.log('Old cover photo not found:', error.message);
+          }
         }
       }
     }
