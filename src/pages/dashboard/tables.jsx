@@ -59,6 +59,12 @@ export function Tables() {
     }
   };
 
+  const getPhotoUrl = (photo) => {
+    if (!photo) return "https://www.gravatar.com/avatar/?d=mp";
+    if (photo.startsWith('http')) return photo;
+    return `/uploads/${photo.split('/').pop()}`; // Ambil nama file saja
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -102,10 +108,11 @@ export function Tables() {
                     <td className={className}>
                       <div className="flex items-center gap-4">
                         <Avatar 
-                          src={absen.photo || "https://www.gravatar.com/avatar/?d=mp"} 
+                          src={getPhotoUrl(absen.photo)}
                           alt={absen.nama} 
                           size="sm" 
-                          variant="rounded" 
+                          variant="rounded"
+                          className="object-cover"
                         />
                         <div>
                           <Typography

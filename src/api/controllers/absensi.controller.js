@@ -286,9 +286,8 @@ export const getRiwayatAbsensi = async (req, res) => {
 
 export const getRiwayatAbsensiByNIS = async (req, res) => {
   try {
-    const { nis } = req.user; // Ambil dari token yang sudah di-decode
+    const { nis } = req.user;
 
-    // Cari siswa
     const siswa = await Siswa.findOne({ nis });
     if (!siswa) {
       return res.status(404).json({
@@ -297,30 +296,34 @@ export const getRiwayatAbsensiByNIS = async (req, res) => {
       });
     }
 
-    // Ambil riwayat absensi
     const riwayat = await Absensi.find({ siswa: siswa._id })
       .sort({ tanggal: -1, jamMasuk: -1 })
       .populate('siswa', 'nama kelas photo');
 
     // Format response dengan format tanggal Indonesia
-    const formattedRiwayat = riwayat.map(absen => ({
-      id: absen._id,
-      nama: absen.siswa.nama,
-      kelas: absen.siswa.kelas,
-      photo: absen.siswa.photo,
-      tanggal: new Date(absen.tanggal).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }),
-      jamMasuk: new Date(absen.jamMasuk).toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      status: absen.status,
-      keterangan: absen.keterangan,
-      suratIzin: absen.suratIzin?.url || null
-    }));
+    const formattedRiwayat = riwayat.map(absen => {
+      // Get base URL
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      return {
+        id: absen._id,
+        nama: absen.siswa.nama,
+        kelas: absen.siswa.kelas,
+        photo: absen.siswa.photo ? `${baseUrl}${absen.siswa.photo}` : null,
+        tanggal: new Date(absen.tanggal).toLocaleDateString('id-ID', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }),
+        jamMasuk: new Date(absen.jamMasuk).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        status: absen.status,
+        keterangan: absen.keterangan,
+        suratIzin: absen.suratIzin?.url || null
+      };
+    });
 
     res.status(200).json({
       success: true,
