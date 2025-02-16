@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import {
   Typography,
   Card,
@@ -43,6 +45,10 @@ export function Home() {
 
   const [image, setImage] = useState(null);
   const [userData, setUserData] = useState(null);
+  const navigate = useNavigate(); // Hook untuk redirect
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -65,40 +71,83 @@ export function Home() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        const storedToken = localStorage.getItem("token");
+
+        // ✅ Pastikan token ada sebelum dipakai
+        if (!storedToken) {
+          navigate("/auth/sign-in");
+          return;
+        }
+
+        // ✅ Decode JWT untuk mendapatkan role
+        const decodedToken = jwtDecode(storedToken);
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+
         const response = await fetch('/api/siswa/profile', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setUserData(data.data);
+
+          // ✅ Cek jika Swal belum pernah muncul
+          if (!localStorage.getItem("swalShown")) {
+            showWelcomeMessage(userRole);
+            localStorage.setItem("swalShown", "true"); // ✅ Tandai Swal sudah muncul
+          }
         }
+        else {
+          // Jika token tidak valid atau gagal fetch, redirect ke login
+          navigate("/auth/sign-in");
+        }
+
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [navigate, swalShown]);
+
+  const showWelcomeMessage = (role) => {
+    const messages = {
+      admin: { title: "Selamat Datang, Admin!", text: "Anda berhasil login sebagai admin." },
+      siswa: { title: "Halo, Siswa!", text: "Selamat datang di dashboard siswa." },
+      guru: { title: "Selamat Datang, Guru!", text: "Anda berhasil masuk sebagai guru." }
+    };
+
+    if (messages[role]) {
+      Swal.fire({
+        title: messages[role].title,
+        text: messages[role].text,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({...prev, suratIzin: file}));
+      setFormData(prev => ({ ...prev, suratIzin: file }));
       setPreviewImage(URL.createObjectURL(file));
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({...prev, [name]: value}));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitIzin = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (!userData) {
         throw new Error('Data siswa tidak tersedia');
@@ -152,6 +201,12 @@ export function Home() {
 
   return (
     <div className="mt-12">
+            {userRole == "guru" &&
+        <div className="bg-transparent p-6">
+          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama || 'Loading...'} !</h1>
+          <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas || 'Loading...'}</p>
+        </div>
+      }
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
@@ -170,6 +225,9 @@ export function Home() {
           />
         ))}
       </div>
+
+
+
       {/* <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         {statisticsChartsData.map((props) => (
           <StatisticsChart
@@ -390,7 +448,7 @@ export function Home() {
         {activeTab === "absen" && (
           <>
             <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
-              
+
               <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
             </div>
             <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
