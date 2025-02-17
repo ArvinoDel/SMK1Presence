@@ -12,28 +12,22 @@ const guruSchema = new mongoose.Schema({
   },
   jenisKelamin: {
     type: String,
-    enum: ['L', 'P'],
-    required: true
+    enum: ['L', 'P']
   },
   tanggalLahir: {
-    type: Date,
-    required: true
+    type: Date
   },
   alamat: {
-    type: String,
-    required: true
+    type: String
   },
   noTelp: {
-    type: String,
-    required: true
+    type: String
   },
   mataPelajaran: {
-    type: String,
-    required: true
+    type: String
   },
   pendidikanTerakhir: {
     type: String,
-    required: true,
     enum: ['D3', 'S1', 'S2', 'S3']
   },
   createdAt: {
