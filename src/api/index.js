@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import absensiRoutes from './routes/absensi.routes.js';
 import siswaRoutes from './routes/siswa.routes.js';
+import guruRoutes from './routes/Guru.routes.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/barcode', barcodeRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/siswa', siswaRoutes);
+app.use('/api/guru', guruRoutes);
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'public/uploads');
