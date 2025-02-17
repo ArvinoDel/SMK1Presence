@@ -45,9 +45,6 @@ export function Home() {
 
   const [image, setImage] = useState(null);
   const [userData, setUserData] = useState(null);
-  const navigate = useNavigate(); // Hook untuk redirect
-  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
-  const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
 
 
   const handleFileChange = (e) => {
@@ -67,6 +64,10 @@ export function Home() {
     suratIzin: null
   });
 
+  
+  const navigate = useNavigate(); // Hook untuk redirect
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
   // Tambahkan useEffect untuk mengambil data user
   useEffect(() => {
     const fetchUserData = async () => {

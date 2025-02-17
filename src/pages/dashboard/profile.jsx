@@ -23,6 +23,8 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import Swal from 'sweetalert2';
 
 import { Link } from "react-router-dom";
@@ -62,7 +64,7 @@ export function Profile() {
         e.target.value = '';
         return;
       }
-      
+
       if (!file.type.startsWith('image/')) {
         Swal.fire({
           title: "Error!",
@@ -73,7 +75,7 @@ export function Profile() {
         e.target.value = '';
         return;
       }
-      
+
       setImage(URL.createObjectURL(file));
       setFormData(prev => ({
         ...prev,
@@ -97,7 +99,7 @@ export function Profile() {
         e.target.value = '';
         return;
       }
-      
+
       if (!file.type.startsWith('image/')) {
         Swal.fire({
           title: "Error!",
@@ -108,7 +110,7 @@ export function Profile() {
         e.target.value = '';
         return;
       }
-      
+
       setPreviewImage(URL.createObjectURL(file));
       setFormData(prev => ({
         ...prev,
@@ -119,16 +121,34 @@ export function Profile() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
+
+  const navigate = useNavigate(); // Hook untuk redirect
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  // const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        const storedToken = localStorage.getItem("token");
+
+        // ✅ Pastikan token ada sebelum dipakai
+        if (!storedToken) {
+          navigate("/auth/sign-in");
+          return;
+        }
+
+        // ✅ Decode JWT untuk mendapatkan role
+        const decodedToken = jwtDecode(storedToken);
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+
         const response = await fetch('/api/siswa/profile', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -150,12 +170,12 @@ export function Profile() {
             photo: data.data.photo || null,
             coverPhoto: data.data.coverPhoto || null
           });
-          
+
           // If there's a photo, set the preview
           if (data.data.photo) {
             setImage(data.data.photo);
           }
-          
+
           // If there's a cover photo, set the preview
           if (data.data.coverPhoto) {
             setPreviewImage(data.data.coverPhoto);
@@ -175,17 +195,17 @@ export function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const formDataToSend = new FormData();
-      
+
       // Add text fields
       Object.keys(formData).forEach(key => {
         if (!['photo', 'coverPhoto', 'street', 'city', 'state', 'postalCode'].includes(key)) {
           formDataToSend.append(key, formData[key] || '');
         }
       });
-      
+
       // Add address fields as a single JSON object
       const alamatData = {
         street: formData.street || '',
@@ -193,14 +213,14 @@ export function Profile() {
         state: formData.state || '',
         postalCode: formData.postalCode || ''
       };
-      
+
       formDataToSend.append('alamat', JSON.stringify(alamatData));
-      
+
       // Add files if they exist and are new
       if (formData.photo instanceof File) {
         formDataToSend.append('photo', formData.photo);
       }
-      
+
       if (formData.coverPhoto instanceof File) {
         formDataToSend.append('coverPhoto', formData.coverPhoto);
       }
@@ -221,28 +241,28 @@ export function Profile() {
 
       // Update displayed image URLs
       if (result.data.photo) {
-        setImage(result.data.photo.startsWith('http') ? 
-          result.data.photo : 
+        setImage(result.data.photo.startsWith('http') ?
+          result.data.photo :
           `/uploads/profilepicture/${result.data.photo.split('/').pop()}`
         );
       }
 
       if (result.data.coverPhoto) {
-        setPreviewImage(result.data.coverPhoto.startsWith('http') ? 
-          result.data.coverPhoto : 
+        setPreviewImage(result.data.coverPhoto.startsWith('http') ?
+          result.data.coverPhoto :
           `/uploads/profilepicture/${result.data.coverPhoto.split('/').pop()}`
         );
       }
 
       setUserData(result.data);
-      
+
       Swal.fire({
         title: "Success!",
         text: "Profile updated successfully!",
         icon: "success",
         confirmButtonText: "OK",
       });
-      
+
     } catch (error) {
       console.error('Error updating profile:', error);
       Swal.fire({
@@ -258,14 +278,14 @@ export function Profile() {
     <>
       <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
         {formData.coverPhoto && (
-          <img 
-            src={formData.coverPhoto instanceof File ? 
-              URL.createObjectURL(formData.coverPhoto) : 
-              (formData.coverPhoto.startsWith('http') ? 
-                formData.coverPhoto : 
+          <img
+            src={formData.coverPhoto instanceof File ?
+              URL.createObjectURL(formData.coverPhoto) :
+              (formData.coverPhoto.startsWith('http') ?
+                formData.coverPhoto :
                 `/uploads/profilepicture/${formData.coverPhoto.split('/').pop()}`
               )}
-            alt="Cover" 
+            alt="Cover"
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
@@ -276,13 +296,13 @@ export function Profile() {
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-6">
               <Avatar
-                src={formData.photo instanceof File ? 
-                  URL.createObjectURL(formData.photo) : 
-                  (formData.photo ? 
-                    (formData.photo.startsWith('http') ? 
-                      formData.photo : 
+                src={formData.photo instanceof File ?
+                  URL.createObjectURL(formData.photo) :
+                  (formData.photo ?
+                    (formData.photo.startsWith('http') ?
+                      formData.photo :
                       `/uploads/profilepicture/${formData.photo.split('/').pop()}`
-                    ) : 
+                    ) :
                     'https://www.gravatar.com/avatar/?d=mp'
                   )}
                 alt="Profile"
@@ -298,7 +318,8 @@ export function Profile() {
                   variant="small"
                   className="font-normal text-blue-gray-600"
                 >
-                  Siswa {userData?.kelas || 'Loading...'}
+                  {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'} {userRole !== 'admin' && (userData?.kelas || 'Loading...')}
+
                 </Typography>
               </div>
             </div>
@@ -316,13 +337,13 @@ export function Profile() {
 
           <div className="px-4 pb-4">
             <Typography variant="h6" color="blue-gray" className="mb-2">
-              Data Diri Siswa
+              Data Diri {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'}
             </Typography>
             <Typography
               variant="small"
               className="font-normal text-blue-gray-500"
             >
-              Data Diri Lengkap Siswa
+              Data Diri Lengkap {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'}
             </Typography>
             <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
             </div>
@@ -333,9 +354,9 @@ export function Profile() {
                   <div className="border-b border-gray-900/10 pb-12">
                     <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
-                      <div className="col-span-full">
+                      {userRole === 'guru' ? <> <div className="col-span-full">
                         <label htmlFor="nisn" className="block text-sm/6 font-medium text-gray-900">
-                          NISN
+                          NIP
                         </label>
                         <div className="mt-2">
                           <input
@@ -348,22 +369,41 @@ export function Profile() {
                           />
                         </div>
                       </div>
-
-                      <div className="col-span-full">
-                        <label htmlFor="nis" className="block text-sm/6 font-medium text-gray-900">
-                          NIS
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            id="nis"
-                            name="nis"
-                            type="text"
-                            value={userData?.nis || ''}
-                            disabled
-                            className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                          />
+                      </> :
+                        userRole === 'siswa' ? <> <div className="col-span-full">
+                          <label htmlFor="nisn" className="block text-sm/6 font-medium text-gray-900">
+                            NISN
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              id="nisn"
+                              name="nisn"
+                              type="text"
+                              value={userData?.nisn || ''}
+                              disabled
+                              className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            />
+                          </div>
                         </div>
-                      </div>
+
+                          <div className="col-span-full">
+                            <label htmlFor="nis" className="block text-sm/6 font-medium text-gray-900">
+                              NIS
+                            </label>
+                            <div className="mt-2">
+                              <input
+                                id="nis"
+                                name="nis"
+                                type="text"
+                                value={userData?.nis || ''}
+                                disabled
+                                className="block w-full rounded-md border border-gray-400 bg-gray-100 px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                              />
+                            </div>
+                          </div>
+                        </> :
+                          userRole === 'admin' ? <></> :
+                            <h1>Loading...</h1>}
 
                       <div className="sm:col-span-3">
                         <label htmlFor="first-name" className="block text-sm/6 font-medium text-gray-900">
@@ -538,12 +578,12 @@ export function Profile() {
                             <UserCircleIcon className="size-12 text-gray-300" />
                           )}
 
-                          <input 
-                            type="file" 
+                          <input
+                            type="file"
                             accept="image/*"
-                            className="hidden" 
-                            id="fileUpload" 
-                            name="photo" 
+                            className="hidden"
+                            id="fileUpload"
+                            name="photo"
                             onChange={handleFileChange}
                           />
 
