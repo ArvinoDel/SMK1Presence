@@ -11,7 +11,148 @@ import {
 } from "@material-tailwind/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import PhotoSwipeLightbox from 'photoswipe/lightbox';
+import 'photoswipe/style.css';
+
+
+const SkeletonRow = () => {
+  return (
+    <th>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+    </th>
+  );
+};
+
 
 
 export function Tables() {
@@ -22,10 +163,13 @@ export function Tables() {
   const [isOpen, setIsOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState("");
 
-  const openModal = (src) => {
-    setImageSrc(src);
-    setIsOpen(true);
-  };
+  // const openModal = (src) => {
+  //   setImageSrc(src);
+  //   setIsOpen(true);
+  // };
+
+  const galleryRef = useRef(null);
+
 
 
   useEffect(() => {
@@ -49,9 +193,24 @@ export function Tables() {
         setLoading(false);
       }
     };
+    
 
     fetchRiwayatAbsensi();
   }, []);
+
+  useEffect(() => {
+    if (!galleryRef.current || loading) return;
+
+    const lightbox = new PhotoSwipeLightbox({
+      gallery: galleryRef.current,
+      children: 'a',
+      pswpModule: () => import('photoswipe'),
+    });
+
+    lightbox.init();
+
+    return () => lightbox.destroy();
+  }, [loading]); 
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -74,7 +233,7 @@ export function Tables() {
     return `/uploads/${photo.split('/').pop()}`; // Ambil nama file saja
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
   return (
@@ -104,108 +263,69 @@ export function Tables() {
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {riwayatAbsensi.map((absen, key) => {
-                const className = `py-3 px-5 ${key === riwayatAbsensi.length - 1
-                  ? ""
-                  : "border-b border-blue-gray-50"
-                  }`;
+            <tbody ref={galleryRef}>
+              {loading
+                ? Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)
+                : riwayatAbsensi.map((absen, key) => {
+                  const className = `py-3 px-5 ${key === riwayatAbsensi.length - 1 ? "" : "border-b border-blue-gray-50"}`;
 
-                return (
-                  <tr key={absen.id}>
-                    <td className={className}>
-                      <div className="flex items-center gap-4">
-                        <Avatar
-                          src={getPhotoUrl(absen.photo)}
-                          alt={absen.nama}
-                          size="sm"
-                          variant="rounded"
-                          className="object-cover"
-                        />
-                        <div>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold"
-                          >
-                            {absen.nama}
-                          </Typography>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {absen.kelas}
-                          </Typography>
+                  return (
+                    <tr key={absen.id}>
+                      <td className={className}>
+                        <div className="flex items-center gap-4">
+                          <Avatar
+                            src={getPhotoUrl(absen.photo)}
+                            alt={absen.nama}
+                            size="sm"
+                            variant="rounded"
+                            className="object-cover"
+                          />
+                          <div>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                              {absen.nama}
+                            </Typography>
+                            <Typography className="text-xs font-normal text-blue-gray-500">
+                              {absen.kelas}
+                            </Typography>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {absen.tanggal}
-                      </Typography>
-                    </td>
-                    <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {absen.jamMasuk}
-                      </Typography>
-                    </td>
-                    <td className={className}>
-                      <Chip
-                        variant="gradient"
-                        color={getStatusColor(absen.status)}
-                        value={absen.status}
-                        className="py-0.5 px-2 text-[11px] font-medium"
-                      />
-                    </td>
-                    <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600">
-                        {absen.keterangan}
-                      </Typography>
-                    </td>
-                    <>
-                      {/* Tabel Data */}
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.tanggal}</Typography>
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.jamMasuk}</Typography>
+                      </td>
+                      <td className={`text-center ${className}`}>
+                        <Chip variant="gradient" color={getStatusColor(absen.status)} value={absen.status} className="py-0.5 px-2 text-[11px] font-medium" />
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.keterangan}</Typography>
+                      </td>
                       <td className={className}>
                         {absen.suratIzin ? (
-                          <Button
-                            variant="text"
-                            color="primary"
-                            size="small"
-                            onClick={() => openModal(absen.suratIzin)}
+                          <a
+                            href="#"
+                            data-pswp-src={absen.suratIzin}
+                            data-pswp-width="800"
+                            data-pswp-height="1000"
                           >
-                            Lihat
-                          </Button>
+                            <img src={absen.suratIzin} alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
+                          </a>
                         ) : (
                           <Typography className="text-xs font-semibold text-gray-600">-</Typography>
                         )}
                       </td>
-
-                      {/* Modal */}
-                      {isOpen && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                          <div className="bg-white p-4 rounded-lg shadow-lg relative max-w-lg">
-                            {/* Close button */}
-                            <button
-                              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
-                              onClick={() => setIsOpen(false)}
-                            >
-                              ✖
-                            </button>
-
-                            {/* Gambar Surat Izin */}
-                            <img
-                              src={imageSrc}
-                              alt="Surat Izin"
-                              className="max-w-full max-h-[80vh] rounded-lg"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  </tr>
-                );
-              })}
+                    </tr>
+                  );
+                })}
             </tbody>
+
+
           </table>
         </CardBody>
       </Card>
-      <Card>
+      {/* <Card>
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
           <Typography variant="h6" color="white">
             Projects Table
@@ -311,7 +431,7 @@ export function Tables() {
             </tbody>
           </table>
         </CardBody>
-      </Card>
+      </Card> */}
     </div>
   );
 }

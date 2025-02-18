@@ -312,13 +312,13 @@ export function Profile() {
               />
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1">
-                  {userData?.nama || 'Loading...'}
+                  {userData?.nama ||   <div className="h-4 bg-gray-300 rounded w-20"></div>}
                 </Typography>
                 <Typography
                   variant="small"
                   className="font-normal text-blue-gray-600"
                 >
-                  {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'} {userRole !== 'admin' && (userData?.kelas || 'Loading...')}
+                  {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>} {userRole !== 'admin' && (userData?.kelas ||   <div className="h-4 bg-gray-300 rounded w-20"></div>)}
 
                 </Typography>
               </div>
@@ -337,13 +337,13 @@ export function Profile() {
 
           <div className="px-4 pb-4">
             <Typography variant="h6" color="blue-gray" className="mb-2">
-              Data Diri {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'}
+              Data Diri {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>}
             </Typography>
             <Typography
               variant="small"
               className="font-normal text-blue-gray-500"
             >
-              Data Diri Lengkap {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : 'Loading...'}
+              Data Diri Lengkap {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>}
             </Typography>
             <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
             </div>
@@ -403,7 +403,7 @@ export function Profile() {
                           </div>
                         </> :
                           userRole === 'admin' ? <></> :
-                            <h1>Loading...</h1>}
+                          <div className="h-4 bg-gray-300 rounded w-20"></div>}
 
                       <div className="sm:col-span-3">
                         <label htmlFor="first-name" className="block text-sm/6 font-medium text-gray-900">
