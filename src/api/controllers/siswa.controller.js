@@ -26,6 +26,7 @@ export const getProfile = async (req, res) => {
         nis: siswa.nis,
         nisn: siswa.nisn,
         nama: siswa.nama,
+        jenisKelamin: siswa.jenisKelamin,
         kelas: siswa.kelas,
         barcode: siswa.barcode,
         firstName: siswa.firstName,

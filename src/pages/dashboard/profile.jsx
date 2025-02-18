@@ -312,13 +312,13 @@ export function Profile() {
               />
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1">
-                  {userData?.nama ||   <div className="h-4 bg-gray-300 rounded w-20"></div>}
+                  {userData?.nama || <div className="h-4 bg-gray-300 rounded w-20"></div>}
                 </Typography>
                 <Typography
                   variant="small"
                   className="font-normal text-blue-gray-600"
                 >
-                  {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>} {userRole !== 'admin' && (userData?.kelas ||   <div className="h-4 bg-gray-300 rounded w-20"></div>)}
+                  {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : <div className="h-4 bg-gray-300 rounded w-20"></div>} {userRole !== 'admin' && (userData?.kelas || <div className="h-4 bg-gray-300 rounded w-20"></div>)}
 
                 </Typography>
               </div>
@@ -337,13 +337,13 @@ export function Profile() {
 
           <div className="px-4 pb-4">
             <Typography variant="h6" color="blue-gray" className="mb-2">
-              Data Diri {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>}
+              Data Diri {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : <div className="h-4 bg-gray-300 rounded w-20"></div>}
             </Typography>
             <Typography
               variant="small"
               className="font-normal text-blue-gray-500"
             >
-              Data Diri Lengkap {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' :   <div className="h-4 bg-gray-300 rounded w-20"></div>}
+              Data Diri Lengkap {userRole === 'guru' ? 'Guru Wali Kelas' : userRole === 'siswa' ? 'Siswa' : userRole === 'admin' ? 'Admin' : <div className="h-4 bg-gray-300 rounded w-20"></div>}
             </Typography>
             <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
             </div>
@@ -403,7 +403,7 @@ export function Profile() {
                           </div>
                         </> :
                           userRole === 'admin' ? <></> :
-                          <div className="h-4 bg-gray-300 rounded w-20"></div>}
+                            <div className="h-4 bg-gray-300 rounded w-20"></div>}
 
                       <div className="sm:col-span-3">
                         <label htmlFor="first-name" className="block text-sm/6 font-medium text-gray-900">
@@ -506,7 +506,7 @@ export function Profile() {
                             id="postalCode"
                             value={formData.postalCode}
                             onChange={handleInputChange}
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            className="block w-full rounded-md border-0 py-2 px-3.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                           />
                         </div>
                       </div>
@@ -548,18 +548,35 @@ export function Profile() {
                           Jenis Kelamin
                         </label>
                         <div className="mt-2">
-                          <select
-                            id="jenisKelamin"
-                            name="jenisKelamin"
-                            value={formData.jenisKelamin}
-                            onChange={handleInputChange}
-                            className="block w-full rounded-md border border-gray-400 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          >
-                            <option value="">Pilih Jenis Kelamin</option>
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                          </select>
+                          {userData?.jenisKelamin ? (
+                            // Jika userData.jenisKelamin sudah ada, hanya menampilkan pilihan yang sesuai dan disable dropdown
+                            <select
+                              id="jenisKelamin"
+                              name="jenisKelamin"
+                              value={userData.jenisKelamin}
+                              disabled
+                              className="block w-full rounded-md border border-gray-400 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            >
+                              <option value={userData.jenisKelamin}>
+                                {userData.jenisKelamin === "L" ? "Laki-laki" : "Perempuan"}
+                              </option>
+                            </select>
+                          ) : (
+                            // Jika userData.jenisKelamin belum ada, tampilkan dropdown yang bisa dipilih
+                            <select
+                              id="jenisKelamin"
+                              name="jenisKelamin"
+                              value={formData.jenisKelamin}
+                              onChange={handleInputChange}
+                              className="block w-full rounded-md border border-gray-400 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            >
+                              <option value="">Pilih Jenis Kelamin</option>
+                              <option value="L">Laki-laki</option>
+                              <option value="P">Perempuan</option>
+                            </select>
+                          )}
                         </div>
+
                       </div>
                     </div>
                   </div>
