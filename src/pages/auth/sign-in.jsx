@@ -6,10 +6,12 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { authAPI } from '@/services/api';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import Swal from 'sweetalert2';
+
 
 export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -56,6 +58,18 @@ export function SignIn() {
     });
   };
 
+  useEffect(() => {
+    if (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  }, [error]);
+
   return (
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
@@ -64,11 +78,11 @@ export function SignIn() {
           <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
             Masukkan NIS dan Password untuk Sign In
           </Typography>
-          {error && (
+          {/* {error && (
             <Typography variant="small" color="red" className="mt-2">
               {error}
             </Typography>
-          )}
+          )} */}
         </div>
         <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
@@ -80,6 +94,7 @@ export function SignIn() {
               placeholder="12345678"
               name="nis"
               value={formData.nis}
+              type="number"
               onChange={handleChange}
               required
               className="!border-t-blue-gray-200 focus:!border-t-gray-900"

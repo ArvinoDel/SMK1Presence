@@ -1,12 +1,8 @@
 import {
-  BanknotesIcon,
   HandRaisedIcon,
-  ShieldCheckIcon,
   BuildingLibraryIcon,
+  ShieldCheckIcon,
   ExclamationCircleIcon,
-  UserPlusIcon,
-  UsersIcon,
-  ChartBarIcon,
 } from "@heroicons/react/24/solid";
 
 export const statisticsCardsData = [

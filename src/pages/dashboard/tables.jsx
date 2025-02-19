@@ -193,8 +193,6 @@ export function Tables() {
         setLoading(false);
       }
     };
-    
-
     fetchRiwayatAbsensi();
   }, []);
 

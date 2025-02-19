@@ -32,19 +32,22 @@ import {
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
 import {
-  statisticsCardsData,
+  // statisticsCardsData,
   statisticsChartsData,
   projectsTableData,
   ordersOverviewData,
 } from "@/data";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 import Swal from 'sweetalert2';
-
+import statisticsCardsData from "./../../data/statistics-cards-data";
 
 export function Home() {
 
   const [image, setImage] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
 
   const handleFileChange = (e) => {
@@ -64,7 +67,7 @@ export function Home() {
     suratIzin: null
   });
 
-  
+
   const navigate = useNavigate(); // Hook untuk redirect
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
   const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
@@ -200,16 +203,74 @@ export function Home() {
     }
   };
 
+  useEffect(() => {
+    const fetchRiwayatAbsensi = async () => {
+      try {
+        const response = await fetch("/api/absensi/riwayat", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch attendance history");
+        }
+
+        const result = await response.json();
+        setRiwayatAbsensi(result.data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRiwayatAbsensi();
+  }, []);
+
+  const calculateAbsensi = (status) => {
+    return riwayatAbsensi.filter(item => item.status === status).length;
+  };
+
+  // Update nilai kartu dengan data dinamis
+  const updatedStatisticsCardsData = statisticsCardsData.map(card => {
+    switch (card.title) {
+      case "Kehadiran":
+        return {
+          ...card,
+          value: `${calculateAbsensi("HADIR")} Hari`,
+        };
+      case "Sakit":
+        return {
+          ...card,
+          value: `${calculateAbsensi("SAKIT")} Hari`,
+        };
+      case "Izin":
+        return {
+          ...card,
+          value: `${calculateAbsensi("IZIN")} Hari`,
+        };
+      case "Alfa":
+        return {
+          ...card,
+          value: `${calculateAbsensi("ALFA")} Hari`,
+        };
+      default:
+        return card;
+    }
+  });
+
+
   return (
     <div className="mt-12">
-            {userRole == "guru" &&
+      {userRole == "guru" &&
         <div className="bg-transparent p-6">
-          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama || 'Loading...'} !</h1>
-          <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas || 'Loading...'}</p>
+          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama ||   <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas ||   <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
         </div>
       }
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
+        {updatedStatisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
             key={title}
             {...rest}

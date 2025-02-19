@@ -146,11 +146,11 @@ export function DashboardNavbar() {
               </MenuHandler>
               <MenuList>
                 <Typography variant="medium" className="font-medium text-black">
-                  {userData?.nama || 'Loading...'}
+                  {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div> }
                 </Typography>
 
                 <Typography variant="small" className="font-medium text-black">
-                  {userData?.kelas ? `Kelas ${userData.kelas}` : 'Loading...'}
+                  {userData?.kelas ? `Kelas ${userData.kelas}` : <div className="h-3 bg-gray-200 rounded w-16"></div>}
                 </Typography>
 
                 <Typography variant="small" className="font-medium text-black">
