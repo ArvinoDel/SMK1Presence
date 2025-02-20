@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
 export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    nis: '',
+    identifier: '',
     password: ''
   });
   const [isVisible, setIsVisible] = useState(false);
@@ -30,24 +30,47 @@ export function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    
     try {
-      const response = await authAPI.login(formData);
-      console.log('Login response:', response);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          identifier: formData.identifier, // Bisa NIS atau NIP
+          password: formData.password
+        })
+      });
 
-      if (response.data.success) {
-        login(response.data.data.user, response.data.data.token);
-        navigate('/dashboard/home');
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.data.token);
+        
+        // Redirect berdasarkan role
+        if (data.data.user.role === 'guru') {
+          navigate('/dashboard/guru');
+        } else if (data.data.user.role === 'siswa') {
+          navigate('/dashboard/siswa');
+        }
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Berhasil!',
+          text: `Selamat datang, ${data.data.user.nama}!`,
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
-        setError(response.data.message || 'Login failed');
+        throw new Error(data.message);
       }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal',
+        text: error.message
+      });
     }
   };
 
@@ -92,8 +115,8 @@ export function SignIn() {
             <Input
               size="lg"
               placeholder="12345678"
-              name="nis"
-              value={formData.nis}
+              name="identifier"
+              value={formData.identifier}
               type="number"
               onChange={handleChange}
               required
