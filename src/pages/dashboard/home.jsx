@@ -265,8 +265,8 @@ export function Home() {
     <div className="mt-12">
       {userRole == "guru" &&
         <div className="bg-transparent p-6">
-          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama ||   <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
-          <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas ||   <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
         </div>
       }
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
@@ -507,185 +507,190 @@ export function Home() {
           </TabsHeader>
         </Tabs>
 
-        {activeTab === "absen" && (
+        {userRole === "siswa" && (
           <>
-            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+            {activeTab === "absen" && (
+              <>
+                <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
 
-              <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
-            </div>
-            <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-              <CardBody className="p-4">
-                <div className="px-4 pb-4">
-                  <div className="space-y-12">
-                    <div className="border-b border-gray-900/10 pb-12">
+                  <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
+                </div>
+                <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
+                  <CardBody className="p-4">
+                    <div className="px-4 pb-4">
+                      <div className="space-y-12">
+                        <div className="border-b border-gray-900/10 pb-12">
 
-                      <div className="border-b border-gray-900/10 pb-12">
-                        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-
-
-                          <div className="sm:col-span-3">
-                            <label htmlFor="FormAbsen" className="block text-2xl font-medium text-gray-900 my-5">
-                              Silahkan Absen
-                            </label>
-
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                          <div className="border-b border-gray-900/10 pb-12">
+                            <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
 
-                        <div className="col-span-full">
-                          <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
-                            QR Code
-                          </label>
-                          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                            <div className="text-center">
-                              <div className="relative h-full w-full overflow-hidden">
-                                <img
-                                  src="data:image/png;base64,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"
-                                  alt="QR Code"
-                                  className="w-[300px] h-[300px] object-fit"
-                                />
+
+                              <div className="sm:col-span-3">
+                                <label htmlFor="FormAbsen" className="block text-2xl font-medium text-gray-900 my-5">
+                                  Silahkan Absen
+                                </label>
+
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
 
-                    </div>
-                  </div>
-
-                </div>
-              </CardBody>
-            </Card>
-          </>
-        )}
-
-        {activeTab === "izin" && (
-          <>
-            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
-              <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
-            </div>
-            <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-              <CardBody className="p-4">
-
-
-                <div className="px-4 pb-4">
-
-                  <form onSubmit={handleSubmitIzin}>
-                    <div className="space-y-12">
-                      <div className="border-b border-gray-900/10 pb-12">
-
-                        <div className="border-b border-gray-900/10 pb-12">
                           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
 
-
-                            <div className="sm:col-span-3">
-                              <label htmlFor="FormIzin" className="block text-2xl font-medium text-gray-900 my-5">
-                                Form Izin
-                              </label>
-                              <label htmlFor="keterangan" className="block text-sm/6 font-medium text-gray-900">
-                                Keterangan
-                              </label>
-                              <div className="relative mt-2 w-full">
-                                <select
-                                  id="keterangan"
-                                  name="keterangan"
-                                  value={formData.keterangan}
-                                  onChange={handleInputChange}
-                                  className="peer w-full rounded-md border border-gray-300 bg-white py-1.5 px-3 text-gray-900"
-                                  required
-                                >
-                                  <option value="" disabled>Pilih Keterangan</option>
-                                  <option value="sakit">Izin Sakit</option>
-                                  <option value="keperluan">Izin Keperluan</option>
-                                </select>
-                                <ChevronDownIcon
-                                  aria-hidden="true"
-                                  className="absolute right-3 top-1/2 w-3 h-3 -translate-y-1/2 text-gray-500 peer-focus:text-indigo-600"
-                                />
-                              </div>
-                            </div>
-
                             <div className="col-span-full">
-                              <label htmlFor="description" className="block text-sm/6 font-medium text-gray-900">
-                                Keperluan Izin (Deskripsikan)
+                              <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
+                                QR Code
                               </label>
-                              <div className="mt-2">
-                                <input
-                                  id="description"
-                                  name="description"
-                                  type="text"
-                                  value={formData.description}
-                                  onChange={handleInputChange}
-                                  className="block w-full rounded-md border border-gray-400 px-3 py-1.5"
-                                  required
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-
-                          <div className="col-span-full">
-                            <label htmlFor="cover-photo" className="block text-sm/6 font-medium text-gray-900">
-                              Sertakan Surat Izin
-                            </label>
-                            <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                              <div className="text-center">
-                                <div
-                                  className="border-gray-300 p-6 rounded-md text-center cursor-pointer hover:bg-gray-50"
-                                  onClick={() => document.getElementById("image-upload-input").click()} // ID unik
-                                >
-                                  {previewImage ? (
-                                    <img src={previewImage} alt="Selected Preview" className="mx-auto size-24 rounded-md object-cover" />
-                                  ) : (
-                                    <PhotoIcon className="mx-auto size-12 text-gray-300" />
-                                  )}
-
-                                  <div className="mt-4 flex justify-center text-sm text-gray-600">
-                                    <label
-                                      htmlFor="image-upload-input"
-                                      className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-                                    >
-                                      <span>Upload a file</span>
-                                      <input
-                                        id="image-upload-input" // ID unik agar tidak bentrok
-                                        name="image-upload"
-                                        type="file"
-                                        className="sr-only"
-                                        accept="image/*"
-                                        onChange={handleImageChange} // Handler berbeda
-                                      />
-                                    </label>
-                                    <p className="pl-1">or drag and drop</p>
+                              <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                                <div className="text-center">
+                                  <div className="relative h-full w-full overflow-hidden">
+                                    <img
+                                      src="data:image/png;base64,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"
+                                      alt="QR Code"
+                                      className="w-[300px] h-[300px] object-fit"
+                                    />
                                   </div>
                                 </div>
-                                <p className="text-xs/5 text-gray-600">PNG, JPG, GIF up to 10MB</p>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+
+                    </div>
+                  </CardBody>
+                </Card>
+              </>
+            )}
+
+            {activeTab === "izin" && (
+              <>
+                <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+                  <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
+                </div>
+                <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
+                  <CardBody className="p-4">
+
+
+                    <div className="px-4 pb-4">
+
+                      <form onSubmit={handleSubmitIzin}>
+                        <div className="space-y-12">
+                          <div className="border-b border-gray-900/10 pb-12">
+
+                            <div className="border-b border-gray-900/10 pb-12">
+                              <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+
+
+                                <div className="sm:col-span-3">
+                                  <label htmlFor="FormIzin" className="block text-2xl font-medium text-gray-900 my-5">
+                                    Form Izin
+                                  </label>
+                                  <label htmlFor="keterangan" className="block text-sm/6 font-medium text-gray-900">
+                                    Keterangan
+                                  </label>
+                                  <div className="relative mt-2 w-full">
+                                    <select
+                                      id="keterangan"
+                                      name="keterangan"
+                                      value={formData.keterangan}
+                                      onChange={handleInputChange}
+                                      className="peer w-full rounded-md border border-gray-300 bg-white py-1.5 px-3 text-gray-900"
+                                      required
+                                    >
+                                      <option value="" disabled>Pilih Keterangan</option>
+                                      <option value="sakit">Izin Sakit</option>
+                                      <option value="keperluan">Izin Keperluan</option>
+                                    </select>
+                                    {/* <ChevronDownIcon
+                                      aria-hidden="true"
+                                      className="absolute right-3 top-1/2 w-3 h-3 -translate-y-1/2 text-gray-500 peer-focus:text-indigo-600"
+                                    /> */}
+                                  </div>
+                                </div>
+
+                                <div className="col-span-full">
+                                  <label htmlFor="description" className="block text-sm/6 font-medium text-gray-900">
+                                    Keperluan Izin (Deskripsikan)
+                                  </label>
+                                  <div className="mt-2">
+                                    <input
+                                      id="description"
+                                      name="description"
+                                      type="text"
+                                      value={formData.description}
+                                      onChange={handleInputChange}
+                                      className="block w-full rounded-md border border-gray-400 px-3 py-1.5"
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+
+                              <div className="col-span-full">
+                                <label htmlFor="cover-photo" className="block text-sm/6 font-medium text-gray-900">
+                                  Sertakan Surat Izin
+                                </label>
+                                <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                                  <div className="text-center">
+                                    <div
+                                      className="border-gray-300 p-6 rounded-md text-center cursor-pointer hover:bg-gray-50"
+                                      onClick={() => document.getElementById("image-upload-input").click()} // ID unik
+                                    >
+                                      {previewImage ? (
+                                        <img src={previewImage} alt="Selected Preview" className="mx-auto size-24 rounded-md object-cover" />
+                                      ) : (
+                                        <PhotoIcon className="mx-auto size-12 text-gray-300" />
+                                      )}
+
+                                      <div className="mt-4 flex justify-center text-sm text-gray-600">
+                                        <label
+                                          htmlFor="image-upload-input"
+                                          className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
+                                        >
+                                          <span>Upload a file</span>
+                                          <input
+                                            id="image-upload-input" // ID unik agar tidak bentrok
+                                            name="image-upload"
+                                            type="file"
+                                            className="sr-only"
+                                            required
+                                            accept="image/*"
+                                            onChange={handleImageChange} // Handler berbeda
+                                          />
+                                        </label>
+                                        <p className="pl-1">or drag and drop</p>
+                                      </div>
+                                    </div>
+                                    <p className="text-xs/5 text-gray-600">PNG, JPG, GIF up to 10MB</p>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="mt-6 flex items-center justify-end gap-x-6">
-                      <button
-                        type="submit"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
-                      >
-                        Submit Izin
-                      </button>
+                        <div className="mt-6 flex items-center justify-end gap-x-6">
+                          <button
+                            type="submit"
+                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white"
+                          >
+                            Submit Izin
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  </form>
-                </div>
-              </CardBody>
-            </Card>
+                  </CardBody>
+                </Card>
+              </>
+            )}
           </>
         )}
 

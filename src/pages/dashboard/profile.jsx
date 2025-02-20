@@ -501,7 +501,7 @@ export function Profile() {
                         </label>
                         <div className="mt-2">
                           <input
-                            type="text"
+                            type="number"
                             name="postalCode"
                             id="postalCode"
                             value={formData.postalCode}
