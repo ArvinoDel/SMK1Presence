@@ -79,7 +79,7 @@ export function Home() {
 
         // ✅ Pastikan token ada sebelum dipakai
         if (!storedToken) {
-          navigate("/auth/sign-in");
+          navigate("auth/sign-in");
           return;
         }
 
@@ -88,7 +88,7 @@ export function Home() {
         setUserRole(decodedToken.role);
         const userRole = decodedToken.role;
 
-        const response = await fetch('/api/siswa/profile', {
+        const response = await fetch('api/siswa/profile', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -206,7 +206,7 @@ export function Home() {
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch("/api/absensi/riwayat", {
+        const response = await fetch("api/absensi/riwayat", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

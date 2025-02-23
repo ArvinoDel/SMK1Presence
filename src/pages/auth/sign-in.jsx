@@ -32,13 +32,13 @@ export function SignIn() {
     e.preventDefault();
     
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          identifier: formData.identifier, // Bisa NIS atau NIP
+          identifier: formData.identifier,
           password: formData.password
         })
       });
@@ -48,13 +48,6 @@ export function SignIn() {
       if (response.ok) {
         localStorage.setItem('token', data.data.token);
         
-        // Redirect berdasarkan role
-        if (data.data.user.role === 'guru') {
-          navigate('/dashboard/guru');
-        } else if (data.data.user.role === 'siswa') {
-          navigate('/dashboard/siswa');
-        }
-        
         Swal.fire({
           icon: 'success',
           title: 'Login Berhasil!',
@@ -62,8 +55,10 @@ export function SignIn() {
           timer: 1500,
           showConfirmButton: false
         });
+
+        navigate('/dashboard/home');
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || 'Login gagal');
       }
     } catch (error) {
       Swal.fire({
@@ -99,7 +94,7 @@ export function SignIn() {
         <div className="text-center">
           <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
           <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
-            Masukkan NIS dan Password untuk Sign In
+            Masukkan NIS/NIP dan Password untuk Sign In
           </Typography>
           {/* {error && (
             <Typography variant="small" color="red" className="mt-2">
@@ -110,14 +105,13 @@ export function SignIn() {
         <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
             <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
-              NIS
+              NIS/NIP
             </Typography>
             <Input
               size="lg"
-              placeholder="12345678"
+              placeholder="Masukkan NIS/NIP"
               name="identifier"
               value={formData.identifier}
-              type="number"
               onChange={handleChange}
               required
               className="!border-t-blue-gray-200 focus:!border-t-gray-900"
