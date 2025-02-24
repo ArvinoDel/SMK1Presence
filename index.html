@@ -21,9 +21,48 @@
     <!-- Nepcha Analytics (nepcha.com) -->
     <!-- Nepcha is a easy-to-use web analytics. No cookies and fully compliant with GDPR, CCPA and PECR. -->
     <script defer data-site="YOUR_DOMAIN_HERE" src="https://api.nepcha.com/js/nepcha-analytics.js"></script>
+
+    <style>
+      /* ======= PRELOADER STYLES ======= */
+      .preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      }
+      .preloader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .loading-gif {
+        width: 64px; /* Sesuaikan ukuran gif */
+        height: 64px;
+      }
+    </style>
   </head>
   <body>
+
+    <!-- PRELOADER -->
+    <div id="preloader" class="preloader">
+      <img src="/gif/loadsmk.gif" alt="Loading..." class="loading-gif" />
+    </div>
+
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
+
+    <script>
+      /* ======= HIDE PRELOADER SETELAH REACT SELESAI DIMUAT ======= */
+      window.addEventListener("load", function () {
+        document.getElementById("preloader").classList.add("hidden");
+      });
+    </script>
   </body>
 </html>
