@@ -165,7 +165,7 @@ export function Home() {
         formDataToSend.append('suratIzin', formData.suratIzin);
       }
 
-      const response = await fetch('/api/absensi/izin', {
+      const response = await fetch('http://localhost:3000/api/absensi/izin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -206,7 +206,7 @@ export function Home() {
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch("api/absensi/riwayat", {
+        const response = await fetch("http://localhost:3000/api/absensi/riwayat", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

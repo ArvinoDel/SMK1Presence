@@ -216,11 +216,11 @@ export const getMyAbsensi = async (req, res) => {
 
 export const getRiwayatAbsensi = async (req, res) => {
   try {
-    const { nisn } = req.params;
+    const { identifier } = req.params;
     const { tanggalMulai, tanggalAkhir } = req.query;
 
     // Cari siswa
-    const siswa = await Siswa.findOne({ nisn });
+    const siswa = await Siswa.findOne({ nis: identifier });
     if (!siswa) {
       return res.status(404).json({
         success: false,
@@ -284,9 +284,9 @@ export const getRiwayatAbsensi = async (req, res) => {
 
 export const getRiwayatAbsensiByNIS = async (req, res) => {
   try {
-    const { nis } = req.user;
+    const { identifier } = req.user;
 
-    const siswa = await Siswa.findOne({ nis });
+    const siswa = await Siswa.findOne({ nis: identifier });
     if (!siswa) {
       return res.status(404).json({
         success: false,

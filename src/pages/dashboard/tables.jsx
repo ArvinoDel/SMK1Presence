@@ -175,7 +175,7 @@ export function Tables() {
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch('/api/absensi/riwayat', {
+        const response = await fetch('http://localhost:3000/api/absensi/riwayat', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
