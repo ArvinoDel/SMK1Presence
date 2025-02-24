@@ -238,8 +238,9 @@ export function Home() {
       case "Kehadiran":
         return {
           ...card,
-          value: `${calculateAbsensi("HADIR")} Hari`,
+          value: `${calculateAbsensi("HADIR") + calculateAbsensi("TERLAMBAT")} Hari`,
         };
+        
       case "Sakit":
         return {
           ...card,

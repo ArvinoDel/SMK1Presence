@@ -80,7 +80,7 @@ export const login = async (req, res) => {
     if (!identifier || !password) {
       return res.status(400).json({
         success: false,
-        message: 'ID dan password harus diisi'
+        message: 'nomor induk dan password harus diisi!'
       });
     }
 
@@ -95,7 +95,7 @@ export const login = async (req, res) => {
     if (!auth) {
       return res.status(401).json({
         success: false,
-        message: 'ID atau password salah'
+        message: 'nomor induk atau password salah!'
       });
     }
 
@@ -104,7 +104,7 @@ export const login = async (req, res) => {
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
-        message: 'ID atau password salah'
+        message: 'nomor induk atau password salah!'
       });
     }
 
@@ -118,10 +118,14 @@ export const login = async (req, res) => {
       userData = await Siswa.findOne({ nis: searchId });
     }
 
+    // console.log(userData);
+
     if (!userData) {
       return res.status(404).json({
         success: false,
-        message: 'Data pengguna tidak ditemukan'
+        message: 'Data pengguna tidak ditemukan',
+        showConfirmButton: false,
+        timer: 2000,
       });
     }
 

@@ -31,7 +31,7 @@ export function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -49,13 +49,13 @@ export function SignIn() {
         localStorage.setItem('token', result.data.token);
         localStorage.setItem('user', JSON.stringify(result.data.user));
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Login Berhasil!',
-          text: `Selamat datang, ${result.data.user.nama}!`,
-          timer: 1500,
-          showConfirmButton: false
-        });
+        // Swal.fire({
+        //   icon: 'success',
+        //   title: 'Login Berhasil!',
+        //   text: `Selamat datang, ${result.data.user.nama}!`,
+        //   timer: 1500,
+        //   showConfirmButton: false
+        // });
         
         // Redirect ke dashboard
         window.location.href = '/dashboard/home';

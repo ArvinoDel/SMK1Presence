@@ -215,7 +215,7 @@ export function Tables() {
       case 'HADIR':
         return 'green';
       case 'TERLAMBAT':
-        return 'red';
+        return 'black';
       case 'IZIN':
         return 'blue';
       case 'SAKIT':
