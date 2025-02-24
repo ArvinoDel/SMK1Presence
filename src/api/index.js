@@ -43,6 +43,7 @@ app.use('/api/public', express.static(path.join(__dirname, 'public')));
 
 // Serve static files dari subfolder
 app.use('/uploads/profilepicture', express.static(path.join(process.cwd(), 'public/uploads/profilepicture')));
+app.use('/uploads/suratizin', express.static(path.join(process.cwd(), 'public/uploads/suratizin')));
 app.use('/uploads/surat', express.static(path.join(process.cwd(), 'public/uploads/surat')));
 
 

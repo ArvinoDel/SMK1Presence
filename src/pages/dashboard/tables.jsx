@@ -153,7 +153,7 @@ const SkeletonRow = () => {
   );
 };
 
-
+const itemsPerPage = 5;
 
 export function Tables() {
   const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
@@ -208,7 +208,7 @@ export function Tables() {
     lightbox.init();
 
     return () => lightbox.destroy();
-  }, [loading]); 
+  }, [loading]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -224,6 +224,14 @@ export function Tables() {
         return 'gray';
     }
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(riwayatAbsensi.length / itemsPerPage);
+
+  const currentData = riwayatAbsensi.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getPhotoUrl = (photo) => {
     if (!photo) return "https://www.gravatar.com/avatar/?d=mp";
@@ -263,10 +271,9 @@ export function Tables() {
             </thead>
             <tbody ref={galleryRef}>
               {loading
-                ? Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)
-                : riwayatAbsensi.map((absen, key) => {
-                  const className = `py-3 px-5 ${key === riwayatAbsensi.length - 1 ? "" : "border-b border-blue-gray-50"}`;
-
+                ? Array.from({ length: itemsPerPage }).map((_, index) => <SkeletonRow key={index} />)
+                : currentData.map((absen, key) => {
+                  const className = `py-3 px-5 ${key === currentData.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                   return (
                     <tr key={absen.id}>
                       <td className={className}>
@@ -304,11 +311,22 @@ export function Tables() {
                         {absen.suratIzin ? (
                           <a
                             href="#"
-                            data-pswp-src={absen.suratIzin}
+                            data-pswp-src={
+                              absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
+                                absen.suratIzin.startsWith('http') ? absen.suratIzin :
+                                  `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
+                            }
                             data-pswp-width="800"
                             data-pswp-height="1000"
                           >
-                            <img src={absen.suratIzin} alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
+
+
+                            <img src={
+                              absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
+                                absen.suratIzin.startsWith('http') ? absen.suratIzin :
+                                  `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
+                            } alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
+
                           </a>
                         ) : (
                           <Typography className="text-xs font-semibold text-gray-600">-</Typography>
@@ -318,6 +336,29 @@ export function Tables() {
                   );
                 })}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan="6" className="py-4 text-center">
+                  <div className="inline-flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                      disabled={currentPage === 1}
+                    >
+                      &#171; Prev
+                    </button>
+                    <span className="px-3 py-1 border rounded-md bg-gray-100">{currentPage} / {totalPages}</span>
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                      disabled={currentPage === totalPages}
+                    >
+                      Next &#187;
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
 
 
           </table>
