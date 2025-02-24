@@ -75,9 +75,8 @@ export const register = async (req, res) => {
 // Login siswa dengan NIS
 export const login = async (req, res) => {
   try {
-    const { identifier, password } = req.body;  // identifier bisa NIS atau NIP
+    const { identifier, password } = req.body;
 
-    // Validasi input
     if (!identifier || !password) {
       return res.status(400).json({
         success: false,
@@ -85,8 +84,14 @@ export const login = async (req, res) => {
       });
     }
 
-    // Cari di Auth berdasarkan identifier (nis atau nip)
-    const auth = await Auth.findOne({ nis: identifier });
+    // Cari di Auth berdasarkan nis atau nip
+    const auth = await Auth.findOne({
+      $or: [
+        { nis: identifier },
+        { nip: identifier }
+      ]
+    });
+
     if (!auth) {
       return res.status(401).json({
         success: false,
@@ -104,11 +109,13 @@ export const login = async (req, res) => {
     }
 
     let userData;
+    const searchId = auth.role === 'guru' ? auth.nip : auth.nis;
+    
     // Cek role untuk menentukan model yang digunakan
     if (auth.role === 'guru') {
-      userData = await Guru.findOne({ nip: identifier });
+      userData = await Guru.findOne({ nip: searchId });
     } else if (auth.role === 'siswa') {
-      userData = await Siswa.findOne({ nis: identifier });
+      userData = await Siswa.findOne({ nis: searchId });
     }
 
     if (!userData) {
@@ -122,7 +129,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       {
         id: userData._id,
-        identifier: identifier, // bisa nis atau nip
+        identifier: searchId,
         role: auth.role,
         nama: userData.nama
       },

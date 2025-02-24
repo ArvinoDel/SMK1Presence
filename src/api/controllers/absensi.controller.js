@@ -180,10 +180,12 @@ export const prosesIzin = async (req, res) => {
 
 export const getMyAbsensi = async (req, res) => {
   try {
-    const { nis } = req.user;
+    const { identifier, role } = req.user;
 
-    // Cari data absensi berdasarkan nis
-    const absensi = await Absensi.findOne({ nis }).populate('siswa', 'nama nis photo'); // Pastikan ada hubungan dengan model siswa
+    // Sesuaikan query berdasarkan role
+    const query = role === 'guru' ? { nip: identifier } : { nis: identifier };
+    
+    const absensi = await Absensi.findOne(query).populate('siswa', 'nama nis photo');
 
     if (!absensi) {
       return res.status(404).json({

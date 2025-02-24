@@ -52,7 +52,7 @@ export function SignIn() {
         Swal.fire({
           icon: 'success',
           title: 'Login Berhasil!',
-          text: `Selamat datang, ${data.data.user.nama}!`,
+          text: `Selamat datang, ${result.data.user.nama}!`,
           timer: 1500,
           showConfirmButton: false
         });

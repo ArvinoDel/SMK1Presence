@@ -70,9 +70,9 @@ export const deleteGuru = async (req, res) => {
 // Get profile data
 export const getProfile = async (req, res) => {
   try {
-    const { nip } = req.user;
+    const { identifier } = req.user;
 
-    const guru = await Guru.findOne({ nip });
+    const guru = await Guru.findOne({ nip: identifier });
     if (!guru) {
       return res.status(404).json({
         success: false,

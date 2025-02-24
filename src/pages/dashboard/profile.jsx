@@ -149,7 +149,7 @@ export function Profile() {
         setUserRole(decodedToken.role);
         const userRole = decodedToken.role;
 
-        const response = await fetch('/api/siswa/profile', {
+        const response = await fetch('http://localhost:3000/api/siswa/profile', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -225,7 +225,7 @@ export function Profile() {
         formDataToSend.append('coverPhoto', formData.coverPhoto);
       }
 
-      const response = await fetch('/api/siswa/profile', {
+      const response = await fetch('http://localhost:3000/api/siswa/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

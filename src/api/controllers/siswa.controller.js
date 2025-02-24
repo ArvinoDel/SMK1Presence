@@ -5,9 +5,9 @@ import path from 'path';
 // Get profile data
 export const getProfile = async (req, res) => {
   try {
-    const { nis } = req.user;
+    const { identifier } = req.user;
 
-    const siswa = await Siswa.findOne({ nis });
+    const siswa = await Siswa.findOne({ nis: identifier });
     if (!siswa) {
       return res.status(404).json({
         success: false,
@@ -55,7 +55,7 @@ export const getProfile = async (req, res) => {
 // Update profile data
 export const updateProfile = async (req, res) => {
   try {
-    const { nis } = req.user;
+    const { identifier } = req.user;
     
     // Parse form data and alamat object
     const alamat = req.body.alamat ? JSON.parse(req.body.alamat) : {};
@@ -75,7 +75,7 @@ export const updateProfile = async (req, res) => {
     };
 
     // Get existing user data
-    const existingUser = await Siswa.findOne({ nis });
+    const existingUser = await Siswa.findOne({ identifier });
     if (!existingUser) {
       return res.status(404).json({
         success: false,
@@ -117,7 +117,7 @@ export const updateProfile = async (req, res) => {
 
     // Update user data
     const updatedSiswa = await Siswa.findOneAndUpdate(
-      { nis },
+      { identifier },
       { $set: updateData },
       { new: true }
     );

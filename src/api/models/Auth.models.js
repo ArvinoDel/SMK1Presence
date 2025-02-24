@@ -4,7 +4,12 @@ import bcrypt from 'bcrypt';
 const authSchema = new mongoose.Schema({
   nis: {
     type: String,
-    required: true,
+    sparse: true,  // Allows null/undefined values
+    unique: true
+  },
+  nip: {
+    type: String,
+    sparse: true,  // Allows null/undefined values
     unique: true
   },
   password: {

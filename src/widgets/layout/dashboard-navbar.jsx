@@ -42,7 +42,7 @@ export function DashboardNavbar() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('api/siswa/profile', {
+        const response = await fetch('http://localhost:3000/api/siswa/profile', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
