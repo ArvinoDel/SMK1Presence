@@ -11,10 +11,14 @@ import { useAuth } from '@/context/AuthContext';
 import { authAPI } from '@/services/api';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import Swal from 'sweetalert2';
+import { Navigate } from 'react-router-dom';
+// import { useAuth } from '@/context/AuthContext';
 
 
 export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     identifier: '',
     password: ''
@@ -91,7 +95,13 @@ export function SignIn() {
     }
   }, [error]);
 
+
+   if (user) {
+      return <Navigate to="/dashboard/home" />;
+    }
+    
   return (
+    
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
         <div className="text-center">
