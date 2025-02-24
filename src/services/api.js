@@ -45,4 +45,9 @@ export const siswaAPI = {
   updateProfile: (data) => api.put('/siswa/profile', data)
 };
 
+export const guruAPI = {
+  getProfile: () => api.get('/guru/profile'),
+  updateProfile: (data) => api.put('/guru/profile', data)
+};
+
 export default api; 

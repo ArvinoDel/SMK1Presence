@@ -17,8 +17,14 @@ const guruSchema = new mongoose.Schema({
   tanggalLahir: {
     type: Date
   },
+  firstName: String,
+  lastName: String,
+  email: String,
   alamat: {
-    type: String
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String
   },
   noTelp: {
     type: String
@@ -30,6 +36,8 @@ const guruSchema = new mongoose.Schema({
     type: String,
     enum: ['D3', 'S1', 'S2', 'S3']
   },
+  photo: String,
+  coverPhoto: String,
   createdAt: {
     type: Date,
     default: Date.now
@@ -38,6 +46,14 @@ const guruSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
+});
+
+// Tambahkan pre-save middleware untuk update timestamps
+guruSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
 });
 
 const Guru = mongoose.model('Guru', guruSchema);
