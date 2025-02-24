@@ -48,6 +48,14 @@ export function SignIn() {
         // Simpan token ke localStorage
         localStorage.setItem('token', result.data.token);
         localStorage.setItem('user', JSON.stringify(result.data.user));
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Berhasil!',
+          text: `Selamat datang, ${data.data.user.nama}!`,
+          timer: 1500,
+          showConfirmButton: false
+        });
         
         // Redirect ke dashboard
         window.location.href = '/dashboard/home';
