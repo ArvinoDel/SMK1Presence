@@ -2,14 +2,9 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const authSchema = new mongoose.Schema({
-  nis: {
+  identifier: { // Bisa berisi NIS atau NIP
     type: String,
-    sparse: true,  // Allows null/undefined values
-    unique: true
-  },
-  nip: {
-    type: String,
-    sparse: true,  // Allows null/undefined values
+    required: true,
     unique: true
   },
   password: {
@@ -18,8 +13,12 @@ const authSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['siswa', 'admin', 'guru'],
-    default: 'siswa'
+    enum: ['guru', 'siswa'],
+    required: true
+  },
+  userData: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'role'
   }
 });
 

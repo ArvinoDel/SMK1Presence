@@ -84,13 +84,8 @@ export const login = async (req, res) => {
       });
     }
 
-    // Cari di Auth berdasarkan nis atau nip
-    const auth = await Auth.findOne({
-      $or: [
-        { nis: identifier },
-        { nip: identifier }
-      ]
-    });
+    // Cari di Auth terlebih dahulu karena password ada di sini
+    const auth = await Auth.findOne({ nis: identifier }).select('+password');
 
     if (!auth) {
       return res.status(401).json({
@@ -108,60 +103,60 @@ export const login = async (req, res) => {
       });
     }
 
-    let userData;
-    const searchId = auth.role === 'guru' ? auth.nip : auth.nis;
-    
-    // Cek role untuk menentukan model yang digunakan
-    if (auth.role === 'guru') {
-      userData = await Guru.findOne({ nip: searchId });
-    } else if (auth.role === 'siswa') {
-      userData = await Siswa.findOne({ nis: searchId });
-    }
+    // Setelah password valid, cari data lengkap user
+    const [guru, siswa] = await Promise.all([
+      Guru.findOne({ nip: identifier }),
+      Siswa.findOne({ nis: identifier })
+    ]);
 
-    // console.log(userData);
+    // Tentukan user dan role
+    let user = guru || siswa;
+    let role = guru ? 'guru' : 'siswa';
 
-    if (!userData) {
-      return res.status(404).json({
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        message: 'Data pengguna tidak ditemukan',
-        showConfirmButton: false,
-        timer: 2000,
+        message: 'Data user tidak ditemukan'
       });
     }
 
-    // Generate token dengan data yang sesuai
+    // Generate token
     const token = jwt.sign(
       {
-        id: userData._id,
-        identifier: searchId,
-        role: auth.role,
-        nama: userData.nama
+        id: user._id,
+        identifier: role === 'guru' ? user.nip : user.nis,
+        role,
+        nama: user.nama
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    // Siapkan response data berdasarkan role
+    const userData = {
+      nama: user.nama,
+      role,
+      ...(role === 'siswa' ? {
+        nis: user.nis,
+        nisn: user.nisn,
+        kelas: user.kelas
+      } : {
+        nip: user.nip,
+        mataPelajaran: user.mataPelajaran
+      })
+    };
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
       data: {
         token,
-        user: {
-          nama: userData.nama,
-          role: auth.role,
-          ...(auth.role === 'siswa' ? {
-            nis: userData.nis,
-            nisn: userData.nisn,
-            kelas: userData.kelas
-          } : {
-            nip: userData.nip,
-            mataPelajaran: userData.mataPelajaran
-          })
-        }
+        user: userData
       }
     });
 
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal melakukan login',
