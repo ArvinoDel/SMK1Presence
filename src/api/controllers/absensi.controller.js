@@ -1,6 +1,7 @@
 import Siswa from '../models/Siswa.models.js';
 import Absensi from '../models/Absensi.models.js';
 import cloudinary from '../config/cloudinary.js';
+import { updateKelasAbsensiOnChange } from './kelasAbsensi.controller.js';
 
 export const prosesAbsensi = async (req, res) => {
   try {
@@ -69,6 +70,9 @@ export const prosesAbsensi = async (req, res) => {
     });
 
     await absensi.save();
+
+    // Update summary kelas
+    await updateKelasAbsensiOnChange(absensi);
 
     res.status(200).json({
       success: true,
@@ -156,6 +160,9 @@ export const prosesIzin = async (req, res) => {
     // Buat record absensi
     const absensi = new Absensi(absensiData);
     await absensi.save();
+
+    // Update summary kelas
+    await updateKelasAbsensiOnChange(absensi);
 
     res.status(200).json({
       success: true,
@@ -332,6 +339,30 @@ export const getRiwayatAbsensiByNIS = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil riwayat absensi',
+      error: error.message
+    });
+  }
+};
+
+export const createOrUpdateAbsensi = async (req, res) => {
+  try {
+    // ... existing code untuk create/update absensi ...
+    // Setelah absensi berhasil dibuat/diupdate
+    const absensi = await Absensi.create(req.body);
+    
+    // Update summary kelas
+    await updateKelasAbsensiOnChange(absensi);
+
+    res.status(200).json({
+      success: true,
+      message: 'Absensi berhasil dicatat',
+      data: absensi
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mencatat absensi',
       error: error.message
     });
   }

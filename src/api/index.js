@@ -10,6 +10,8 @@ import guruRoutes from './routes/Guru.routes.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { initCronJobs } from './services/cronService.js';
+import kelasAbsensiRoutes from './routes/kelasAbsensi.routes.js';
 dotenv.config();
 
 const app = express();
@@ -30,6 +32,7 @@ app.use('/api/barcode', barcodeRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/siswa', siswaRoutes);
 app.use('/api/guru', guruRoutes);
+app.use('/api/kelas-absensi', kelasAbsensiRoutes);
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'public/uploads');
@@ -51,6 +54,7 @@ app.use('/uploads/surat', express.static(path.join(process.cwd(), 'public/upload
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Berhasil terhubung ke MongoDB');
+    initCronJobs();
   })
   .catch((error) => {
     console.error('Gagal terhubung ke MongoDB:', error);

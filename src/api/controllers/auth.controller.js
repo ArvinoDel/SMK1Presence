@@ -18,7 +18,7 @@ export const register = async (req, res) => {
     }
 
     // Cek apakah NIS atau NISN sudah terdaftar
-    const existingAuth = await Auth.findOne({ nis });
+    const existingAuth = await Auth.findOne({ nis: nis });
     if (existingAuth) {
       return res.status(400).json({
         success: false,
@@ -36,10 +36,12 @@ export const register = async (req, res) => {
       });
     }
 
-    // Buat akun auth dengan NIS
+    // Buat akun auth dengan NIS sebagai identifier
+    const hashedPassword = await bcrypt.hash(password, 10);
     const auth = new Auth({
-      nis,
-      password
+      nis: nis,
+      password: hashedPassword,
+      role: 'siswa'
     });
 
     // Buat data siswa
@@ -72,7 +74,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Login siswa dengan NIS
+// Login function
 export const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
@@ -84,9 +86,13 @@ export const login = async (req, res) => {
       });
     }
 
-    // Cari di Auth terlebih dahulu karena password ada di sini
-    const auth = await Auth.findOne({ nis: identifier }).select('+password');
-
+    // Cari di Auth dengan nis (bisa berisi NIS atau NIP)
+    const auth = await Auth.findOne({
+      $or: [
+        { nis: identifier, role: 'siswa' },
+        { nis: identifier, role: 'guru' }
+      ]
+    });
     if (!auth) {
       return res.status(401).json({
         success: false,
@@ -103,55 +109,53 @@ export const login = async (req, res) => {
       });
     }
 
-    // Setelah password valid, cari data lengkap user
-    const [guru, siswa] = await Promise.all([
-      Guru.findOne({ nip: identifier }),
-      Siswa.findOne({ nis: identifier })
-    ]);
+    // Cari data lengkap user berdasarkan role
+    let userData;
+    if (auth.role === 'siswa') {
+      userData = await Siswa.findOne({ nis: identifier });
+    } else if (auth.role === 'guru') {
+      userData = await Guru.findOne({ nip: identifier });
+    }
 
-    // Tentukan user dan role
-    let user = guru || siswa;
-    let role = guru ? 'guru' : 'siswa';
-
-    if (!user) {
-      return res.status(401).json({
+    if (!userData) {
+      return res.status(404).json({
         success: false,
         message: 'Data user tidak ditemukan'
       });
     }
 
-    // Generate token
+    // Generate JWT token
     const token = jwt.sign(
-      {
-        id: user._id,
-        identifier: role === 'guru' ? user.nip : user.nis,
-        role,
-        nama: user.nama
+      { 
+        id: userData._id,
+        identifier: auth.nis, // Konsisten menggunakan nis
+        role: auth.role,
+        nama: userData.nama
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
     // Siapkan response data berdasarkan role
-    const userData = {
-      nama: user.nama,
-      role,
-      ...(role === 'siswa' ? {
-        nis: user.nis,
-        nisn: user.nisn,
-        kelas: user.kelas
-      } : {
-        nip: user.nip,
-        mataPelajaran: user.mataPelajaran
-      })
+    const responseData = {
+      nama: userData.nama,
+      role: auth.role
     };
+
+    if (auth.role === 'siswa') {
+      responseData.nis = userData.nis;
+      responseData.kelas = userData.kelas;
+    } else {
+      responseData.nip = userData.nip;
+      responseData.mataPelajaran = userData.mataPelajaran;
+    }
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
       data: {
         token,
-        user: userData
+        user: responseData
       }
     });
 
