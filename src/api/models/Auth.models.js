@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const authSchema = new mongoose.Schema({
-  identifier: { // Bisa berisi NIS atau NIP
+  nis: { 
     type: String,
     required: true,
     unique: true
@@ -20,6 +20,8 @@ const authSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     refPath: 'role'
   }
+}, {
+  timestamps: true
 });
 
 // Hash password sebelum disimpan
