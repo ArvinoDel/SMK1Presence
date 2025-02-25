@@ -103,6 +103,7 @@ export const getProfile = async (req, res) => {
       data: {
         nip: guru.nip,
         nama: guru.nama,
+        kelas: guru.kelas,
         jenisKelamin: guru.jenisKelamin,
         tanggalLahir: guru.tanggalLahir,
         mataPelajaran: guru.mataPelajaran,
@@ -134,7 +135,7 @@ export const getProfile = async (req, res) => {
 // Update profile data
 export const updateProfile = async (req, res) => {
   try {
-    const { nip } = req.user;
+    const { identifier } = req.user;
     
     // Parse form data and alamat object
     const alamat = req.body.alamat ? JSON.parse(req.body.alamat) : {};
@@ -157,7 +158,9 @@ export const updateProfile = async (req, res) => {
     };
 
     // Get existing user data
-    const existingUser = await Guru.findOne({ nip });
+    const existingUser = await Guru.findOne({ nip: identifier });
+    // const existingUser = await Siswa.findOne({ nis: identifier });
+
     if (!existingUser) {
       return res.status(404).json({
         success: false,
@@ -199,10 +202,12 @@ export const updateProfile = async (req, res) => {
 
     // Update user data
     const updatedGuru = await Guru.findOneAndUpdate(
-      { nip },
+      { nip: identifier },
       { $set: updateData },
       { new: true }
     );
+
+  
 
     res.status(200).json({
       success: true,
