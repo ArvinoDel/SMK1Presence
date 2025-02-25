@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { jwtDecode } from "jwt-decode";
 import {
   Typography,
   Alert,
@@ -37,10 +38,49 @@ export function Notifications() {
     { nis: "220005", nisn: "0056789016", name: "Eka Saputra", class: "XII RPL 2", classCode: "RPL2SMKN1", attendance: "Hadir" },
   ];
 
+  const [userData, setUserData] = useState(null);
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedToken = localStorage.getItem("token");
+
+        if (!storedToken) {
+          navigate("auth/sign-in");
+          return;
+        }
+
+        const decodedToken = jwtDecode(storedToken);
+        setUserRole(decodedToken.role);
+
+        const response = await fetch('http://localhost:3000/api/siswa/profile', {
+          headers: {
+            'Authorization': `Bearer ${storedToken}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.data);
+        } else {
+          navigate("/auth/sign-in");
+        }
+
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]); // ✅ Tambahkan navigate sebagai dependency agar tidak memicu re-render yang berulang
+
   return (
     <>
 
-      <div className="mx-auto my-20 flex max-w-screen-lg flex-col gap-8">
+      {/* <div className="mx-auto my-20 flex max-w-screen-lg flex-col gap-8">
         <Card>
           <CardHeader
             color="transparent"
@@ -97,9 +137,13 @@ export function Notifications() {
             ))}
           </CardBody>
         </Card>
-      </div>
+      </div> */}
 
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex flex-col items-center justify-center min-h-[200px] my-10 bg-gray-100">
+        <div className="bg-transparent p-6">
+          <h1 className="text-2xl font-bold">Selamat Pagi, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <p className="text-gray-600">Masukkan Kode Kelas Untuk Mencari Absensi </p>
+        </div>
         {/* SEARCH INPUT */}
         <motion.div
           initial={{ width: "80px" }}
@@ -111,7 +155,7 @@ export function Notifications() {
           <input
             type="text"
             placeholder="Masukkan kode kelas..."
-            className="w-full px-4 py-2 text-white bg-gray-800 border border-gray-600 rounded-lg focus:outline-none"
+            className="w-full px-4 py-2 text-black bg-gray-300 border border-gray-900 rounded-lg focus:outline-none"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value.toUpperCase());
@@ -128,7 +172,7 @@ export function Notifications() {
               animate={{ opacity: 1, y: 20, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="mt-4 w-[500px] bg-gray-800 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              className="mt-4 w-[500px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
             >
               <table className="w-full text-white">
                 <thead>
@@ -158,10 +202,10 @@ export function Notifications() {
                         <td className="px-4 py-2">{siswa.class}</td>
                         <td
                           className={`px-4 py-2 font-semibold ${siswa.attendance === "Hadir"
-                              ? "text-green-400"
-                              : siswa.attendance === "Izin"
-                                ? "text-yellow-400"
-                                : "text-red-400"
+                            ? "text-green-400"
+                            : siswa.attendance === "Izin"
+                              ? "text-yellow-400"
+                              : "text-red-400"
                             }`}
                         >
                           {siswa.attendance}
