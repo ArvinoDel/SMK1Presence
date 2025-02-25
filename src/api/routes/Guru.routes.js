@@ -85,5 +85,5 @@ router.get('/:id', getGuruById);
 router.post('/', createGuru);
 router.put('/:id', updateGuru);
 router.delete('/:id', deleteGuru);
-
+router.put('/:nip', updateGuru);
 export default router; 

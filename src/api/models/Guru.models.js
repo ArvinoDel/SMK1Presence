@@ -32,9 +32,9 @@ const guruSchema = new mongoose.Schema({
   mataPelajaran: {
     type: String
   },
-  waliKelas: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Kelas'
+  kelas: {
+    type: String,
+    default: '-'
   },
   pendidikanTerakhir: {
     type: String,

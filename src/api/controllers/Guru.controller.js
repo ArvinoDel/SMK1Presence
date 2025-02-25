@@ -39,16 +39,29 @@ export const createGuru = async (req, res) => {
 // Update guru
 export const updateGuru = async (req, res) => {
   try {
-    const guru = await Guru.findById(req.params.id);
-    if (!guru) {
-      return res.status(404).json({ message: 'Guru tidak ditemukan' });
-    }
+    const guru = await Guru.findOneAndUpdate(
+      { nip: req.params.nip },
+      { $set: req.body },
+      { new: true }
+    );
     
-    Object.assign(guru, req.body);
-    const updatedGuru = await guru.save();
-    res.status(200).json(updatedGuru);
+    if (!guru) {
+      return res.status(404).json({
+        success: false,
+        message: 'Guru tidak ditemukan'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Data guru berhasil diupdate',
+      data: guru
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
