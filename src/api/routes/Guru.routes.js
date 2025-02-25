@@ -12,6 +12,7 @@ import {
   updateProfile
 } from '../controllers/Guru.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+// import { uploadMiddleware } from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
@@ -55,42 +56,34 @@ const upload = multer({
 ]);
 
 // Wrap upload middleware dengan error handling
-const uploadMiddleware = (req, res, next) => {
-  upload(req, res, function(err) {
-    if (err instanceof multer.MulterError) {
-      return res.status(400).json({
-        success: false,
-        message: 'Error uploading file',
-        error: err.message
-      });
-    } else if (err) {
-      return res.status(500).json({
-        success: false,
-        message: 'Terjadi kesalahan internal server',
-        error: err.message
-      });
-    }
-    next();
-  });
-};
+// const uploadMiddleware = (req, res, next) => {
+//   upload(req, res, function(err) {
+//     if (err instanceof multer.MulterError) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Error uploading file',
+//         error: err.message
+//       });
+//     } else if (err) {
+//       return res.status(500).json({
+//         success: false,
+//         message: 'Terjadi kesalahan internal server',
+//         error: err.message
+//       });
+//     }
+//     next();
+//   });
+// };
 
-// GET all guru
-router.get('/', getAllGuru);
-
-// GET guru by ID
-router.get('/:id', getGuruById);
-
-// POST new guru
-router.post('/', createGuru);
-
-// PUT update guru
-router.put('/:id', updateGuru);
-
-// DELETE guru
-router.delete('/:id', deleteGuru);
-
-// Routes
+// Profile routes
 router.get('/profile', authMiddleware, getProfile);
-router.put('/profile', authMiddleware, uploadMiddleware, updateProfile);
+router.put('/profile', authMiddleware, updateProfile);
+
+// CRUD routes
+router.get('/', getAllGuru);
+router.get('/:id', getGuruById);
+router.post('/', createGuru);
+router.put('/:id', updateGuru);
+router.delete('/:id', deleteGuru);
 
 export default router; 

@@ -32,6 +32,10 @@ const guruSchema = new mongoose.Schema({
   mataPelajaran: {
     type: String
   },
+  waliKelas: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Kelas'
+  },
   pendidikanTerakhir: {
     type: String,
     enum: ['D3', 'S1', 'S2', 'S3']
