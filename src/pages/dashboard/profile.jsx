@@ -138,60 +138,61 @@ export function Profile() {
       try {
         const storedToken = localStorage.getItem("token");
 
-        // ✅ Pastikan token ada sebelum dipakai
+
         if (!storedToken) {
           navigate("/auth/sign-in");
           return;
         }
 
-        // ✅ Decode JWT untuk mendapatkan role
+        // Decode JWT untuk mendapatkan role
         const decodedToken = jwtDecode(storedToken);
-        setUserRole(decodedToken.role);
         const userRole = decodedToken.role;
+        setUserRole(userRole);
 
-        const response = await fetch('http://localhost:3000/api/siswa/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+        // Tentukan endpoint berdasarkan role
+        const endpoint = userRole === "siswa"
+          ? "http://localhost:3000/api/siswa/profile"
+          : "http://localhost:3000/api/guru/profile";
+  
+        const response = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data.data);
-          setFormData({
-            firstName: data.data.firstName || '',
-            lastName: data.data.lastName || '',
-            email: data.data.email || '',
-            jenisKelamin: data.data.jenisKelamin || '',
-            street: data.data.alamat?.street || '',
-            city: data.data.alamat?.city || '',
-            state: data.data.alamat?.state || '',
-            postalCode: data.data.alamat?.postalCode || '',
-            photo: data.data.photo || null,
-            coverPhoto: data.data.coverPhoto || null
-          });
-
-          // If there's a photo, set the preview
-          if (data.data.photo) {
-            setImage(data.data.photo);
-          }
-
-          // If there's a cover photo, set the preview
-          if (data.data.coverPhoto) {
-            setPreviewImage(data.data.coverPhoto);
-          }
-        } else {
-          setError('Failed to fetch user data');
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
         }
+  
+        const data = await response.json();
+        setUserData(data.data);
+  
+        setFormData({
+          firstName: data.data.firstName || '',
+          lastName: data.data.lastName || '',
+          email: data.data.email || '',
+          jenisKelamin: data.data.jenisKelamin || '',
+          street: data.data.alamat?.street || '',
+          city: data.data.alamat?.city || '',
+          state: data.data.alamat?.state || '',
+          postalCode: data.data.alamat?.postalCode || '',
+          photo: data.data.photo || null,
+          coverPhoto: data.data.coverPhoto || null
+        });
+  
+        // Jika ada foto, set preview
+        if (data.data.photo) setImage(data.data.photo);
+        if (data.data.coverPhoto) setPreviewImage(data.data.coverPhoto);
+  
       } catch (error) {
+        console.error("Error fetching user data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchUserData();
-  }, []);
+  }, [navigate]);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

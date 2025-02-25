@@ -1,5 +1,6 @@
 import { useLocation, Link, useNavigate, Navigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import { jwtDecode } from "jwt-decode";
 import {
   Navbar,
   Typography,
@@ -38,29 +39,56 @@ export function DashboardNavbar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/siswa/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+        const storedToken = localStorage.getItem("token");
+
+        if (!storedToken) {
+          navigate("/auth/sign-in");
+          return;
+        }
+
+        // Decode JWT untuk mendapatkan role
+        const decodedToken = jwtDecode(storedToken);
+        const userRole = decodedToken.role;
+        setUserRole(userRole);
+
+        let endpoint = "";
+
+        // Tentukan endpoint berdasarkan role
+        if (userRole === "siswa") {
+          endpoint = "http://localhost:3000/api/siswa/profile";
+        } else if (userRole === "guru") {
+          endpoint = "http://localhost:3000/api/guru/profile";
+        } else if (userRole === "admin") {
+          endpoint = "http://localhost:3000/api/admin/profile";
+        } else {
+          throw new Error("Role tidak dikenali");
+        }
+
+        const response = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data.data);
+        if (!response.ok) {
+          throw new Error("Gagal mengambil data pengguna");
         }
+
+        const data = await response.json();
+        setUserData(data.data);
+
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       }
     };
 
     if (isAuthenticated) {
       fetchUserData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]); // Tambahkan navigate ke dependency array
 
   const handleLogout = () => {
     Swal.fire({

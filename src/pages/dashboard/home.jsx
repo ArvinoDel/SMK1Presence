@@ -48,6 +48,39 @@ export function Home() {
   const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [time, setTime] = useState("");
+  const [greeting, setGreeting] = useState("");
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const formattedTime = now.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour12: false
+      });
+
+      setTime(formattedTime);
+
+      // Ambil jam saja (format 24 jam)
+      const hour = now.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        hour12: false
+      });
+
+      // Tentukan greeting berdasarkan jam
+      if (hour >= 3 && hour <= 10) setGreeting("Selamat Pagi");
+      else if (hour >= 11 && hour <= 14) setGreeting("Selamat Siang");
+      else if (hour >= 15 && hour <= 18) setGreeting("Selamat Sore");
+      else setGreeting("Selamat Malam");
+    };
+
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
 
 
   const handleFileChange = (e) => {
@@ -77,45 +110,50 @@ export function Home() {
       try {
         const storedToken = localStorage.getItem("token");
 
-        // ✅ Pastikan token ada sebelum dipakai
         if (!storedToken) {
           navigate("auth/sign-in");
           return;
         }
 
-        // ✅ Decode JWT untuk mendapatkan role
+        // Decode JWT untuk mendapatkan role
         const decodedToken = jwtDecode(storedToken);
         setUserRole(decodedToken.role);
         const userRole = decodedToken.role;
 
-        const response = await fetch('http://localhost:3000/api/siswa/profile', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        let response;
+        if (userRole === "siswa") {
+          response = await fetch("http://localhost:3000/api/siswa/profile", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+        } else if (userRole === "guru") {
+          response = await fetch("http://localhost:3000/api/guru/profile", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+        } else if (userRole === "admin") {
+          response = await fetch("http://localhost:3000/api/admin/profile", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+        }
 
-        if (response.ok) {
+        if (response && response.ok) {
           const data = await response.json();
           setUserData(data.data);
 
-          // ✅ Cek jika Swal belum pernah muncul
+          // Cek jika Swal sudah muncul sebelumnya
           if (!localStorage.getItem("swalShown")) {
             showWelcomeMessage(userRole);
-            localStorage.setItem("swalShown", "true"); // ✅ Tandai Swal sudah muncul
+            localStorage.setItem("swalShown", "true");
           }
-        }
-        else {
-          // Jika token tidak valid atau gagal fetch, redirect ke login
+        } else {
           navigate("/auth/sign-in");
         }
-
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       }
     };
 
     fetchUserData();
-  }, [navigate, swalShown]);
+  }, [navigate]); // ✅ Hapus swalShown karena hanya pakai localStorage langsung
 
   const showWelcomeMessage = (role) => {
     const messages = {
@@ -206,11 +244,33 @@ export function Home() {
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/absensi/riwayat", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+
+        const storedToken = localStorage.getItem("token");
+
+        if (!storedToken) {
+          navigate("auth/sign-in");
+          return;
+        }
+
+        // Decode JWT untuk mendapatkan role
+        const decodedToken = jwtDecode(storedToken);
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+
+        let response;
+        if (userRole === "siswa") {
+          response = await fetch("http://localhost:3000/api/absensi/riwayat", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+        } else if (userRole === "guru") {
+          // response = await fetch("http://localhost:3000/api/guru/profile", {
+          //   headers: { Authorization: `Bearer ${storedToken}` },
+          // });
+        } else if (userRole === "admin") {
+          // response = await fetch("http://localhost:3000/api/admin/profile", {
+          //   headers: { Authorization: `Bearer ${storedToken}` },
+          // });
+        }
 
         if (!response.ok) {
           throw new Error("Failed to fetch attendance history");
@@ -240,7 +300,7 @@ export function Home() {
           ...card,
           value: `${calculateAbsensi("HADIR") + calculateAbsensi("TERLAMBAT")} Hari`,
         };
-        
+
       case "Sakit":
         return {
           ...card,
@@ -263,11 +323,20 @@ export function Home() {
 
 
   return (
-    <div className="mt-12">
+    <div className="mt-5">
+      <div className="flex flex-col items-right justify-right text-black">
+        <span className="text-3xl font-bold">{time}<span className="text-xl font-bold">WIB</span></span>
+      </div>
       {userRole == "guru" &&
         <div className="bg-transparent p-6">
-          <h1 className="text-2xl font-bold">Selamat Datang, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <h1 className="text-2xl font-bold">{greeting}, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
           <p className="text-gray-600">Anda adalah wali kelas {userData?.kelas || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+        </div>
+      }
+      {userRole == "siswa" &&
+        <div className="bg-transparent p-6">
+          <h1 className="text-2xl font-bold">Halo, {greeting} {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <p className="text-gray-600">Selamat Belajar, dan Semoga Sukses!</p>
         </div>
       }
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
