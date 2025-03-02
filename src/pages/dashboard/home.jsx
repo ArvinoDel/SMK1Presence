@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import jsQR from "jsqr";
+import QRCode from "react-qr-code";
 import { jwtDecode } from "jwt-decode";
 import {
   Typography,
@@ -160,57 +161,79 @@ export function Home() {
 
   const navigate = useNavigate(); // Hook untuk redirect
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  const [nisn, setNisn] = useState(""); // State untuk menyimpan NISN siswa
   const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
   // Tambahkan useEffect untuk mengambil data user
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const storedToken = localStorage.getItem("token");
-
         if (!storedToken) {
           navigate("auth/sign-in");
           return;
         }
 
-        // Decode JWT untuk mendapatkan role
+        // Decode JWT Token
         const decodedToken = jwtDecode(storedToken);
-        setUserRole(decodedToken.role);
-        const userRole = decodedToken.role;
-
-        let response;
-        if (userRole === "siswa") {
-          response = await fetch("http://localhost:3000/api/siswa/profile", {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-        } else if (userRole === "guru") {
-          response = await fetch("http://localhost:3000/api/guru/profile", {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-        } else if (userRole === "admin") {
-          response = await fetch("http://localhost:3000/api/admin/profile", {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
+        const currentTime = Date.now() / 1000;
+        if (decodedToken.exp < currentTime) {
+          localStorage.removeItem("token");
+          navigate("auth/sign-in");
+          return;
         }
 
-        if (response && response.ok) {
-          const data = await response.json();
-          setUserData(data.data);
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+        let apiUrl;
 
-          // Cek jika Swal sudah muncul sebelumnya
-          if (!localStorage.getItem("swalShown")) {
-            showWelcomeMessage(userRole);
-            localStorage.setItem("swalShown", "true");
+        switch (userRole) {
+          case "siswa":
+            apiUrl = "http://localhost:3000/api/siswa/profile";
+            break;
+          case "guru":
+            apiUrl = "http://localhost:3000/api/guru/profile";
+            break;
+          case "admin":
+            apiUrl = "http://localhost:3000/api/admin/profile";
+            break;
+          default:
+            console.warn("User role tidak valid");
+            navigate("auth/sign-in");
+            return;
+        }
+
+        const response = await fetch(apiUrl, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("token");
           }
-        } else {
           navigate("/auth/sign-in");
+          return;
+        }
+
+        const data = await response.json();
+        setUserData(data.data);
+
+        // Simpan NISN jika user adalah siswa
+        if (userRole === "siswa" && data.data.nisn) {
+          setNisn(data.data.nisn);
+        }
+
+        if (!localStorage.getItem("swalShown")) {
+          showWelcomeMessage(userRole);
+          localStorage.setItem("swalShown", "true");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        navigate("/auth/sign-in");
       }
     };
 
     fetchUserData();
-  }, [navigate]); // ✅ Hapus swalShown karena hanya pakai localStorage langsung
+  }, [navigate]);
 
   const showWelcomeMessage = (role) => {
     const messages = {
@@ -700,19 +723,26 @@ export function Home() {
                             </div>
                           )}
 
-                          {userRole === "siswa" && (
-                            <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                              <div className="text-center">
-                                <div className="relative h-full w-full overflow-hidden">
-                                  <img
-                                    src="data:image/png;base64,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"
-                                    alt="QR Code"
-                                    className="w-[300px] h-[300px] object-fit"
-                                  />
-                                </div>
+                          {userRole === "siswa" && nisn && (
+                            <div className="mt-6 flex flex-col items-center p-6 border border-gray-300 rounded-2xl shadow-lg bg-white max-w-sm sm:max-w-md md:max-w-lg mx-auto">
+                              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Kode QR Anda</h2>
+
+                              {/* QR Code responsif sesuai ukuran layar */}
+                              <div className="p-4">
+                                <QRCode
+                                  value={nisn}
+                                  size={200} // Default untuk mobile
+                                  className="mx-auto sm:size-[250px] md:size-[300px]"
+                                />
                               </div>
+
+                              <p className="mt-4 text-lg font-medium text-gray-700">
+                                NISN: <span className="text-blue-600">{nisn}</span>
+                              </p>
                             </div>
                           )}
+
+
                         </div>
                       </div>
 
