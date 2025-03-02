@@ -296,9 +296,10 @@ export function Home() {
       if (response.ok) {
         Swal.fire({
           title: "Berhasil!",
-          text: "Izin berhasil disubmit",
+          text: "Izin berhasil dikirim!",
           icon: "success",
-          confirmButtonText: "OK"
+          timer: 2000,
+          showConfirmButton: false,
         });
 
         // Reset form
@@ -316,7 +317,8 @@ export function Home() {
         title: "Error!",
         text: error.message,
         icon: "error",
-        confirmButtonText: "OK"
+        showConfirmButton: false,
+        timer: 3000
       });
     }
   };
