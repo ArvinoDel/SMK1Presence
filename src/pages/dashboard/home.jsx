@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Webcam from "react-webcam";
+import jsQR from "jsqr";
 import { jwtDecode } from "jwt-decode";
 import {
   Typography,
@@ -50,6 +52,61 @@ export function Home() {
   const [error, setError] = useState(null);
   const [time, setTime] = useState("");
   const [greeting, setGreeting] = useState("");
+
+  const [scannedData, setScannedData] = useState(null);
+  const [deviceId, setDeviceId] = useState("");
+  const webcamRef = useRef(null);
+
+  useEffect(() => {
+    // Ambil daftar perangkat yang tersedia
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const videoDevices = devices.filter(device => device.kind === "videoinput");
+
+      // Pilih kamera belakang
+      const backCamera = videoDevices.find(device => device.label.toLowerCase().includes("back")) || videoDevices[0];
+      if (backCamera) setDeviceId(backCamera.deviceId);
+    });
+  }, []);
+
+  const scanBarcode = () => {
+    if (webcamRef.current) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const video = webcamRef.current.video;
+
+      if (video.readyState === 4) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+        if (code) {
+          setScannedData(code.data);
+          sendToBackend(code.data);
+        }
+      }
+    }
+  };
+
+  const sendToBackend = async (barcode) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barcode }),
+      });
+      const result = await response.json();
+      console.log("Response from server:", result);
+    } catch (error) {
+      console.error("Error sending barcode data:", error);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(scanBarcode, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const updateClock = () => {
@@ -570,71 +627,106 @@ export function Home() {
               Absen
             </Tab>
 
-            <Tab value="izin" onClick={() => setActiveTab("izin")}>
-              <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-              Izin/Sakit
-            </Tab>
+            {userRole === "siswa" && (
+              <Tab value="izin" onClick={() => setActiveTab("izin")}>
+                <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                Izin/Sakit
+              </Tab>
+            )}
           </TabsHeader>
         </Tabs>
 
-        {userRole === "siswa" && (
+        {activeTab === "absen" && (
           <>
-            {activeTab === "absen" && (
-              <>
-                <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+            <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
 
-                  <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
-                </div>
-                <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-                  <CardBody className="p-4">
-                    <div className="px-4 pb-4">
-                      <div className="space-y-12">
-                        <div className="border-b border-gray-900/10 pb-12">
+              <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
+            </div>
+            <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
+              <CardBody className="p-4">
+                <div className="px-4 pb-4">
+                  <div className="space-y-12">
+                    <div className="border-b border-gray-900/10 pb-12">
 
-                          <div className="border-b border-gray-900/10 pb-12">
-                            <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                      <div className="border-b border-gray-900/10 pb-12">
+                        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                          <div className="sm:col-span-3">
+                            <label htmlFor="FormAbsen" className="block text-2xl font-medium text-gray-900 my-5">
+                              {userRole === "siswa" ? "Silahkan Absen" : userRole === "guru" ? "Silahkan Menginput Absen" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
 
+                            </label>
 
-
-                              <div className="sm:col-span-3">
-                                <label htmlFor="FormAbsen" className="block text-2xl font-medium text-gray-900 my-5">
-                                  Silahkan Absen
-                                </label>
-
-                              </div>
-                            </div>
                           </div>
+                        </div>
+                      </div>
 
-                          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                      <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
 
-                            <div className="col-span-full">
-                              <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
-                                QR Code
-                              </label>
-                              <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                                <div className="text-center">
-                                  <div className="relative h-full w-full overflow-hidden">
-                                    <img
-                                      src="data:image/png;base64,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"
-                                      alt="QR Code"
-                                      className="w-[300px] h-[300px] object-fit"
-                                    />
-                                  </div>
+                        <div className="col-span-full">
+                          <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
+                            {userRole === "siswa" ? "QR Code" : userRole === "guru" ? "Scan QR Code" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
+
+                          </label>
+                          {userRole === "guru" && (
+                            <div className="flex flex-col items-center rounded-lg justify-center min-h-screen bg-gray-100">
+                              {/* Kamera Scanner */}
+                              <div className="relative w-80 h-80 bg-black rounded-lg overflow-hidden shadow-lg">
+                                <Webcam
+                                  ref={webcamRef}
+                                  className="absolute top-0 left-0 w-full h-full object-cover"
+                                />
+
+                                {/* Border Scanner */}
+                                <div className="absolute inset-0 border-4 border-gray-100 rounded-lg pointer-events-none">
+                                  {/* Sudut Atas Kiri */}
+                                  <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-green-500"></div>
+                                  {/* Sudut Atas Kanan */}
+                                  <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-green-500"></div>
+                                  {/* Sudut Bawah Kiri */}
+                                  <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-green-500"></div>
+                                  {/* Sudut Bawah Kanan */}
+                                  <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-green-500"></div>
+                                </div>
+                              </div>
+
+                              {/* Hasil Scan */}
+                              {scannedData && (
+                                <div className="mt-6 p-4 w-80 bg-white shadow-lg rounded-lg border border-gray-200">
+                                  <h2 className="text-lg font-semibold text-gray-800">Hasil Scan</h2>
+                                  <p className="text-sm text-gray-600 break-words">{scannedData}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {userRole === "siswa" && (
+                            <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                              <div className="text-center">
+                                <div className="relative h-full w-full overflow-hidden">
+                                  <img
+                                    src="data:image/png;base64,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"
+                                    alt="QR Code"
+                                    className="w-[300px] h-[300px] object-fit"
+                                  />
                                 </div>
                               </div>
                             </div>
-                          </div>
-
+                          )}
                         </div>
                       </div>
 
                     </div>
-                  </CardBody>
-                </Card>
-              </>
-            )}
+                  </div>
 
+                </div>
+              </CardBody>
+            </Card>
+          </>
+        )}
+
+        {userRole === "siswa" && (
+          <>
             {activeTab === "izin" && (
               <>
                 <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">

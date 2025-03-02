@@ -86,4 +86,11 @@ router.post('/', createGuru);
 router.put('/:id', updateGuru);
 router.delete('/:id', deleteGuru);
 router.put('/:nip', updateGuru);
+
+router.post("/scan", (req, res) => {
+  const { barcode } = req.body;
+  console.log("Barcode diterima:", barcode);
+  res.json({ message: "Barcode diterima", data: barcode });
+});
+
 export default router; 
