@@ -669,7 +669,7 @@ export function Home() {
 
                           </label>
                           {userRole === "guru" && (
-                            <div className="flex flex-col items-center rounded-lg justify-center min-h-screen bg-gray-100">
+                            <div className="flex flex-col items-center rounded-lg justify-center my-10">
                               {/* Kamera Scanner */}
                               <div className="relative w-80 h-80 bg-black rounded-lg overflow-hidden shadow-lg">
                                 <Webcam
@@ -692,9 +692,9 @@ export function Home() {
 
                               {/* Hasil Scan */}
                               {scannedData && (
-                                <div className="mt-6 p-4 w-80 bg-white shadow-lg rounded-lg border border-gray-200">
+                                <div className="mt-6 p-4 w-80 bg-white shadow-lg text-center rounded-lg border border-gray-200">
                                   <h2 className="text-lg font-semibold text-gray-800">Hasil Scan</h2>
-                                  <p className="text-sm text-gray-600 break-words">{scannedData}</p>
+                                  <p className="text-md text-green-700 break-words">{scannedData}</p>
                                 </div>
                               )}
                             </div>
