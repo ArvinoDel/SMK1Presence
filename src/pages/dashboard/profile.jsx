@@ -33,6 +33,7 @@ import { platformSettingsData, conversationsData, projectsData } from "@/data";
 import { useAuth } from '@/context/AuthContext';
 
 export function Profile() {
+  const [isZoomed, setIsZoomed] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,6 +49,16 @@ export function Profile() {
     photo: null,
     coverPhoto: null
   });
+
+  const imageUrl =
+    formData.photo instanceof File
+      ? URL.createObjectURL(formData.photo)
+      : formData.photo
+        ? formData.photo.startsWith("http")
+          ? formData.photo
+          : `/uploads/profilepicture/${formData.photo.split("/").pop()}`
+        : "https://www.gravatar.com/avatar/?d=mp";
+
 
   const [image, setImage] = useState(null);
 
@@ -348,21 +359,41 @@ export function Profile() {
         <CardBody className="p-4">
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-6">
-              <Avatar
-                src={formData.photo instanceof File ?
-                  URL.createObjectURL(formData.photo) :
-                  (formData.photo ?
-                    (formData.photo.startsWith('http') ?
-                      formData.photo :
-                      `/uploads/profilepicture/${formData.photo.split('/').pop()}`
-                    ) :
-                    'https://www.gravatar.com/avatar/?d=mp'
-                  )}
-                alt="Profile"
-                size="xl"
-                variant="rounded"
-                className="rounded-lg shadow-lg shadow-blue-gray-500/40"
-              />
+              <>
+                {/* Avatar (klik untuk zoom-in) */}
+                <Avatar
+                  src={imageUrl}
+                  alt="Profile"
+                  size="xl"
+                  variant="rounded"
+                  className="rounded-lg shadow-lg shadow-blue-gray-500/40 cursor-pointer"
+                  onClick={() => setIsZoomed(true)}
+                />
+
+                {/* Modal zoom-in */}
+                {isZoomed && (
+                  <div
+                    className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+                    onClick={() => setIsZoomed(false)} // Klik di luar = close
+                  >
+                    <div
+                      className="relative bg-white p-2 rounded-2xl shadow-xl"
+                      onClick={(e) => e.stopPropagation()} // Mencegah klik dalam modal menutup overlay
+                    >
+                      {/* Tombol close */}
+                      <button
+                        className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-3xl font-bold"
+                        onClick={() => setIsZoomed(false)}
+                      >
+                        &times;
+                      </button>
+
+                      {/* Gambar dalam ukuran besar */}
+                      <img src={imageUrl} alt="Profile Zoomed" className="max-w-full max-h-[90vh] rounded-lg" />
+                    </div>
+                  </div>
+                )}
+              </>
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1">
                   {userData?.nama || <div className="h-4 bg-gray-300 rounded w-20"></div>}
