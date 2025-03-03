@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Spinner } from "@material-tailwind/react";
 import Loading from 'react-fullscreen-loading';
-import loadGif from '../../public/gif/loadsmk.gif';
+import loadGif from '../gif/loadsmk.gif';
 
 export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
