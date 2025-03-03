@@ -311,13 +311,22 @@ export function Tables() {
                         {absen.suratIzin ? (
                           <a
                             href="#"
-                            data-pswp-src={
-                              absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
-                                absen.suratIzin.startsWith('http') ? absen.suratIzin :
-                                  `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
-                            }
-                            data-pswp-width="800"
-                            data-pswp-height="1000"
+                            ref={(el) => {
+                              if (el) {
+                                const img = new Image();
+                                img.src = absen.suratIzin instanceof File
+                                  ? URL.createObjectURL(absen.suratIzin)
+                                  : absen.suratIzin.startsWith('http')
+                                    ? absen.suratIzin
+                                    : `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`;
+
+                                img.onload = () => {
+                                  el.setAttribute("data-pswp-src", img.src);
+                                  el.setAttribute("data-pswp-width", img.naturalWidth);
+                                  el.setAttribute("data-pswp-height", img.naturalHeight);
+                                };
+                              }
+                            }}
                           >
 
 

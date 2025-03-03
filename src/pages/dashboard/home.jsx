@@ -57,6 +57,7 @@ export function Home() {
   const [scannedData, setScannedData] = useState(null);
   const [deviceId, setDeviceId] = useState("");
   const webcamRef = useRef(null);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   useEffect(() => {
     // Ambil daftar perangkat yang tersedia
@@ -726,22 +727,49 @@ export function Home() {
                           )}
 
                           {userRole === "siswa" && nisn && (
-                            <div className="mt-6 flex flex-col items-center p-6 border border-gray-300 rounded-2xl shadow-lg bg-white max-w-sm sm:max-w-md md:max-w-lg mx-auto">
-                              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Kode QR Anda</h2>
+                            <>
+                              {/* Parent div yang bisa diklik untuk zoom-in */}
+                              <div
+                                className="mt-6 flex flex-col items-center p-6 border border-gray-300 rounded-2xl shadow-lg bg-white max-w-sm sm:max-w-md md:max-w-lg mx-auto cursor-pointer"
+                                onClick={() => setIsZoomed(true)}
+                              >
+                                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Kode QR Anda</h2>
 
-                              {/* QR Code responsif sesuai ukuran layar */}
-                              <div className="p-4">
-                                <QRCode
-                                  value={nisn}
-                                  size={200} // Default untuk mobile
-                                  className="mx-auto sm:size-[250px] md:size-[300px]"
-                                />
+                                {/* QR Code responsif */}
+                                <div className="p-4">
+                                  <QRCode value={nisn} size={200} className="mx-auto sm:size-[250px] md:size-[300px]" />
+                                </div>
+
+                                <p className="mt-4 text-lg font-medium text-gray-700">
+                                  NISN: <span className="text-blue-600">{nisn}</span>
+                                </p>
                               </div>
 
-                              <p className="mt-4 text-lg font-medium text-gray-700">
-                                NISN: <span className="text-blue-600">{nisn}</span>
-                              </p>
-                            </div>
+                              {/* Overlay zoom-in saat diklik */}
+                              {isZoomed && (
+                                <div
+                                  className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+                                  onClick={() => setIsZoomed(false)} // Klik di luar = close
+                                >
+                                  {/* Container untuk QR dan tombol close */}
+                                  <div
+                                    className="relative bg-white p-6 rounded-2xl shadow-xl"
+                                    onClick={(e) => e.stopPropagation()} // Mencegah klik di dalam QR menutup overlay
+                                  >
+                                    {/* Tombol Close */}
+                                    <button
+                                      className="absolute top-1 right-1 text-gray-600 hover:text-gray-900 text-3xl font-bold"
+                                      onClick={() => setIsZoomed(false)}
+                                    >
+                                      &times;
+                                    </button>
+
+                                    {/* QR Code besar */}
+                                    <QRCode value={nisn} size={350} className="mx-auto" />
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
 
 
