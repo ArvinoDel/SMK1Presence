@@ -52,6 +52,7 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [time, setTime] = useState("");
+  const [dateString, setDateString] = useState("");
   const [greeting, setGreeting] = useState("");
 
   const [scannedData, setScannedData] = useState(null);
@@ -113,9 +114,11 @@ export function Home() {
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
+
+      // Format waktu dalam zona Asia/Jakarta
       const formattedTime = now.toLocaleTimeString("id-ID", {
         timeZone: "Asia/Jakarta",
-        hour12: false
+        hour12: false,
       });
 
       setTime(formattedTime);
@@ -124,7 +127,7 @@ export function Home() {
       const hour = now.toLocaleTimeString("id-ID", {
         timeZone: "Asia/Jakarta",
         hour: "2-digit",
-        hour12: false
+        hour12: false,
       });
 
       // Tentukan greeting berdasarkan jam
@@ -132,6 +135,20 @@ export function Home() {
       else if (hour >= 11 && hour <= 14) setGreeting("Selamat Siang");
       else if (hour >= 15 && hour <= 18) setGreeting("Selamat Sore");
       else setGreeting("Selamat Malam");
+
+      // Ambil hari, tanggal, bulan (dalam huruf), dan tahun
+      const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const months = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+      ];
+
+      const dayName = days[now.getDay()];
+      const date = now.getDate();
+      const monthName = months[now.getMonth()];
+      const year = now.getFullYear();
+
+      setDateString(`${dayName}, ${date} ${monthName} ${year}`);
     };
 
     updateClock();
@@ -406,8 +423,10 @@ export function Home() {
 
 
   return (
-    <div className="mt-5">
+    <div className="mt-3">
       <div className="flex flex-col items-right justify-right text-black">
+        {/* Hari + Tanggal */}
+        <span className="text-xl font-medium">{dateString}</span>
         <span className="text-3xl font-bold">{time}<span className="text-xl font-bold">WIB</span></span>
       </div>
       {userRole == "guru" &&
