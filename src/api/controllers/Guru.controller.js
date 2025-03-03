@@ -141,6 +141,7 @@ export const updateProfile = async (req, res) => {
     const alamat = req.body.alamat ? JSON.parse(req.body.alamat) : {};
     
     const updateData = {
+      nama: req.body.nama || '',
       firstName: req.body.firstName || '',
       lastName: req.body.lastName || '',
       email: req.body.email || '',
@@ -159,7 +160,6 @@ export const updateProfile = async (req, res) => {
 
     // Get existing user data
     const existingUser = await Guru.findOne({ nip: identifier });
-    // const existingUser = await Siswa.findOne({ nis: identifier });
 
     if (!existingUser) {
       return res.status(404).json({
@@ -168,7 +168,7 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-    // Handle photo uploads with correct path
+    // Handle photo uploads
     if (req.files) {
       if (req.files.photo) {
         updateData.photo = `/uploads/profilepicture/${req.files.photo[0].filename}`;
@@ -206,8 +206,6 @@ export const updateProfile = async (req, res) => {
       { $set: updateData },
       { new: true }
     );
-
-  
 
     res.status(200).json({
       success: true,

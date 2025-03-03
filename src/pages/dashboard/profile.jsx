@@ -198,12 +198,26 @@ export function Profile() {
           });
         } else if (userRole === "guru") {
           setFormData({
+            nama: data.data.nama || '',
             firstName: data.data.firstName || '',
             lastName: data.data.lastName || '',
             email: data.data.email || '',
             mataPelajaran: data.data.mataPelajaran || '',
             noTelp: data.data.noTelp || '',
             pendidikanTerakhir: data.data.pendidikanTerakhir || '',
+            jenisKelamin: data.data.jenisKelamin || '',
+            street: data.data.alamat?.street || '',
+            city: data.data.alamat?.city || '',
+            state: data.data.alamat?.state || '',
+            postalCode: data.data.alamat?.postalCode || '',
+            photo: data.data.photo || null,
+            coverPhoto: data.data.coverPhoto || null
+          });
+        } else if (userRole === "admin") {
+          setFormData({
+            firstName: data.data.firstName || '',
+            lastName: data.data.lastName || '',
+            email: data.data.email || '',
             jenisKelamin: data.data.jenisKelamin || '',
             street: data.data.alamat?.street || '',
             city: data.data.alamat?.city || '',
