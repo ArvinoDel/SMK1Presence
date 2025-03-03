@@ -54,6 +54,7 @@ export function Home() {
   const [time, setTime] = useState("");
   const [dateString, setDateString] = useState("");
   const [greeting, setGreeting] = useState("");
+  const [dayName, setDayName] = useState("");
 
   const [scannedData, setScannedData] = useState(null);
   const [deviceId, setDeviceId] = useState("");
@@ -143,12 +144,13 @@ export function Home() {
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
       ];
 
-      const dayName = days[now.getDay()];
+      const day = days[now.getDay()];
       const date = now.getDate();
-      const monthName = months[now.getMonth()];
+      const month = months[now.getMonth()];
       const year = now.getFullYear();
 
-      setDateString(`${dayName}, ${date} ${monthName} ${year}`);
+      setDayName(day);
+      setDateString(`${day}, ${date} ${month} ${year}`);
     };
 
     updateClock();
@@ -156,6 +158,21 @@ export function Home() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleTabClick = () => {
+    if (dayName === "Sabtu" || dayName === "Minggu") {
+      Swal.fire({
+        icon: "warning",
+        title: "Hari Libur!",
+        text: "Anda tidak bisa mengakses ini di hari libur!",
+        confirmButtonColor: "#3085d6",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+    // Lakukan sesuatu jika tab diizinkan
+    setActiveTab("izin")
+  };
 
 
 
@@ -672,8 +689,14 @@ export function Home() {
               Absen
             </Tab>
 
+            {/* Tab hanya muncul untuk siswa */}
             {userRole === "siswa" && (
-              <Tab value="izin" onClick={() => setActiveTab("izin")}>
+              <Tab
+                value="izin"
+                onClick={handleTabClick}
+                disabled={dayName === "Sabtu" || dayName === "Minggu"}
+                className={`${dayName === "Sabtu" || dayName === "Minggu" ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
                 <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
                 Izin/Sakit
               </Tab>
