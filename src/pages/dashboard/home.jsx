@@ -93,17 +93,48 @@ export function Home() {
     }
   };
 
-  const sendToBackend = async (barcode) => {
+  const sendToBackend = async (qrData) => {
     try {
-      const response = await fetch("http://localhost:3000/api/scan", {
+      const response = await fetch("http://localhost:3000/api/absensi/scan-qr", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barcode }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ qrData }),
       });
+      
       const result = await response.json();
-      console.log("Response from server:", result);
+      
+      if (result.success) {
+        // Get current time in HH:mm:ss format
+        const currentTime = new Date().toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        // Show success message with complete details
+        setScannedData(
+          `✅ Berhasil Absensi!\n` +
+          `Nama: ${result.data.nama}\n` +
+          `Kelas: ${result.data.kelas}\n` +
+          `Status: ${result.data.status}\n` +
+          `Waktu: ${currentTime}`
+        );
+      } else {
+        // Show detailed error message
+        if (result.message.includes("sudah")) {
+          setScannedData(`⚠️ ${result.message}\nSiswa sudah melakukan absensi hari ini`);
+        } else if (result.message.includes("tidak ditemukan")) {
+          setScannedData(`❌ Error: Siswa tidak ditemukan dalam database`);
+        } else {
+          setScannedData(`❌ Error: ${result.message}`);
+        }
+      }
     } catch (error) {
-      console.error("Error sending barcode data:", error);
+      console.error("Error sending QR data:", error);
+      setScannedData("❌ Error: Gagal memproses absensi. Silakan coba lagi.");
     }
   };
 

@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { prosesAbsensi, prosesIzin, getRiwayatAbsensi, getMyAbsensi, getRiwayatAbsensiByNIS } from '../controllers/absensi.controller.js';
+import { prosesAbsensi, prosesIzin, getRiwayatAbsensi, getMyAbsensi, getRiwayatAbsensiByNIS, scanQRCode } from '../controllers/absensi.controller.js';
 
 const router = express.Router();
 
@@ -68,5 +68,6 @@ router.post('/izin', uploadMiddleware, prosesIzin);
 router.get('/riwayat/:nisn', getRiwayatAbsensi);
 router.get('/fetch', authMiddleware, getMyAbsensi);
 router.get('/riwayat', authMiddleware, getRiwayatAbsensiByNIS);
+router.post('/scan-qr', authMiddleware, scanQRCode);
 
 export default router; 

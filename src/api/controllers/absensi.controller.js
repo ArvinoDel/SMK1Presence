@@ -366,4 +366,71 @@ export const createOrUpdateAbsensi = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const scanQRCode = async (req, res) => {
+  try {
+    const { qrData } = req.body;
+    
+    // Find student by NISN
+    const siswa = await Siswa.findOne({ nisn: qrData });
+    if (!siswa) {
+      return res.status(404).json({
+        success: false,
+        message: 'Siswa tidak ditemukan'
+      });
+    }
+
+    // Get current time
+    const now = new Date();
+    
+    // Set date for today (reset time to 00:00:00)
+    const tanggal = new Date(now);
+    tanggal.setHours(0, 0, 0, 0);
+
+    // Check if already attended today
+    const absensiHariIni = await Absensi.findOne({
+      siswa: siswa._id,
+      tanggal
+    });
+
+    if (absensiHariIni) {
+      return res.status(400).json({
+        success: false,
+        message: 'Siswa sudah melakukan absensi hari ini'
+      });
+    }
+
+    // Create new attendance record
+    const absensi = new Absensi({
+      siswa: siswa._id,
+      tanggal,
+      jamMasuk: now,
+      status: 'HADIR',
+      keterangan: 'Absensi via QR Code'
+    });
+
+    await absensi.save();
+
+    // Update kelas summary
+    await updateKelasAbsensiOnChange(absensi);
+
+    res.status(200).json({
+      success: true,
+      message: 'Absensi berhasil dicatat',
+      data: {
+        nama: siswa.nama,
+        kelas: siswa.kelas,
+        status: 'HADIR',
+        keterangan: 'Absensi via QR Code'
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal memproses absensi',
+      error: error.message
+    });
+  }
 }; 
