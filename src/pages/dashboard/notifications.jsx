@@ -40,6 +40,8 @@ export function Notifications() {
 
   const [userData, setUserData] = useState(null);
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  const [kelasAbsensi, setKelasAbsensi] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
@@ -56,7 +58,17 @@ export function Notifications() {
         const decodedToken = jwtDecode(storedToken);
         setUserRole(decodedToken.role);
 
-        const response = await fetch('http://localhost:3000/api/siswa/profile', {
+        // Fetch based on user role
+        let profileEndpoint = '';
+        if (decodedToken.role === 'siswa') {
+          profileEndpoint = '/api/siswa/profile';
+        } else if (decodedToken.role === 'guru') {
+          profileEndpoint = '/api/guru/profile';
+        } else if (decodedToken.role === 'admin') {
+          profileEndpoint = '/api/admin/profile';
+        }
+
+        const response = await fetch(`http://localhost:3000${profileEndpoint}`, {
           headers: {
             'Authorization': `Bearer ${storedToken}`
           }
@@ -68,14 +80,53 @@ export function Notifications() {
         } else {
           navigate("/auth/sign-in");
         }
-
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
 
     fetchUserData();
-  }, [navigate]); // ✅ Tambahkan navigate sebagai dependency agar tidak memicu re-render yang berulang
+  }, [navigate]);
+
+  // Function to fetch class attendance data
+  const fetchKelasAbsensi = async (kodeKelas) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/absensi/kelas/${kodeKelas}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data.map(siswa => ({
+          nis: siswa.nis,
+          nisn: siswa.nisn,
+          name: siswa.nama,
+          class: siswa.kelas,
+          classCode: kodeKelas,
+          attendance: siswa.status || 'ALFA',
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching class attendance:', error);
+      return [];
+    }
+  };
+
+  // Update search handler
+  const handleSearch = async (searchQuery) => {
+    setQuery(searchQuery.toUpperCase());
+    if (searchQuery.length > 0) {
+      const absensiData = await fetchKelasAbsensi(searchQuery);
+      setKelasAbsensi(absensiData);
+      setShowTable(true);
+    } else {
+      setKelasAbsensi([]);
+      setShowTable(false);
+    }
+  };
 
   return (
     <>
@@ -158,15 +209,14 @@ export function Notifications() {
             className="w-full px-4 py-2 text-black bg-gray-300 border border-gray-900 rounded-lg focus:outline-none"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value.toUpperCase());
-              setShowTable(e.target.value.length > 0);
+              handleSearch(e.target.value);
             }}
           />
         </motion.div>
 
         {/* TABLE MUNCUL DI BAWAH SEARCH */}
         <AnimatePresence>
-          {showTable && students.some((siswa) => siswa.classCode.includes(query)) && (
+          {showTable && kelasAbsensi.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 20, scale: 1 }}
@@ -185,33 +235,29 @@ export function Notifications() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students
-                    .filter((siswa) => siswa.classCode.includes(query))
-                    .map((siswa, index) => (
-                      <motion.tr
-                        key={siswa.nis}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        transition={{ duration: 0.2, delay: index * 0.05 }}
-                        className="hover:bg-gray-700"
-                      >
-                        <td className="px-4 py-2">{siswa.nis}</td>
-                        <td className="px-4 py-2">{siswa.nisn}</td>
-                        <td className="px-4 py-2">{siswa.name}</td>
-                        <td className="px-4 py-2">{siswa.class}</td>
-                        <td
-                          className={`px-4 py-2 font-semibold ${siswa.attendance === "Hadir"
-                            ? "text-green-400"
-                            : siswa.attendance === "Izin"
-                              ? "text-yellow-400"
-                              : "text-red-400"
-                            }`}
-                        >
-                          {siswa.attendance}
-                        </td>
-                      </motion.tr>
-                    ))}
+                  {kelasAbsensi.map((siswa, index) => (
+                    <motion.tr
+                      key={siswa.nis}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      className="hover:bg-gray-700"
+                    >
+                      <td className="px-4 py-2">{siswa.nis}</td>
+                      <td className="px-4 py-2">{siswa.nisn}</td>
+                      <td className="px-4 py-2">{siswa.name}</td>
+                      <td className="px-4 py-2">{siswa.class}</td>
+                      <td className={`px-4 py-2 font-semibold ${
+                        siswa.attendance === "HADIR" ? "text-green-400" :
+                        siswa.attendance === "IZIN" ? "text-yellow-400" :
+                        siswa.attendance === "SAKIT" ? "text-orange-400" :
+                        "text-red-400"
+                      }`}>
+                        {siswa.attendance}
+                      </td>
+                    </motion.tr>
+                  ))}
                 </tbody>
               </table>
             </motion.div>

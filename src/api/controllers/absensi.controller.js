@@ -433,4 +433,50 @@ export const scanQRCode = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const getKelasAbsensi = async (req, res) => {
+  try {
+    const { kodeKelas } = req.params;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get all students in the class
+    const siswaKelas = await Siswa.find({ 
+      kelas: { $regex: new RegExp(kodeKelas, 'i') }
+    });
+
+    // Get today's attendance for these students
+    const absensiHariIni = await Absensi.find({
+      siswa: { $in: siswaKelas.map(s => s._id) },
+      tanggal: today
+    });
+
+    // Combine student data with attendance
+    const data = siswaKelas.map(siswa => {
+      const absensi = absensiHariIni.find(a => 
+        a.siswa.toString() === siswa._id.toString()
+      );
+
+      return {
+        nis: siswa.nis,
+        nisn: siswa.nisn,
+        nama: siswa.nama,
+        kelas: siswa.kelas,
+        status: absensi ? absensi.status : 'ALFA'
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data absensi kelas',
+      error: error.message
+    });
+  }
 }; 
