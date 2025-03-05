@@ -562,9 +562,19 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
 
 export const downloadRekapanSemester = async (req, res) => {
   try {
-    const { kelas, semester, tahun } = req.query;
+    // Cek role dari token
+    const { role } = req.user;
+    if (role !== 'guru') {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Hanya guru yang dapat mengunduh rekapan.'
+      });
+    }
 
+    const { kelas, semester, tahun } = req.query;
     if (!kelas || !semester || !tahun) {
+      res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({
         success: false,
         message: 'Kelas, semester, dan tahun harus diisi'
@@ -655,14 +665,17 @@ export const downloadRekapanSemester = async (req, res) => {
       rowNumber++;
     }
 
-    // Set response headers
+    // Set response headers untuk file Excel
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=rekapan_${kelas}_semester${semester}_${tahun}.xlsx`);
 
-    // Kirim file
+    // Kirim workbook ke response
     await workbook.xlsx.write(res);
+    res.end();
 
   } catch (error) {
+    console.error('Error:', error);
+    res.setHeader('Content-Type', 'application/json');
     res.status(500).json({
       success: false,
       message: 'Gagal mengunduh rekapan semester',

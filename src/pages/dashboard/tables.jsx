@@ -319,21 +319,42 @@ export function Tables() {
             Unduh Rekapan Absensi
           </Typography>
           <div className="flex flex-wrap gap-3 mt-4">
-            {[1, 2, 3, 4, 5, 6].map((semester) => {
-              const encodedKelas = encodeURIComponent(kelasInfo.kelas);
-              const url = `http://localhost:3000/api/absensi/rekapan-semester/download?kelas=${encodedKelas}&semester=${semester}&tahun=${kelasInfo.tahun}`;
-
-              return (
-                <a key={semester} href={url} className="w-full sm:w-auto">
-                  <Button
-                    variant="gradient"
-                    className="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300"
-                  >
-                    Semester {semester}
-                  </Button>
-                </a>
-              );
-            })}
+            {[1, 2, 3, 4, 5, 6].map((semester) => (
+              <Button
+                key={semester}
+                variant="gradient"
+                className="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300"
+                onClick={async () => {
+                  const storedToken = localStorage.getItem("token");
+                  const encodedKelas = encodeURIComponent(kelasInfo.kelas);
+                  const url = `${baseUrl}?kelas=${encodedKelas}&semester=${semester}&tahun=${kelasInfo.tahun}`;
+                  
+                  try {
+                    const response = await fetch(url, {
+                      headers: {
+                        Authorization: `Bearer ${storedToken}`
+                      }
+                    });
+                    
+                    if (!response.ok) throw new Error('Download gagal');
+                    
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `rekapan_${kelasInfo.kelas}_semester${semester}_${kelasInfo.tahun}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(downloadUrl);
+                  } catch (error) {
+                    console.error('Error:', error);
+                  }
+                }}
+              >
+                Semester {semester}
+              </Button>
+            ))}
           </div>
         </div>
       )}
