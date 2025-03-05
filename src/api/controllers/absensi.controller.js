@@ -2,6 +2,8 @@ import Siswa from '../models/Siswa.models.js';
 import Absensi from '../models/Absensi.models.js';
 import cloudinary from '../config/cloudinary.js';
 import { updateKelasAbsensiOnChange } from './kelasAbsensi.controller.js';
+import Guru from '../models/Guru.models.js';
+import ExcelJS from 'exceljs';
 
 export const prosesAbsensi = async (req, res) => {
   try {
@@ -476,6 +478,195 @@ export const getKelasAbsensi = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data absensi kelas',
+      error: error.message
+    });
+  }
+};
+
+export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
+  try {
+    const { identifier } = req.user; // NIP guru dari token
+    
+    // Cari data guru dan kelas yang diwalikan
+    const guru = await Guru.findOne({ nip: identifier })
+      .select('nip nama waliKelas');
+
+    if (!guru || !guru.waliKelas) {
+      return res.status(404).json({
+        success: false,
+        message: 'Guru tidak ditemukan atau bukan wali kelas'
+      });
+    }
+
+    // Ambil semua siswa di kelas tersebut
+    const siswaList = await Siswa.find({ kelas: guru.waliKelas })
+      .select('nis nisn nama kelas')
+      .sort({ nama: 1 });
+
+    // Ambil riwayat absensi untuk semua siswa
+    const riwayatAbsensi = await Absensi.find({
+      siswa: { $in: siswaList.map(s => s._id) }
+    })
+    .sort({ tanggal: -1, jamMasuk: -1 })
+    .populate('siswa', 'nis nisn nama kelas');
+
+    // Kelompokkan data berdasarkan tanggal
+    const groupedData = {};
+
+    riwayatAbsensi.forEach(absen => {
+      const tanggal = new Date(absen.tanggal).toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      if (!groupedData[tanggal]) {
+        groupedData[tanggal] = [];
+      }
+
+      groupedData[tanggal].push({
+        id: absen._id,
+        nis: absen.siswa.nis,
+        nisn: absen.siswa.nisn,
+        nama: absen.siswa.nama,
+        jamMasuk: new Date(absen.jamMasuk).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        status: absen.status,
+        keterangan: absen.keterangan,
+        suratIzin: absen.suratIzin ? `${req.protocol}://${req.get('host')}${absen.suratIzin.url}` : null
+      });
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        waliKelas: {
+          nip: guru.nip,
+          nama: guru.nama,
+          kelas: guru.waliKelas
+        },
+        riwayatAbsensi: groupedData
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil riwayat absensi',
+      error: error.message
+    });
+  }
+};
+
+export const downloadRekapanSemester = async (req, res) => {
+  try {
+    const { kelas, semester, tahun } = req.query;
+
+    if (!kelas || !semester || !tahun) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kelas, semester, dan tahun harus diisi'
+      });
+    }
+
+    // Tentukan range tanggal semester (6 bulan)
+    let startDate, endDate;
+    if (semester === '1') {
+      startDate = new Date(tahun, 6, 1); // Juli
+      endDate = new Date(tahun, 11, 31); // Desember
+    } else {
+      startDate = new Date(tahun, 0, 1); // Januari
+      endDate = new Date(tahun, 5, 30); // Juni
+    }
+
+    // Ambil semua siswa dalam kelas tersebut
+    const siswaList = await Siswa.find({ kelas }).sort({ nama: 1 });
+
+    // Buat workbook baru
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Rekapan Absensi');
+
+    // Styling untuk header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(2).font = { bold: true };
+    worksheet.getRow(4).font = { bold: true };
+
+    // Tambahkan header
+    worksheet.mergeCells('A1:H1');
+    worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${semester} TAHUN ${tahun}`;
+    worksheet.getCell('A1').alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('A2:H2');
+    worksheet.getCell('A2').value = `Kelas: ${kelas}`;
+    worksheet.getCell('A2').alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('A3:H3');
+    worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+    worksheet.getCell('A3').alignment = { horizontal: 'center' };
+
+    // Header tabel
+    worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
+
+    // Set lebar kolom
+    worksheet.getColumn('A').width = 5;
+    worksheet.getColumn('B').width = 12;
+    worksheet.getColumn('C').width = 12;
+    worksheet.getColumn('D').width = 30;
+    worksheet.getColumn('E').width = 10;
+    worksheet.getColumn('F').width = 10;
+    worksheet.getColumn('G').width = 10;
+    worksheet.getColumn('H').width = 10;
+
+    // Isi data siswa
+    let rowNumber = 5;
+    for (const [index, siswa] of siswaList.entries()) {
+      const absensiList = await Absensi.find({
+        siswa: siswa._id,
+        tanggal: {
+          $gte: startDate,
+          $lte: endDate
+        }
+      });
+
+      const summary = {
+        HADIR: 0,
+        SAKIT: 0,
+        IZIN: 0,
+        ALFA: 0
+      };
+
+      absensiList.forEach(absen => {
+        summary[absen.status]++;
+      });
+
+      worksheet.getRow(rowNumber).values = [
+        index + 1,
+        siswa.nis,
+        siswa.nisn,
+        siswa.nama,
+        summary.HADIR,
+        summary.SAKIT,
+        summary.IZIN,
+        summary.ALFA
+      ];
+
+      rowNumber++;
+    }
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=rekapan_${kelas}_semester${semester}_${tahun}.xlsx`);
+
+    // Kirim file
+    await workbook.xlsx.write(res);
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengunduh rekapan semester',
       error: error.message
     });
   }
