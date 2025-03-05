@@ -540,16 +540,15 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
       });
     });
 
+    // Convert groupedData object to array format
+    const formattedData = Object.entries(groupedData).map(([tanggal, absensi]) => ({
+      tanggal,
+      data: absensi
+    }));
+
     res.status(200).json({
       success: true,
-      data: {
-        waliKelas: {
-          nip: guru.nip,
-          nama: guru.nama,
-          kelas: guru.kelas
-        },
-        riwayatAbsensi: groupedData
-      }
+      data: formattedData
     });
 
   } catch (error) {
