@@ -406,7 +406,7 @@ export function Tables() {
                               {absen.nama}
                             </Typography>
                             <Typography className="text-xs font-normal text-blue-gray-500">
-                              {absen.kelas}
+                              {absen.nis}
                             </Typography>
                           </div>
                         </div>
