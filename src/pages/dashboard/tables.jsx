@@ -12,8 +12,10 @@ import {
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
+import { jwtDecode } from "jwt-decode";
 
 
 const SkeletonRow = () => {
@@ -163,6 +165,9 @@ export function Tables() {
   const [isOpen, setIsOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState("");
 
+  const navigate = useNavigate(); // Hook untuk redirect
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+
   // const openModal = (src) => {
   //   setImageSrc(src);
   //   setIsOpen(true);
@@ -175,16 +180,46 @@ export function Tables() {
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/absensi/riwayat', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
+          navigate("auth/sign-in");
+          return;
+        }
+
+        // Decode JWT Token
+        const decodedToken = jwtDecode(storedToken);
+
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+        let apiUrl;
+
+        switch (userRole) {
+          case "siswa":
+            apiUrl = "http://localhost:3000/api/absensi/riwayat";
+            break;
+          case "guru":
+            apiUrl = "";
+            break;
+          case "admin":
+            apiUrl = "";
+            break;
+          default:
+            console.warn("User role tidak valid");
+            navigate("auth/sign-in");
+            return;
+        }
+
+        const response = await fetch(apiUrl, {
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch attendance history');
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+          }
+          navigate("/auth/sign-in");
+          return;
         }
-
         const result = await response.json();
         setRiwayatAbsensi(result.data);
       } catch (error) {
