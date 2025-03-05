@@ -188,7 +188,7 @@ export function Tables() {
             apiUrl = "http://localhost:3000/api/absensi/riwayat";
             break;
           case "guru":
-            apiUrl = "";
+            apiUrl = "http://localhost:3000/api/absensi/wali-kelas/riwayat";
             break;
           case "admin":
             apiUrl = "";
