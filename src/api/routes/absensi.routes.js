@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { prosesAbsensi, prosesIzin, getRiwayatAbsensi, getMyAbsensi, getRiwayatAbsensiByNIS, scanQRCode, getKelasAbsensi } from '../controllers/absensi.controller.js';
+import { prosesAbsensi, prosesIzin, getRiwayatAbsensi, getMyAbsensi, getRiwayatAbsensiByNIS, scanQRCode, getKelasAbsensi, getRiwayatAbsensiByWaliKelas, downloadRekapanSemester } from '../controllers/absensi.controller.js';
 
 const router = express.Router();
 
@@ -70,5 +70,7 @@ router.get('/fetch', authMiddleware, getMyAbsensi);
 router.get('/riwayat', authMiddleware, getRiwayatAbsensiByNIS);
 router.post('/scan-qr', authMiddleware, scanQRCode);
 router.get('/kelas/:kodeKelas', authMiddleware, getKelasAbsensi);
+router.get('/wali-kelas/riwayat', authMiddleware, getRiwayatAbsensiByWaliKelas);
+router.get('/rekapan-semester/download', authMiddleware, downloadRekapanSemester);
 
 export default router; 

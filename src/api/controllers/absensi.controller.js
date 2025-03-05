@@ -489,9 +489,9 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
     
     // Cari data guru dan kelas yang diwalikan
     const guru = await Guru.findOne({ nip: identifier })
-      .select('nip nama waliKelas');
+      .select('nip nama kelas');
 
-    if (!guru || !guru.waliKelas) {
+    if (!guru || !guru.kelas) {
       return res.status(404).json({
         success: false,
         message: 'Guru tidak ditemukan atau bukan wali kelas'
@@ -499,7 +499,7 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
     }
 
     // Ambil semua siswa di kelas tersebut
-    const siswaList = await Siswa.find({ kelas: guru.waliKelas })
+    const siswaList = await Siswa.find({ kelas: guru.kelas })
       .select('nis nisn nama kelas')
       .sort({ nama: 1 });
 
@@ -546,7 +546,7 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
         waliKelas: {
           nip: guru.nip,
           nama: guru.nama,
-          kelas: guru.waliKelas
+          kelas: guru.kelas
         },
         riwayatAbsensi: groupedData
       }
