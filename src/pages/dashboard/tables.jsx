@@ -166,6 +166,10 @@ export function Tables() {
   const navigate = useNavigate(); // Hook untuk redirect
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
   const galleryRef = useRef(null);
+  const [kelasInfo, setKelasInfo] = useState({
+    kelas: '',
+    tahun: new Date().getFullYear()
+  });
 
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
@@ -176,9 +180,7 @@ export function Tables() {
           return;
         }
 
-        // Decode JWT Token
         const decodedToken = jwtDecode(storedToken);
-
         setUserRole(decodedToken.role);
         const userRole = decodedToken.role;
         let apiUrl;
@@ -210,8 +212,23 @@ export function Tables() {
           navigate("/auth/sign-in");
           return;
         }
+
         const result = await response.json();
-        setRiwayatAbsensi(result.data);
+        
+        // Format data berdasarkan role
+        if (userRole === "guru") {
+          // Flatten data yang dikelompokkan per tanggal
+          const flattenedData = result.data.reduce((acc, group) => {
+            return acc.concat(group.data.map(item => ({
+              ...item,
+              tanggal: group.tanggal
+            })));
+          }, []);
+          setRiwayatAbsensi(flattenedData);
+        } else {
+          setRiwayatAbsensi(result.data);
+        }
+
       } catch (error) {
         setError(error.message);
       } finally {
@@ -264,11 +281,31 @@ export function Tables() {
     return `/uploads/${photo.split('/').pop()}`; // Ambil nama file saja
   };
 
+  useEffect(() => {
+    const fetchKelasInfo = async () => {
+      try {
+        const storedToken = localStorage.getItem("token");
+        const response = await fetch("http://localhost:3000/api/guru/profile", {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        const result = await response.json();
+        setKelasInfo({
+          kelas: result.data.kelas,
+          tahun: new Date().getFullYear()
+        });
+      } catch (error) {
+        console.error("Error fetching kelas info:", error);
+      }
+    };
+
+    if (userRole === "guru") {
+      fetchKelasInfo();
+    }
+  }, [userRole]);
+
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
-  const kelas = "XI RPL 2"; // Bisa dari props atau state
-  const tahun = 2024; // Bisa dari props atau state
   const baseUrl =
     "http://localhost:3000/api/absensi/rekapan-semester/download";
 
@@ -276,32 +313,29 @@ export function Tables() {
 
     <div className="mt-12 mb-8 flex flex-col gap-12">
 
-      {userRole === "guru" && (
-        <>
-          <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-xl">
-            <Typography variant="h6" color="dark" className="text-xl font-semibold">
-              Unduh Rekapan Absensi
-            </Typography>
-            <div className="flex flex-wrap gap-3 mt-4">
-              {[1, 2, 3, 4, 5, 6].map((semester) => {
-                // Encode parameter agar URL tetap valid
-                const encodedKelas = encodeURIComponent(kelas);
-                const url = `${baseUrl}?kelas=${encodedKelas}&semester=${semester}&tahun=${tahun}`;
+      {userRole === "guru" && kelasInfo.kelas && (
+        <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-xl">
+          <Typography variant="h6" color="dark" className="text-xl font-semibold">
+            Unduh Rekapan Absensi
+          </Typography>
+          <div className="flex flex-wrap gap-3 mt-4">
+            {[1, 2, 3, 4, 5, 6].map((semester) => {
+              const encodedKelas = encodeURIComponent(kelasInfo.kelas);
+              const url = `http://localhost:3000/api/absensi/rekapan-semester/download?kelas=${encodedKelas}&semester=${semester}&tahun=${kelasInfo.tahun}`;
 
-                return (
-                  <a key={semester} href={url} className="w-full sm:w-auto">
-                    <Button
-                      variant="gradient"
-                      className="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300"
-                    >
-                      Semester {semester}
-                    </Button>
-                  </a>
-                );
-              })}
-            </div>
+              return (
+                <a key={semester} href={url} className="w-full sm:w-auto">
+                  <Button
+                    variant="gradient"
+                    className="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300"
+                  >
+                    Semester {semester}
+                  </Button>
+                </a>
+              );
+            })}
           </div>
-        </>
+        </div>
       )}
 
 
