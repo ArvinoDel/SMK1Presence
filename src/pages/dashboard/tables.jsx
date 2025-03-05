@@ -267,8 +267,44 @@ export function Tables() {
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
+  const kelas = "XI RPL 2"; // Bisa dari props atau state
+  const tahun = 2024; // Bisa dari props atau state
+  const baseUrl =
+    "http://localhost:3000/api/absensi/rekapan-semester/download";
+
   return (
+
     <div className="mt-12 mb-8 flex flex-col gap-12">
+
+      {userRole === "guru" && (
+        <>
+          <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-xl">
+            <Typography variant="h6" color="dark" className="text-xl font-semibold">
+              Unduh Rekapan Absensi
+            </Typography>
+            <div className="flex flex-wrap gap-3 mt-4">
+              {[1, 2, 3, 4, 5, 6].map((semester) => {
+                // Encode parameter agar URL tetap valid
+                const encodedKelas = encodeURIComponent(kelas);
+                const url = `${baseUrl}?kelas=${encodedKelas}&semester=${semester}&tahun=${tahun}`;
+
+                return (
+                  <a key={semester} href={url} className="w-full sm:w-auto">
+                    <Button
+                      variant="gradient"
+                      className="w-full sm:w-auto px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 transition-all duration-300"
+                    >
+                      Semester {semester}
+                    </Button>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+
       <Card>
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
           <Typography variant="h6" color="white">
