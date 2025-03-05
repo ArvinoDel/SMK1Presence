@@ -12,31 +12,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 export function Notifications() {
-  const [showAlerts, setShowAlerts] = React.useState({
-    blue: true,
-    green: true,
-    orange: true,
-    red: true,
-  });
-  const [showAlertsWithIcon, setShowAlertsWithIcon] = React.useState({
-    blue: true,
-    green: true,
-    orange: true,
-    red: true,
-  });
-  const alerts = ["gray", "green", "orange", "red"];
 
   const [query, setQuery] = useState("");
   const [showTable, setShowTable] = useState(false);
-
-  // Data Dummy Siswa dengan Kode Kelas
-  const students = [
-    { nis: "220001", nisn: "0056789012", name: "Andi Pratama", class: "XII RPL 2", classCode: "RPL2SMKN1", attendance: "Hadir" },
-    { nis: "220002", nisn: "0056789013", name: "Budi Santoso", class: "XII TOI 2", classCode: "TOI2SMKN1", attendance: "Izin" },
-    { nis: "220003", nisn: "0056789014", name: "Citra Lestari", class: "XII DPIB 2", classCode: "DPIB2SMKN1", attendance: "Alfa" },
-    { nis: "220004", nisn: "0056789015", name: "Dewi Ayu", class: "XII TJKT 2", classCode: "TJKT2SMKN1", attendance: "Hadir" },
-    { nis: "220005", nisn: "0056789016", name: "Eka Saputra", class: "XII RPL 2", classCode: "RPL2SMKN1", attendance: "Hadir" },
-  ];
 
   const [userData, setUserData] = useState(null);
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
@@ -130,65 +108,6 @@ export function Notifications() {
 
   return (
     <>
-
-      {/* <div className="mx-auto my-20 flex max-w-screen-lg flex-col gap-8">
-        <Card>
-          <CardHeader
-            color="transparent"
-            floated={false}
-            shadow={false}
-            className="m-0 p-4"
-          >
-            <Typography variant="h5" color="blue-gray">
-              Alerts
-            </Typography>
-          </CardHeader>
-          <CardBody className="flex flex-col gap-4 p-4">
-            {alerts.map((color) => (
-              <Alert
-                key={color}
-                open={showAlerts[color]}
-                color={color}
-                onClose={() => setShowAlerts((current) => ({ ...current, [color]: false }))}
-              >
-                A simple {color} alert with an <a href="#">example link</a>. Give
-                it a click if you like.
-              </Alert>
-            ))}
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader
-            color="transparent"
-            floated={false}
-            shadow={false}
-            className="m-0 p-4"
-          >
-            <Typography variant="h5" color="blue-gray">
-              Alerts with Icon
-            </Typography>
-          </CardHeader>
-          <CardBody className="flex flex-col gap-4 p-4">
-            {alerts.map((color) => (
-              <Alert
-                key={color}
-                open={showAlertsWithIcon[color]}
-                color={color}
-                icon={
-                  <InformationCircleIcon strokeWidth={2} className="h-6 w-6" />
-                }
-                onClose={() => setShowAlertsWithIcon((current) => ({
-                  ...current,
-                  [color]: false,
-                }))}
-              >
-                A simple {color} alert with an <a href="#">example link</a>. Give
-                it a click if you like.
-              </Alert>
-            ))}
-          </CardBody>
-        </Card>
-      </div> */}
 
       <div className="flex flex-col items-center justify-center min-h-[200px] my-10 bg-gray-100">
         <div className="bg-transparent p-6">
