@@ -486,6 +486,9 @@ export const getKelasAbsensi = async (req, res) => {
 export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
   try {
     const { identifier } = req.user; // NIP guru dari token
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
     
     // Cari data guru dan kelas yang diwalikan
     const guru = await Guru.findOne({ nip: identifier })
@@ -508,7 +511,7 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
       siswa: { $in: siswaList.map(s => s._id) }
     })
     .sort({ tanggal: -1, jamMasuk: -1 })
-    .populate('siswa', 'nis nisn nama kelas');
+    .populate('siswa', 'nis nisn nama kelas photo');
 
     // Kelompokkan data berdasarkan tanggal
     const groupedData = {};
@@ -530,13 +533,14 @@ export const getRiwayatAbsensiByWaliKelas = async (req, res) => {
         nis: absen.siswa.nis,
         nisn: absen.siswa.nisn,
         nama: absen.siswa.nama,
+        photo: absen.siswa.photo ? `${baseUrl}${absen.siswa.photo}` : null,
         jamMasuk: new Date(absen.jamMasuk).toLocaleTimeString('id-ID', {
           hour: '2-digit',
           minute: '2-digit'
         }),
         status: absen.status,
         keterangan: absen.keterangan,
-        suratIzin: absen.suratIzin ? `${req.protocol}://${req.get('host')}${absen.suratIzin.url}` : null
+        suratIzin: absen.suratIzin?.url || null
       });
     });
 
