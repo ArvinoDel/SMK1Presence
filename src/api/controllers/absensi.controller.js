@@ -648,7 +648,12 @@ export const downloadRekapanSemester = async (req, res) => {
       };
 
       absensiList.forEach(absen => {
-        summary[absen.status]++;
+        // Jika status TERLAMBAT, hitung sebagai HADIR
+        if (absen.status === 'TERLAMBAT') {
+          summary.HADIR++;
+        } else {
+          summary[absen.status]++;
+        }
       });
 
       worksheet.getRow(rowNumber).values = [
