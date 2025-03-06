@@ -5,6 +5,7 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, History, Search } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
@@ -36,7 +37,7 @@ export const routes = [
         element: <History />,
       },
       {
-        icon: <InformationCircleIcon {...icon} />,
+        icon: <MagnifyingGlassIcon {...icon} />,
         name: "search",
         path: "/search",
         element: <Search />,
