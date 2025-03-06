@@ -157,7 +157,7 @@ const SkeletonRow = () => {
 
 const itemsPerPage = 5;
 
-export function Tables() {
+export function History() {
   const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -493,4 +493,4 @@ export function Tables() {
   );
 }
 
-export default Tables;
+export default History;

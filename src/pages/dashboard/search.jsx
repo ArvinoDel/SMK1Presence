@@ -11,7 +11,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-export function Notifications() {
+export function Search() {
 
   const [query, setQuery] = useState("");
   const [showTable, setShowTable] = useState(false);
@@ -187,4 +187,4 @@ export function Notifications() {
   );
 }
 
-export default Notifications;
+export default Search;
