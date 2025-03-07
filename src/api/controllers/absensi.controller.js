@@ -373,6 +373,8 @@ export const createOrUpdateAbsensi = async (req, res) => {
 export const scanQRCode = async (req, res) => {
   try {
     const { qrData } = req.body;
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
     
     // Find student by NISN
     const siswa = await Siswa.findOne({ nisn: qrData });
@@ -422,6 +424,7 @@ export const scanQRCode = async (req, res) => {
       message: 'Absensi berhasil dicatat',
       data: {
         nama: siswa.nama,
+        photo: siswa.photo ? `${baseUrl}${siswa.photo}` : null,
         kelas: siswa.kelas,
         status: 'HADIR',
         keterangan: 'Absensi via QR Code'

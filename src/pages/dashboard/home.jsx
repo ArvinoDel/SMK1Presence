@@ -103,9 +103,7 @@ export function Home() {
         },
         body: JSON.stringify({ qrData }),
       });
-      
       const result = await response.json();
-      
       if (result.success) {
         // Get current time in HH:mm:ss format
         const currentTime = new Date().toLocaleTimeString('id-ID', {
@@ -113,28 +111,56 @@ export function Home() {
           minute: '2-digit',
           second: '2-digit'
         });
-        
-        // Show success message with complete details
-        setScannedData(
-          `✅ Berhasil Absensi!\n` +
-          `Nama: ${result.data.nama}\n` +
-          `Kelas: ${result.data.kelas}\n` +
-          `Status: ${result.data.status}\n` +
-          `Waktu: ${currentTime}`
-        );
+
+        // Show success message with SweetAlert2
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil Absensi!",
+          html: `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <img src="${result.data.photo || '../img/team-1.jpeg'}" 
+                   alt="Foto Siswa" 
+                   style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">
+              <strong style="font-size: 18px; color: #2c3e50;">${result.data.nama}</strong>
+              <p style="margin: 5px 0; font-size: 16px; color: #444;">Kelas: <b>${result.data.kelas}</b></p>
+              <p style="margin: 5px 0; font-size: 16px; color: #444;">Status: <b>${result.data.status}</b></p>
+              <p style="margin-top: 10px; font-size: 15px; color: #555;">Waktu: ${currentTime}</p>
+            </div>
+          `,
+          showConfirmButton: false,
+          timer: 3000,
+        });
+
+
       } else {
-        // Show detailed error message
+        // Show detailed error message with Swal
+        let errorMessage = " Error: " + result.message;
+        let iconType = "error";
+
         if (result.message.includes("sudah")) {
-          setScannedData(`⚠️ ${result.message}\nSiswa sudah melakukan absensi hari ini`);
+          errorMessage = `⚠️ ${result.message}<br>Siswa sudah melakukan absensi hari ini`;
+          iconType = "warning";
         } else if (result.message.includes("tidak ditemukan")) {
-          setScannedData(`❌ Error: Siswa tidak ditemukan dalam database`);
-        } else {
-          setScannedData(`❌ Error: ${result.message}`);
+          errorMessage = " Error: Siswa tidak ditemukan dalam database";
         }
+
+        Swal.fire({
+          icon: iconType,
+          title: "Oops!",
+          html: errorMessage,
+          confirmButtonColor: "#d33",
+          confirmButtonText: "OK"
+        });
       }
     } catch (error) {
       console.error("Error sending QR data:", error);
-      setScannedData("❌ Error: Gagal memproses absensi. Silakan coba lagi.");
+      Swal.fire({
+        icon: "error",
+        title: "Gagal!",
+        text: "❌ Error: Gagal memproses absensi. Silakan coba lagi.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "OK"
+      });
     }
   };
 
@@ -792,8 +818,8 @@ export function Home() {
                               {/* Hasil Scan */}
                               {scannedData && (
                                 <div className="mt-6 p-4 w-80 bg-white shadow-lg text-center rounded-lg border border-gray-200">
-                                  <h2 className="text-lg font-semibold text-gray-800">Hasil Scan</h2>
-                                  <p className="text-md text-green-700 break-words">{scannedData}</p>
+                                  <h2 className="text-lg font-semibold text-gray-800">Absen Berhasil!</h2>
+                                  <p className="text-md text-green-700 break-words">NIS: {scannedData}</p>
                                 </div>
                               )}
                             </div>

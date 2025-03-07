@@ -109,10 +109,10 @@ export function Search() {
   return (
     <>
 
-      <div className="flex flex-col items-center justify-center min-h-[200px] my-10 bg-gray-100">
+      <div className="flex flex-col items-center justify-center min-h-[200px] my-10">
         <div className="bg-transparent p-6">
           <h1 className="text-2xl font-bold">Selamat Pagi, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
-          <p className="text-gray-600">Masukkan Kode Kelas Untuk Mencari Absensi </p>
+          <p className="text-gray-600">Masukkan Kode Kelas Untuk Mencari Absensi Hari Ini.</p>
         </div>
         {/* SEARCH INPUT */}
         <motion.div
