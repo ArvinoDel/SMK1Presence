@@ -11,6 +11,8 @@ import {
   Switch,
   Tooltip,
   Button,
+  iconButton,
+  IconButton
 } from "@material-tailwind/react";
 import {
   HomeIcon,
@@ -21,6 +23,7 @@ import {
   UserCircleIcon,
   ChevronDownIcon,
   UserIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -395,12 +398,15 @@ export function Profile() {
                       onClick={(e) => e.stopPropagation()} // Mencegah klik dalam modal menutup overlay
                     >
                       {/* Tombol close */}
-                      <button
-                        className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-3xl font-bold"
+                      <IconButton
+                        size="sm"
+                        variant="text"
+                        className="!absolute right-3.5 top-3.5 text-gray-600 hover:text-gray-900"
                         onClick={() => setIsZoomed(false)}
                       >
-                        &times;
-                      </button>
+                        <XMarkIcon className="h-4 w-4 stroke-2" />
+                      </IconButton>
+
 
                       {/* Gambar dalam ukuran besar */}
                       <img src={imageUrl} alt="Profile Zoomed" className="max-w-full max-h-[90vh] rounded-lg" />
