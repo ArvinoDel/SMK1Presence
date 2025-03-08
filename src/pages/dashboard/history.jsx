@@ -7,11 +7,23 @@ import {
   Chip,
   Tooltip,
   Progress,
+  Input,
   Button,
+  CardFooter,
+  Tabs,
+  TabsHeader,
+  Tab,
+  IconButton,
+  Dialog,
+  DialogBody,
+  DialogHeader,
+  DialogFooter,
 } from "@material-tailwind/react";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, UserPlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
@@ -157,11 +169,31 @@ const SkeletonRow = () => {
 
 const itemsPerPage = 5;
 
+const ITEMS_PER_PAGE = 3; // Jumlah data per halaman
+
+const TABS = [
+  { label: "All", value: "all" },
+  { label: "Guru", value: "guru" },
+  { label: "Siswa", value: "siswa" },
+];
+
+const TABLE_HEAD = ["Users", "Email", "Kelas", "Status", "Employed", "Action"];
+
+const TABLE_ROWS = [
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "John Michael", nis: "12228442", nisn: "0022299922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg", name: "Alexa Liras", nis: "12228443", nisn: "0022299923", role: "XII RPL 2", email: "siswa1@gmail.com", isGuru: false, date: "23/04/18" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg", name: "Laurent Perrier", nis: "12228444", nisn: "0022299924", role: "XII RPL 2", email: "siswa2@gmail.com", isGuru: true, date: "19/09/17" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Michael Levi", nis: "12228445", nisn: "0022299925", role: "XII RPL 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Richard Gran", nis: "12228446", nisn: "0022299926", role: "XII RPL 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
+];
+
 export function History() {
   const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(!open);
   const [imageSrc, setImageSrc] = useState("");
   const navigate = useNavigate(); // Hook untuk redirect
   const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
@@ -170,6 +202,42 @@ export function History() {
     kelas: '',
     tahun: new Date().getFullYear()
   });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [pageIndex, setPageIndex] = useState(0); // Index halaman tanpa state global
+
+  // **🔍 Filter Data Berdasarkan Role dan Search Query**
+  const filteredData = useMemo(() => {
+    console.log("Filtering Data...");
+    console.log("Selected Filter:", selectedFilter);
+    console.log("Search Query:", searchQuery);
+
+    return TABLE_ROWS.filter((user) => {
+      const query = searchQuery.toLowerCase();
+
+      // **Filter Berdasarkan Role**
+      const matchRole =
+        selectedFilter === "all" ||
+        (selectedFilter === "guru" && user.isGuru === true) ||
+        (selectedFilter === "siswa" && user.isGuru === false);
+
+      // **Filter Berdasarkan Search Query**
+      const matchSearch =
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query);
+
+      // **Gabungkan Kedua Filter**
+      return matchRole && matchSearch;
+    });
+  }, [searchQuery, selectedFilter]);
+
+
+  // **📌 Pagination: Ambil data berdasarkan halaman**
+  const paginatedData = useMemo(() => {
+    const start = pageIndex * ITEMS_PER_PAGE;
+    return filteredData.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredData, pageIndex]);
 
   useEffect(() => {
     const fetchRiwayatAbsensi = async () => {
@@ -214,7 +282,7 @@ export function History() {
         }
 
         const result = await response.json();
-        
+
         // Format data berdasarkan role
         if (userRole === "guru") {
           // Flatten data yang dikelompokkan per tanggal
@@ -328,16 +396,16 @@ export function History() {
                   const storedToken = localStorage.getItem("token");
                   const encodedKelas = encodeURIComponent(kelasInfo.kelas);
                   const url = `${baseUrl}?kelas=${encodedKelas}&semester=${semester}&tahun=${kelasInfo.tahun}`;
-                  
+
                   try {
                     const response = await fetch(url, {
                       headers: {
                         Authorization: `Bearer ${storedToken}`
                       }
                     });
-                    
+
                     if (!response.ok) throw new Error('Download gagal');
-                    
+
                     const blob = await response.blob();
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -488,6 +556,268 @@ export function History() {
 
           </table>
         </CardBody>
+      </Card>
+
+      <Card className="h-full w-full">
+        {/* <CardHeader floated={false} shadow={false} className="rounded-none"> */}
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <div className="flex items-center justify-between gap-8">
+            <div>
+              <Typography variant="h6" color="white">
+                Users list
+              </Typography>
+              <Typography color="white" className="mt-1 font-normal">
+                Lihat Semua Informasi Siswa dan Guru.
+              </Typography>
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              {/* Tombol untuk membuka modal */}
+              <Button onClick={handleOpen} className="flex items-center gap-3" size="sm">
+                <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add User
+              </Button>
+            </div>
+          </div>
+
+          {/* Modal Dialog */}
+          <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
+            <DialogHeader className="relative m-0 block">
+              <Typography variant="h4" color="blue-gray">
+                Add New User
+              </Typography>
+              <Typography className="mt-1 font-normal text-gray-600">
+                Fill in the details below to add a new user.
+              </Typography>
+              <IconButton
+                size="sm"
+                variant="text"
+                className="!absolute right-3.5 top-3.5"
+                onClick={handleOpen}
+              >
+                <XMarkIcon className="h-4 w-4 stroke-2" />
+              </IconButton>
+            </DialogHeader>
+
+            <DialogBody className="space-y-4 pb-6">
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                  Full Name
+                </Typography>
+                <Input
+                  color="gray"
+                  size="lg"
+                  placeholder="Enter full name"
+                  name="name"
+                  className="placeholder:opacity-100 focus:!border-t-gray-900"
+                  containerProps={{ className: "!min-w-full" }}
+                  labelProps={{ className: "hidden" }}
+                />
+              </div>
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                  Email
+                </Typography>
+                <Input
+                  color="gray"
+                  size="lg"
+                  placeholder="Enter email"
+                  name="email"
+                  className="placeholder:opacity-100 focus:!border-t-gray-900"
+                  containerProps={{ className: "!min-w-full" }}
+                  labelProps={{ className: "hidden" }}
+                />
+              </div>
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                  Role
+                </Typography>
+                <Input
+                  color="gray"
+                  size="lg"
+                  placeholder="e.g. Admin, User, Guest"
+                  name="role"
+                  className="placeholder:opacity-100 focus:!border-t-gray-900"
+                  containerProps={{ className: "!min-w-full" }}
+                  labelProps={{ className: "hidden" }}
+                />
+              </div>
+            </DialogBody>
+
+            <DialogFooter>
+              <Button variant="text" onClick={handleOpen} className="mr-2">
+                Cancel
+              </Button>
+              <Button className="ml-auto" onClick={handleOpen}>
+                Add User
+              </Button>
+            </DialogFooter>
+          </Dialog>
+
+        </CardHeader>
+        {/* **FILTER DAN SEARCH** */}
+        <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
+          <Tabs value={selectedFilter} className="w-full md:w-max">
+            <TabsHeader>
+              {[
+                { label: "All", value: "all" },
+                { label: "Guru", value: "guru" },
+                { label: "Siswa", value: "siswa" },
+              ].map(({ label, value }) => (
+                <Tab
+                  key={value}
+                  value={value}
+                  onClick={() => {
+                    console.log("Filter yang dipilih:", value);
+                    setSelectedFilter(value);
+                    setPageIndex(0);
+                  }}
+                >
+                  {label}
+                </Tab>
+              ))}
+            </TabsHeader>
+          </Tabs>
+
+
+          <div className="w-full md:w-72">
+            <Input
+              label="Search"
+              icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPageIndex(0); }}
+            />
+          </div>
+        </div>
+        {/* </CardHeader> */}
+        <CardBody className="overflow-hidden px-0">
+          <table className="mt-4 w-full min-w-max table-auto text-left">
+            <thead>
+              <tr>
+                {TABLE_HEAD.map((head) => (
+                  <th
+                    key={head}
+                    className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
+                  >
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="font-normal leading-none opacity-70"
+                    >
+                      {head}
+                    </Typography>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.map(({ img, name, nis, nisn, email, role, isGuru, date }, index) => {
+                const isLast = index === paginatedData.length - 1;
+                const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                return (
+                  <tr key={name}>
+                    <td className={classes}>
+                      <div className="flex items-center gap-3">
+                        <Avatar src={img} alt={name} size="sm" />
+                        <div className="flex flex-col">
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal"
+                          >
+                            {name}
+                          </Typography>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal opacity-70"
+                          >
+                            NIS: {nis}
+                          </Typography>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal opacity-70"
+                          >
+                            NISN: {nisn}
+                          </Typography>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <div className="flex flex-col">
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {email}
+                        </Typography>
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <div className="flex flex-col">
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {role}
+                        </Typography>
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <div className="w-max">
+                        <Chip
+                          variant="ghost"
+                          size="sm"
+                          value={isGuru ? "Guru" : "Siswa"}
+                          color={isGuru ? "green" : "blue-gray"}
+                        />
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
+                        {date}
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <Tooltip content="Edit User">
+                        <IconButton variant="text">
+                          <PencilIcon className="h-4 w-4" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip content="Delete User">
+                        <IconButton variant="text">
+                          <TrashIcon className="h-4 w-4" />
+                        </IconButton>
+                      </Tooltip>
+                    </td>
+                  </tr>
+                );
+              },
+              )}
+            </tbody>
+          </table>
+        </CardBody>
+        {/* PAGINATION */}
+        <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
+          <Typography variant="small" color="blue-gray" className="font-normal">
+            Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
+          </Typography>
+          <div className="flex gap-2">
+            <Button variant="outlined" size="sm" disabled={pageIndex === 0} onClick={() => setPageIndex(pageIndex - 1)}>
+              Previous
+            </Button>
+            <Button variant="outlined" size="sm" disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length} onClick={() => setPageIndex(pageIndex + 1)}>
+              Next
+            </Button>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
