@@ -169,7 +169,7 @@ const SkeletonRow = () => {
 
 const itemsPerPage = 5;
 
-const ITEMS_PER_PAGE = 3; // Jumlah data per halaman
+const ITEMS_PER_PAGE = 5; // Jumlah data per halaman
 
 const TABS = [
   { label: "All", value: "all" },
@@ -183,8 +183,13 @@ const TABLE_ROWS = [
   { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "John Michael", nis: "12228442", nisn: "0022299922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
   { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg", name: "Alexa Liras", nis: "12228443", nisn: "0022299923", role: "XII RPL 2", email: "siswa1@gmail.com", isGuru: false, date: "23/04/18" },
   { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg", name: "Laurent Perrier", nis: "12228444", nisn: "0022299924", role: "XII RPL 2", email: "siswa2@gmail.com", isGuru: true, date: "19/09/17" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Michael Levi", nis: "12228445", nisn: "0022299925", role: "XII RPL 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Richard Gran", nis: "12228446", nisn: "0022299926", role: "XII RPL 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Michael Levi", nis: "12228345", nisn: "0022259925", role: "XII RPL 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Richard Gran", nis: "12228346", nisn: "0022249926", role: "XII RPL 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "Jihn Miracle", nis: "12228432", nisn: "0022296922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg", name: "Kobe Liras", nis: "12228343", nisn: "0022297923", role: "XII DPIB 2", email: "siswa1@gmail.com", isGuru: false, date: "23/04/18" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg", name: "Sabrina Perrier", nis: "12258444", nisn: "0021299924", role: "XII RPL 2", email: "siswa2@gmail.com", isGuru: true, date: "19/09/17" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Trevor Levi", nis: "12228475", nisn: "0022299921", role: "XII TOI 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
+  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Lee Gran", nis: "12228432", nisn: "0022299226", role: "XII TKJ 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
 ];
 
 export function History() {
