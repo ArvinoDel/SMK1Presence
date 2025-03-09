@@ -197,27 +197,159 @@ const TABLE_ROWS = [
 
 export function History() {
   const [openEdit, setOpenEdit] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    nama: '',
+    email: '',
+    role: '',
+    nis: '',
+    nisn: '',
+    nip: '',
+    kelas: '',
+    mataPelajaran: ''
+  });
 
-  const handleOpenEdit = () => {
-    setOpenEdit(!openEdit);
+  const handleOpenEdit = (user) => {
+    setSelectedUser(user);
+    setEditFormData({
+      nama: user.nama,
+      email: user.email,
+      role: user.isGuru ? 'guru' : 'siswa',
+      nis: user.nis || '',
+      nisn: user.nisn || '',
+      nip: user.nip || '',
+      kelas: user.kelas || '',
+      mataPelajaran: user.mataPelajaran || ''
+    });
+    setOpenEdit(true);
   };
 
-  const handleDeleteUser = () => {
-    Swal.fire({
-      title: "Apakah Anda yakin?",
-      text: "User ini akan dihapus secara permanen!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, hapus!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire("Terhapus!", "User telah dihapus.", "success");
-        // Tambahkan fungsi delete di sini
-      }
+  const handleCloseEdit = () => {
+    setOpenEdit(false);
+    setSelectedUser(null);
+    setEditFormData({
+      nama: '',
+      email: '',
+      role: '',
+      nis: '',
+      nisn: '',
+      nip: '',
+      kelas: '',
+      mataPelajaran: ''
     });
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    try {
+      const storedToken = localStorage.getItem("token");
+      const endpoint = `http://localhost:3000/api/admin/users/${selectedUser._id}`;
+      const payload = {
+        role: editFormData.role,
+        nama: editFormData.nama,
+        email: editFormData.email,
+        ...(editFormData.role === 'siswa' ? {
+          nis: editFormData.nis,
+          nisn: editFormData.nisn,
+          kelas: editFormData.kelas
+        } : {
+          nip: editFormData.nip,
+          mataPelajaran: editFormData.mataPelajaran
+        })
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${storedToken}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update user');
+      }
+
+      // Close modal and refresh data
+      handleCloseEdit();
+      fetchData();
+
+      // Show success message
+      Swal.fire({
+        title: 'Success!',
+        text: 'User has been updated successfully',
+        icon: 'success',
+        confirmButtonText: 'OK'
+      });
+
+    } catch (error) {
+      console.error('Error updating user:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error.message,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    try {
+      const result = await Swal.fire({
+        title: "Apakah Anda yakin?",
+        text: "User ini akan dihapus secara permanen!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        const storedToken = localStorage.getItem("token");
+        const endpoint = `http://localhost:3000/api/admin/users/${user._id}?role=${user.isGuru ? 'guru' : 'siswa'}`;
+
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${storedToken}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete user');
+        }
+
+        // Refresh data
+        fetchData();
+
+        Swal.fire({
+          title: "Terhapus!",
+          text: "User telah dihapus.",
+          icon: "success"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: error.message,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    }
   };
 
   const [riwayatAbsensi, setRiwayatAbsensi] = useState([]);
@@ -389,72 +521,73 @@ export function History() {
     return filteredData.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredData, pageIndex]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const storedToken = localStorage.getItem("token");
-        if (!storedToken) {
+  const fetchData = async () => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      if (!storedToken) {
+        navigate("auth/sign-in");
+        return;
+      }
+
+      const decodedToken = jwtDecode(storedToken);
+      setUserRole(decodedToken.role);
+      const userRole = decodedToken.role;
+      let apiUrl;
+
+      switch (userRole) {
+        case "siswa":
+          apiUrl = "http://localhost:3000/api/absensi/riwayat";
+          break;
+        case "guru":
+          apiUrl = "http://localhost:3000/api/absensi/wali-kelas/riwayat";
+          break;
+        case "admin":
+          apiUrl = "http://localhost:3000/api/admin/users";
+          break;
+        default:
+          console.warn("User role tidak valid");
           navigate("auth/sign-in");
           return;
-        }
-
-        const decodedToken = jwtDecode(storedToken);
-        setUserRole(decodedToken.role);
-        const userRole = decodedToken.role;
-        let apiUrl;
-
-        switch (userRole) {
-          case "siswa":
-            apiUrl = "http://localhost:3000/api/absensi/riwayat";
-            break;
-          case "guru":
-            apiUrl = "http://localhost:3000/api/absensi/wali-kelas/riwayat";
-            break;
-          case "admin":
-            apiUrl = "http://localhost:3000/api/admin/users";
-            break;
-          default:
-            console.warn("User role tidak valid");
-            navigate("auth/sign-in");
-            return;
-        }
-
-        const response = await fetch(apiUrl, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem("token");
-          }
-          navigate("/auth/sign-in");
-          return;
-        }
-
-        const result = await response.json();
-
-        // Format data berdasarkan role
-        if (userRole === "guru") {
-          // Flatten data yang dikelompokkan per tanggal
-          const flattenedData = result.data.reduce((acc, group) => {
-            return acc.concat(group.data.map(item => ({
-              ...item,
-              tanggal: group.tanggal
-            })));
-          }, []);
-          setRiwayatAbsensi(flattenedData);
-        } else if (userRole === "siswa") {
-          setRiwayatAbsensi(result.data);
-        } else if (userRole === "admin") {
-          setUsers(result.data);
-        }
-
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
       }
-    };
+
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+        }
+        navigate("/auth/sign-in");
+        return;
+      }
+
+      const result = await response.json();
+
+      // Format data berdasarkan role
+      if (userRole === "guru") {
+        // Flatten data yang dikelompokkan per tanggal
+        const flattenedData = result.data.reduce((acc, group) => {
+          return acc.concat(group.data.map(item => ({
+            ...item,
+            tanggal: group.tanggal
+          })));
+        }, []);
+        setRiwayatAbsensi(flattenedData);
+      } else if (userRole === "siswa") {
+        setRiwayatAbsensi(result.data);
+      } else if (userRole === "admin") {
+        setUsers(result.data);
+      }
+
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -1066,197 +1199,12 @@ export function History() {
                       </td>
                       <td className={classes}>
                         <Tooltip content="Edit User">
-                          <IconButton variant="text" onClick={handleOpenEdit}>
+                          <IconButton variant="text" onClick={() => handleOpenEdit(user)}>
                             <PencilIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-
-                        <Dialog size="sm" open={openEdit} handler={handleOpenEdit} className="p-4">
-                          <DialogHeader className="relative m-0 block">
-                            <Typography variant="h4" color="blue-gray">
-                              Edit User
-                            </Typography>
-                            <Typography className="mt-1 font-normal text-gray-600">
-                              Update user details below.
-                            </Typography>
-                            <IconButton
-                              size="sm"
-                              variant="text"
-                              className="!absolute right-3.5 top-3.5"
-                              onClick={handleOpenEdit}
-                            >
-                              <XMarkIcon className="h-4 w-4 stroke-2" />
-                            </IconButton>
-                          </DialogHeader>
-
-                          {/* GANTI DI SINI */}
-
-                          {/* <form onSubmit={handleEditUser}>
-                            <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
-                              <div>
-                                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                  Full Name
-                                </Typography>
-                                <Input
-                                  required
-                                  color="gray"
-                                  size="lg"
-                                  name="nama"
-                                  value={editData.nama}
-                                  onChange={(e) => setEditData({ ...editData, nama: e.target.value })}
-                                  placeholder="Enter full name"
-                                  className="placeholder:opacity-100 focus:!border-t-gray-900"
-                                />
-                              </div>
-
-                              <div>
-                                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                  Email
-                                </Typography>
-                                <Input
-                                  required
-                                  type="email"
-                                  color="gray"
-                                  size="lg"
-                                  name="email"
-                                  value={editData.email}
-                                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                                  placeholder="Enter email"
-                                  className="placeholder:opacity-100 focus:!border-t-gray-900"
-                                />
-                              </div>
-
-                              <div>
-                                <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                  Role
-                                </Typography>
-                                <Select
-                                  required
-                                  color="gray"
-                                  size="lg"
-                                  name="role"
-                                  value={editData.role}
-                                  onChange={(value) => setEditData({ ...editData, role: value })}
-                                  className="placeholder:opacity-100 focus:!border-t-gray-900"
-                                >
-                                  <Option value="siswa">Siswa</Option>
-                                  <Option value="guru">Guru</Option>
-                                </Select>
-                              </div>
-
-                              {editData.role === "siswa" ? (
-                                <>
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      NIS
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="nis"
-                                      value={editData.nis}
-                                      onChange={(e) => setEditData({ ...editData, nis: e.target.value })}
-                                      placeholder="Enter NIS"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      NISN
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="nisn"
-                                      value={editData.nisn}
-                                      onChange={(e) => setEditData({ ...editData, nisn: e.target.value })}
-                                      placeholder="Enter NISN"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      Kelas
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="kelas"
-                                      value={editData.kelas}
-                                      onChange={(e) => setEditData({ ...editData, kelas: e.target.value })}
-                                      placeholder="Enter Kelas (e.g. XII RPL 2)"
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      NIP
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="nip"
-                                      value={editData.nip}
-                                      onChange={(e) => setEditData({ ...editData, nip: e.target.value })}
-                                      placeholder="Enter NIP"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      Kelas
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="kelas"
-                                      value={editData.kelas}
-                                      onChange={(e) => setEditData({ ...editData, kelas: e.target.value })}
-                                      placeholder="Enter Kelas (e.g. XII RPL 2)"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                                      Mata Pelajaran
-                                    </Typography>
-                                    <Input
-                                      required
-                                      color="gray"
-                                      size="lg"
-                                      name="mataPelajaran"
-                                      value={editData.mataPelajaran}
-                                      onChange={(e) =>
-                                        setEditData({ ...editData, mataPelajaran: e.target.value })
-                                      }
-                                      placeholder="Enter Mata Pelajaran"
-                                    />
-                                  </div>
-                                </>
-                              )}
-                            </DialogBody>
-
-                            <DialogFooter>
-                              <Button variant="text" onClick={handleOpenEdit} className="mr-2">
-                                Cancel
-                              </Button>
-                              <Button type="submit" className="ml-auto">
-                                Save Changes
-                              </Button>
-                            </DialogFooter>
-                          </form> */}
-                        </Dialog>
-
-
                         <Tooltip content="Delete User">
-                          <IconButton variant="text" onClick={handleDeleteUser}>
+                          <IconButton variant="text" onClick={() => handleDeleteUser(user)}>
                             <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
@@ -1292,6 +1240,169 @@ export function History() {
           </CardFooter>
         </Card>
       )}
+
+      {/* Edit User Dialog */}
+      <Dialog size="sm" open={openEdit} handler={handleCloseEdit} className="p-4">
+        <DialogHeader className="relative m-0 block">
+          <Typography variant="h4" color="blue-gray">
+            Edit User
+          </Typography>
+          <Typography className="mt-1 font-normal text-gray-600">
+            Update user information below.
+          </Typography>
+          <IconButton
+            size="sm"
+            variant="text"
+            className="!absolute right-3.5 top-3.5"
+            onClick={handleCloseEdit}
+          >
+            <XMarkIcon className="h-4 w-4 stroke-2" />
+          </IconButton>
+        </DialogHeader>
+
+        <form onSubmit={handleEditUser}>
+          <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                Full Name
+              </Typography>
+              <Input
+                required
+                color="gray"
+                size="lg"
+                name="nama"
+                value={editFormData.nama}
+                onChange={handleEditInputChange}
+                placeholder="Enter full name"
+                className="placeholder:opacity-100 focus:!border-t-gray-900"
+                containerProps={{ className: "!min-w-full" }}
+                labelProps={{ className: "hidden" }}
+              />
+            </div>
+
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                Email
+              </Typography>
+              <Input
+                required
+                type="email"
+                color="gray"
+                size="lg"
+                name="email"
+                value={editFormData.email}
+                onChange={handleEditInputChange}
+                placeholder="Enter email"
+                className="placeholder:opacity-100 focus:!border-t-gray-900"
+                containerProps={{ className: "!min-w-full" }}
+                labelProps={{ className: "hidden" }}
+              />
+            </div>
+
+            {editFormData.role === 'siswa' ? (
+              <>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    NIS
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="nis"
+                    value={editFormData.nis}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter NIS"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    NISN
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="nisn"
+                    value={editFormData.nisn}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter NISN"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    Kelas
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="kelas"
+                    value={editFormData.kelas}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter Kelas (e.g. XII RPL 2)"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    NIP
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="nip"
+                    value={editFormData.nip}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter NIP"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    Mata Pelajaran
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="mataPelajaran"
+                    value={editFormData.mataPelajaran}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter Mata Pelajaran"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+              </>
+            )}
+          </DialogBody>
+
+          <DialogFooter>
+            <Button variant="text" onClick={handleCloseEdit} className="mr-2">
+              Cancel
+            </Button>
+            <Button type="submit" className="ml-auto">
+              Update User
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
 
     </div>
   );

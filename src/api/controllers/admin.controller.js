@@ -266,4 +266,127 @@ export const getAllUsers = async (req, res) => {
       error: error.message
     });
   }
+};
+
+// Update user (siswa atau guru)
+export const updateUser = async (req, res) => {
+  try {
+    const { role } = req.user;
+    const userId = req.params.id;
+    const updateData = req.body;
+
+    // Pastikan user adalah admin
+    if (role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak'
+      });
+    }
+
+    // Cek apakah user yang akan diupdate adalah siswa atau guru
+    let updatedUser;
+    if (updateData.role === 'siswa') {
+      // Update data siswa
+      updatedUser = await Siswa.findByIdAndUpdate(
+        userId,
+        {
+          nama: updateData.nama,
+          email: updateData.email,
+          nis: updateData.nis,
+          nisn: updateData.nisn,
+          kelas: updateData.kelas
+        },
+        { new: true }
+      );
+    } else if (updateData.role === 'guru') {
+      // Update data guru
+      updatedUser = await Guru.findByIdAndUpdate(
+        userId,
+        {
+          nama: updateData.nama,
+          email: updateData.email,
+          nip: updateData.nip,
+          mataPelajaran: updateData.mataPelajaran
+        },
+        { new: true }
+      );
+    }
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User berhasil diupdate',
+      data: updatedUser
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengupdate user',
+      error: error.message
+    });
+  }
+};
+
+// Delete user (siswa atau guru)
+export const deleteUser = async (req, res) => {
+  try {
+    const { role } = req.user;
+    const userId = req.params.id;
+    const userRole = req.query.role; // 'siswa' atau 'guru'
+
+    // Pastikan user adalah admin
+    if (role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak'
+      });
+    }
+
+    let deletedUser;
+    let authIdentifier;
+
+    // Hapus user berdasarkan role
+    if (userRole === 'siswa') {
+      deletedUser = await Siswa.findById(userId);
+      if (deletedUser) {
+        authIdentifier = deletedUser.nis;
+        await deletedUser.deleteOne();
+      }
+    } else if (userRole === 'guru') {
+      deletedUser = await Guru.findById(userId);
+      if (deletedUser) {
+        authIdentifier = deletedUser.nip;
+        await deletedUser.deleteOne();
+      }
+    }
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+
+    // Hapus data auth terkait
+    await Auth.findOneAndDelete({ nis: authIdentifier });
+
+    res.status(200).json({
+      success: true,
+      message: 'User berhasil dihapus'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal menghapus user',
+      error: error.message
+    });
+  }
 }; 
