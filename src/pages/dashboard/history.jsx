@@ -710,7 +710,7 @@ export function History() {
             </div>
           </div>
 
-          <Dialog size="sm" open={open} handler={handleOpen} className="space-y-4 pb-6 max-h-[80vh] overflow-y-auto">
+          <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
             <DialogHeader className="relative m-0 block">
               <Typography variant="h4" color="blue-gray">
                 Add New User
@@ -729,7 +729,7 @@ export function History() {
             </DialogHeader>
 
             <form onSubmit={handleAddUser}>
-              <DialogBody className="space-y-4 pb-6">
+              <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Full Name
