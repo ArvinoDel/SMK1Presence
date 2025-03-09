@@ -174,12 +174,15 @@ export function DashboardNavbar() {
               </MenuHandler>
               <MenuList>
                 <Typography variant="medium" className="font-medium text-black">
-                  {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div> }
+                  {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>}
                 </Typography>
+                
+                {userRole === "guru" || userRole === "siswa" && (
+                  <Typography variant="small" className="font-medium text-black">
+                    {userData?.kelas ? `Kelas ${userData.kelas}` : <div className="h-3 bg-gray-200 rounded w-16"></div>}
+                  </Typography>
+                )}
 
-                <Typography variant="small" className="font-medium text-black">
-                  {userData?.kelas ? `Kelas ${userData.kelas}` : <div className="h-3 bg-gray-200 rounded w-16"></div>}
-                </Typography>
 
                 <Typography variant="small" className="font-medium text-black">
                   {userRole === "siswa" ? "Siswa SMKN 1 Cirebon" : userRole === "guru" ? "Guru SMKN 1 Cirebon" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
