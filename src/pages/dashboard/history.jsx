@@ -710,7 +710,7 @@ export function History() {
             </div>
           </div>
 
-          <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
+          <Dialog size="sm" open={open} handler={handleOpen} className="space-y-4 pb-6 max-h-[80vh] overflow-y-auto">
             <DialogHeader className="relative m-0 block">
               <Typography variant="h4" color="blue-gray">
                 Add New User
