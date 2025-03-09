@@ -8,18 +8,10 @@ import Admin from '../models/Admin.models.js';
 // Register siswa
 export const register = async (req, res) => {
   try {
-    // Pastikan yang melakukan request adalah admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Hanya admin yang dapat mendaftarkan siswa'
-      });
-    }
-
-    const { nis, nisn, password, nama, kelas, email } = req.body;
+    const { nis, nisn, password, nama, kelas } = req.body;
 
     // Validasi input
-    if (!nis || !nisn || !password || !nama || !kelas || !email) {
+    if (!nis || !nisn || !password || !nama || !kelas) {
       return res.status(400).json({
         success: false,
         message: 'Semua field harus diisi'
@@ -36,19 +28,17 @@ export const register = async (req, res) => {
     }
 
     const existingSiswa = await Siswa.findOne({ 
-      $or: [{ nis }, { nisn }, { email }] 
+      $or: [{ nis }, { nisn }] 
     });
     if (existingSiswa) {
       return res.status(400).json({
         success: false,
-        message: 'NIS, NISN, atau email sudah terdaftar'
+        message: 'NIS atau NISN sudah terdaftar'
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Buat akun auth dengan NIS sebagai identifier
+    const hashedPassword = await bcrypt.hash(password, 10);
     const auth = new Auth({
       nis: nis,
       password: hashedPassword,
@@ -60,8 +50,7 @@ export const register = async (req, res) => {
       nis,
       nisn,
       nama,
-      kelas,
-      email
+      kelas
     });
 
     await auth.save();
@@ -69,12 +58,11 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Registrasi siswa berhasil',
+      message: 'Registrasi berhasil',
       data: {
         nis: siswa.nis,
         nama: siswa.nama,
-        kelas: siswa.kelas,
-        email: siswa.email
+        kelas: siswa.kelas
       }
     });
 
@@ -190,21 +178,13 @@ export const login = async (req, res) => {
 // Register guru
 export const registerGuru = async (req, res) => {
   try {
-    // Pastikan yang melakukan request adalah admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Hanya admin yang dapat mendaftarkan guru'
-      });
-    }
-
-    const { nip, password, nama, email, mataPelajaran } = req.body;
+    const { nip, password, nama, jenisKelamin, tanggalLahir, alamat, noTelp, mataPelajaran, pendidikanTerakhir } = req.body;
 
     // Validasi input
-    if (!nip || !password || !nama || !email || !mataPelajaran) {
+    if (!nip || !password || !nama) {
       return res.status(400).json({
         success: false,
-        message: 'NIP, password, nama, email, dan mata pelajaran harus diisi'
+        message: 'NIP, password, dan nama harus diisi'
       });
     }
 
@@ -217,33 +197,32 @@ export const registerGuru = async (req, res) => {
       });
     }
 
-    // Cek apakah NIP atau email sudah terdaftar di Guru
-    const existingGuru = await Guru.findOne({
-      $or: [{ nip }, { email }]
-    });
+    // Cek apakah NIP sudah terdaftar di Guru
+    const existingGuru = await Guru.findOne({ nip });
     if (existingGuru) {
       return res.status(400).json({
         success: false,
-        message: 'NIP atau email sudah terdaftar'
+        message: 'NIP sudah terdaftar'
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Buat akun auth dengan NIP sebagai username
     const auth = new Auth({
-      nis: nip,
-      password: hashedPassword,
-      role: 'guru'
+      nis: nip, // menggunakan field nis untuk menyimpan nip
+      password,
+      role: 'guru' // tambahkan role guru
     });
 
     // Buat data guru
     const guru = new Guru({
       nip,
       nama,
-      email,
-      mataPelajaran
+      jenisKelamin,
+      tanggalLahir,
+      alamat,
+      noTelp,
+      mataPelajaran,
+      pendidikanTerakhir
     });
 
     await auth.save();
@@ -255,7 +234,6 @@ export const registerGuru = async (req, res) => {
       data: {
         nip: guru.nip,
         nama: guru.nama,
-        email: guru.email,
         mataPelajaran: guru.mataPelajaran
       }
     });

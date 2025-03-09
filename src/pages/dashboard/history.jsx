@@ -30,6 +30,7 @@ import { useNavigate } from "react-router-dom";
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
 import { jwtDecode } from "jwt-decode";
+import Swal from "sweetalert2";
 
 
 const SkeletonRow = () => {
@@ -236,51 +237,41 @@ export function History() {
     }));
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = async (e) => {
+    e.preventDefault();
     try {
       const storedToken = localStorage.getItem("token");
-      if (!storedToken) {
-        navigate("/auth/sign-in");
-        return;
-      }
-
-      // Validate required fields
-      if (!formData.nama || !formData.email || !formData.password) {
-        alert("Please fill in all required fields");
-        return;
-      }
-
-      // Prepare data based on role
-      const userData = {
-        nama: formData.nama,
-        email: formData.email,
-        password: formData.password
-      };
+      let endpoint;
+      let payload;
 
       if (formData.role === 'siswa') {
-        if (!formData.nis || !formData.nisn || !formData.kelas) {
-          alert("Please fill in all required fields for student");
-          return;
-        }
-        userData.nis = formData.nis;
-        userData.nisn = formData.nisn;
-        userData.kelas = formData.kelas;
+        endpoint = 'http://localhost:3000/api/auth/register';
+        payload = {
+          nis: formData.nis,
+          nisn: formData.nisn,
+          nama: formData.nama,
+          email: formData.email,
+          password: formData.password,
+          kelas: formData.kelas
+        };
       } else if (formData.role === 'guru') {
-        if (!formData.nip || !formData.mataPelajaran) {
-          alert("Please fill in all required fields for teacher");
-          return;
-        }
-        userData.nip = formData.nip;
-        userData.mataPelajaran = formData.mataPelajaran;
+        endpoint = 'http://localhost:3000/api/auth/register-guru';
+        payload = {
+          nip: formData.nip,
+          nama: formData.nama,
+          email: formData.email,
+          password: formData.password,
+          mataPelajaran: formData.mataPelajaran
+        };
       }
 
-      const response = await fetch(`http://localhost:3000/api/${formData.role}/register`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${storedToken}`
+          Authorization: `Bearer ${storedToken}`
         },
-        body: JSON.stringify(userData)
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
@@ -301,17 +292,27 @@ export function History() {
         kelas: '',
         mataPelajaran: ''
       });
-      setOpen(false);
+      handleOpen();
 
       // Refresh user list
       fetchData();
 
       // Show success message
-      alert('User added successfully!');
+      Swal.fire({
+        title: 'Success!',
+        text: 'User has been added successfully',
+        icon: 'success',
+        confirmButtonText: 'OK'
+      });
 
     } catch (error) {
       console.error('Error adding user:', error);
-      alert(error.message);
+      Swal.fire({
+        title: 'Error!',
+        text: error.message,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     }
   };
 
@@ -557,258 +558,271 @@ export function History() {
 
       {userRole === "siswa" && (
         <>
-          <Card>
-            <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-              <Typography variant="h6" color="white">
-                Riwayat Absensi
-              </Typography>
-            </CardHeader>
-            <CardBody className="overflow-hidden px-0 pt-0 pb-2">
-              <table className="w-full min-w-[640px] table-auto">
-                <thead>
-                  <tr>
-                    {["Siswa", "Tanggal", "Jam Masuk", "Status", "Keterangan", "Surat Izin"].map((el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-bold uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody ref={galleryRef}>
-                  {loading
-                    ? Array.from({ length: itemsPerPage }).map((_, index) => <SkeletonRow key={index} />)
-                    : currentData.map((absen, key) => {
-                      const className = `py-3 px-5 ${key === currentData.length - 1 ? "" : "border-b border-blue-gray-50"}`;
-                      return (
-                        <tr key={absen.id}>
-                          <td className={className}>
-                            <div className="flex items-center gap-4">
-                              <Avatar
-                                src={getPhotoUrl(absen.photo)}
-                                alt={absen.nama}
-                                size="sm"
-                                variant="rounded"
-                                className="object-cover"
-                              />
-                              <div>
-                                <Typography variant="small" color="blue-gray" className="font-semibold">
-                                  {absen.nama}
-                                </Typography>
-                                <Typography className="text-xs font-normal text-blue-gray-500">
-                                  {absen.nis}
-                                </Typography>
-                              </div>
-                            </div>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-semibold text-blue-gray-600">{absen.tanggal}</Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-semibold text-blue-gray-600">{absen.jamMasuk}</Typography>
-                          </td>
-                          <td className={`text-center ${className}`}>
-                            <Chip variant="gradient" color={getStatusColor(absen.status)} value={absen.status} className="py-0.5 px-2 text-[11px] font-medium" />
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-semibold text-blue-gray-600">{absen.keterangan}</Typography>
-                          </td>
-                          <td className={className}>
-                            {absen.suratIzin ? (
-                              <a
-                                href="#"
-                                ref={(el) => {
-                                  if (el) {
-                                    const img = new Image();
-                                    img.src = absen.suratIzin instanceof File
-                                      ? URL.createObjectURL(absen.suratIzin)
-                                      : absen.suratIzin.startsWith('http')
-                                        ? absen.suratIzin
-                                        : `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`;
+      <Card>
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <Typography variant="h6" color="white">
+            Riwayat Absensi
+          </Typography>
+        </CardHeader>
+        <CardBody className="overflow-hidden px-0 pt-0 pb-2">
+          <table className="w-full min-w-[640px] table-auto">
+            <thead>
+              <tr>
+                {["Siswa", "Tanggal", "Jam Masuk", "Status", "Keterangan", "Surat Izin"].map((el) => (
+                  <th
+                    key={el}
+                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                  >
+                    <Typography
+                      variant="small"
+                      className="text-[11px] font-bold uppercase text-blue-gray-400"
+                    >
+                      {el}
+                    </Typography>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody ref={galleryRef}>
+              {loading
+                ? Array.from({ length: itemsPerPage }).map((_, index) => <SkeletonRow key={index} />)
+                : currentData.map((absen, key) => {
+                  const className = `py-3 px-5 ${key === currentData.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                  return (
+                    <tr key={absen.id}>
+                      <td className={className}>
+                        <div className="flex items-center gap-4">
+                          <Avatar
+                            src={getPhotoUrl(absen.photo)}
+                            alt={absen.nama}
+                            size="sm"
+                            variant="rounded"
+                            className="object-cover"
+                          />
+                          <div>
+                            <Typography variant="small" color="blue-gray" className="font-semibold">
+                              {absen.nama}
+                            </Typography>
+                            <Typography className="text-xs font-normal text-blue-gray-500">
+                              {absen.nis}
+                            </Typography>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.tanggal}</Typography>
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.jamMasuk}</Typography>
+                      </td>
+                      <td className={`text-center ${className}`}>
+                        <Chip variant="gradient" color={getStatusColor(absen.status)} value={absen.status} className="py-0.5 px-2 text-[11px] font-medium" />
+                      </td>
+                      <td className={className}>
+                        <Typography className="text-xs font-semibold text-blue-gray-600">{absen.keterangan}</Typography>
+                      </td>
+                      <td className={className}>
+                        {absen.suratIzin ? (
+                          <a
+                            href="#"
+                            ref={(el) => {
+                              if (el) {
+                                const img = new Image();
+                                img.src = absen.suratIzin instanceof File
+                                  ? URL.createObjectURL(absen.suratIzin)
+                                  : absen.suratIzin.startsWith('http')
+                                    ? absen.suratIzin
+                                    : `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`;
 
-                                    img.onload = () => {
-                                      el.setAttribute("data-pswp-src", img.src);
-                                      el.setAttribute("data-pswp-width", img.naturalWidth);
-                                      el.setAttribute("data-pswp-height", img.naturalHeight);
-                                    };
-                                  }
-                                }}
-                              >
-
-
-                                <img src={
-                                  absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
-                                    absen.suratIzin.startsWith('http') ? absen.suratIzin :
-                                      `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
-                                } alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
-
-                              </a>
-                            ) : (
-                              <Typography className="text-xs font-semibold text-gray-600">-</Typography>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan="6" className="py-4 text-center">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                          className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
-                          disabled={currentPage === 1}
-                        >
-                          &#171; Prev
-                        </button>
-                        <span className="px-3 py-1 border rounded-md bg-gray-100">{currentPage} / {totalPages}</span>
-                        <button
-                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                          className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
-                          disabled={currentPage === totalPages}
-                        >
-                          Next &#187;
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tfoot>
+                                img.onload = () => {
+                                  el.setAttribute("data-pswp-src", img.src);
+                                  el.setAttribute("data-pswp-width", img.naturalWidth);
+                                  el.setAttribute("data-pswp-height", img.naturalHeight);
+                                };
+                              }
+                            }}
+                          >
 
 
-              </table>
-            </CardBody>
-          </Card>
+                            <img src={
+                              absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
+                                absen.suratIzin.startsWith('http') ? absen.suratIzin :
+                                  `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
+                            } alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
+
+                          </a>
+                        ) : (
+                          <Typography className="text-xs font-semibold text-gray-600">-</Typography>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan="6" className="py-4 text-center">
+                  <div className="inline-flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                      disabled={currentPage === 1}
+                    >
+                      &#171; Prev
+                    </button>
+                    <span className="px-3 py-1 border rounded-md bg-gray-100">{currentPage} / {totalPages}</span>
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                      disabled={currentPage === totalPages}
+                    >
+                      Next &#187;
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+
+
+          </table>
+        </CardBody>
+      </Card>
         </>
       )}
 
       {userRole === "admin" && (
-        <Card className="h-full w-full">
-          <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-            <div className="flex items-center justify-between gap-8">
-              <div>
-                <Typography variant="h6" color="white">
-                  Users list
-                </Typography>
-                <Typography color="white" className="mt-1 font-normal">
-                  Lihat Semua Informasi Siswa dan Guru.
-                </Typography>
-              </div>
-
-              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                <Button onClick={handleOpen} className="flex items-center gap-3" size="sm">
-                  <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add User
-                </Button>
-              </div>
+      <Card className="h-full w-full">
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <div className="flex items-center justify-between gap-8">
+            <div>
+              <Typography variant="h6" color="white">
+                Users list
+              </Typography>
+              <Typography color="white" className="mt-1 font-normal">
+                Lihat Semua Informasi Siswa dan Guru.
+              </Typography>
             </div>
 
-            <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
-              <DialogHeader className="relative m-0 block">
-                <Typography variant="h4" color="blue-gray">
-                  Add New User
-                </Typography>
-                <Typography className="mt-1 font-normal text-gray-600">
-                  Fill in the details below to add a new user.
-                </Typography>
-                <IconButton
-                  size="sm"
-                  variant="text"
-                  className="!absolute right-3.5 top-3.5"
-                  onClick={handleOpen}
-                >
-                  <XMarkIcon className="h-4 w-4 stroke-2" />
-                </IconButton>
-              </DialogHeader>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Button onClick={handleOpen} className="flex items-center gap-3" size="sm">
+                <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add User
+              </Button>
+            </div>
+          </div>
 
+          <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
+            <DialogHeader className="relative m-0 block">
+              <Typography variant="h4" color="blue-gray">
+                Add New User
+              </Typography>
+              <Typography className="mt-1 font-normal text-gray-600">
+                Fill in the details below to add a new user.
+              </Typography>
+              <IconButton
+                size="sm"
+                variant="text"
+                className="!absolute right-3.5 top-3.5"
+                onClick={handleOpen}
+              >
+                <XMarkIcon className="h-4 w-4 stroke-2" />
+              </IconButton>
+            </DialogHeader>
+
+            <form onSubmit={handleAddUser}>
               <DialogBody className="space-y-4 pb-6">
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Full Name
                   </Typography>
                   <Input
+                    required
                     color="gray"
                     size="lg"
-                    placeholder="Enter full name"
                     name="nama"
+                    value={formData.nama}
+                    onChange={handleInputChange}
+                    placeholder="Enter full name"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
-                    value={formData.nama}
-                    onChange={handleInputChange}
                   />
                 </div>
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Email
                   </Typography>
                   <Input
+                    required
+                    type="email"
                     color="gray"
                     size="lg"
-                    placeholder="Enter email"
                     name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter email"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
-                    value={formData.email}
-                    onChange={handleInputChange}
                   />
                 </div>
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Password
                   </Typography>
                   <Input
+                    required
                     type="password"
                     color="gray"
                     size="lg"
-                    placeholder="Enter password"
                     name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Enter password"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
-                    value={formData.password}
-                    onChange={handleInputChange}
                   />
                 </div>
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Role
                   </Typography>
                   <Select
+                    required
                     color="gray"
                     size="lg"
                     name="role"
                     value={formData.role}
                     onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
                   >
                     <Option value="siswa">Siswa</Option>
                     <Option value="guru">Guru</Option>
                   </Select>
                 </div>
-                {formData.role === 'siswa' && (
+
+                {formData.role === 'siswa' ? (
                   <>
                     <div>
                       <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                         NIS
                       </Typography>
                       <Input
+                        required
                         color="gray"
                         size="lg"
-                        placeholder="Enter NIS"
                         name="nis"
+                        value={formData.nis}
+                        onChange={handleInputChange}
+                        placeholder="Enter NIS"
                         className="placeholder:opacity-100 focus:!border-t-gray-900"
                         containerProps={{ className: "!min-w-full" }}
                         labelProps={{ className: "hidden" }}
-                        value={formData.nis}
-                        onChange={handleInputChange}
                       />
                     </div>
                     <div>
@@ -816,15 +830,16 @@ export function History() {
                         NISN
                       </Typography>
                       <Input
+                        required
                         color="gray"
                         size="lg"
-                        placeholder="Enter NISN"
                         name="nisn"
+                        value={formData.nisn}
+                        onChange={handleInputChange}
+                        placeholder="Enter NISN"
                         className="placeholder:opacity-100 focus:!border-t-gray-900"
                         containerProps={{ className: "!min-w-full" }}
                         labelProps={{ className: "hidden" }}
-                        value={formData.nisn}
-                        onChange={handleInputChange}
                       />
                     </div>
                     <div>
@@ -832,35 +847,36 @@ export function History() {
                         Kelas
                       </Typography>
                       <Input
+                        required
                         color="gray"
                         size="lg"
-                        placeholder="Enter Kelas (e.g. XII RPL 2)"
                         name="kelas"
+                        value={formData.kelas}
+                        onChange={handleInputChange}
+                        placeholder="Enter Kelas (e.g. XII RPL 2)"
                         className="placeholder:opacity-100 focus:!border-t-gray-900"
                         containerProps={{ className: "!min-w-full" }}
                         labelProps={{ className: "hidden" }}
-                        value={formData.kelas}
-                        onChange={handleInputChange}
                       />
                     </div>
                   </>
-                )}
-                {formData.role === 'guru' && (
+                ) : (
                   <>
                     <div>
                       <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                         NIP
                       </Typography>
                       <Input
+                        required
                         color="gray"
                         size="lg"
-                        placeholder="Enter NIP"
                         name="nip"
+                        value={formData.nip}
+                        onChange={handleInputChange}
+                        placeholder="Enter NIP"
                         className="placeholder:opacity-100 focus:!border-t-gray-900"
                         containerProps={{ className: "!min-w-full" }}
                         labelProps={{ className: "hidden" }}
-                        value={formData.nip}
-                        onChange={handleInputChange}
                       />
                     </div>
                     <div>
@@ -868,15 +884,16 @@ export function History() {
                         Mata Pelajaran
                       </Typography>
                       <Input
+                        required
                         color="gray"
                         size="lg"
-                        placeholder="Enter Mata Pelajaran"
                         name="mataPelajaran"
+                        value={formData.mataPelajaran}
+                        onChange={handleInputChange}
+                        placeholder="Enter Mata Pelajaran"
                         className="placeholder:opacity-100 focus:!border-t-gray-900"
                         containerProps={{ className: "!min-w-full" }}
                         labelProps={{ className: "hidden" }}
-                        value={formData.mataPelajaran}
-                        onChange={handleInputChange}
                       />
                     </div>
                   </>
@@ -887,105 +904,106 @@ export function History() {
                 <Button variant="text" onClick={handleOpen} className="mr-2">
                   Cancel
                 </Button>
-                <Button className="ml-auto" onClick={handleAddUser}>
+                <Button type="submit" className="ml-auto">
                   Add User
                 </Button>
               </DialogFooter>
-            </Dialog>
+            </form>
+          </Dialog>
 
-          </CardHeader>
+        </CardHeader>
 
-          <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
-            <Tabs value={selectedFilter} className="w-full md:w-max">
-              <TabsHeader>
+        <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
+          <Tabs value={selectedFilter} className="w-full md:w-max">
+            <TabsHeader>
                 {TABS.map(({ label, value }) => (
-                  <Tab
-                    key={value}
-                    value={value}
-                    onClick={() => {
-                      setSelectedFilter(value);
-                      setPageIndex(0);
-                    }}
-                  >
-                    {label}
-                  </Tab>
-                ))}
-              </TabsHeader>
-            </Tabs>
+                <Tab
+                  key={value}
+                  value={value}
+                  onClick={() => {
+                    setSelectedFilter(value);
+                    setPageIndex(0);
+                  }}
+                >
+                  {label}
+                </Tab>
+              ))}
+            </TabsHeader>
+          </Tabs>
 
-            <div className="w-full md:w-72">
-              <Input
-                label="Search"
-                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPageIndex(0); }}
-              />
-            </div>
+          <div className="w-full md:w-72">
+            <Input
+              label="Search"
+              icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPageIndex(0); }}
+            />
           </div>
+        </div>
 
-          <CardBody className="overflow-hidden px-0">
-            <table className="mt-4 w-full min-w-max table-auto text-left">
-              <thead>
-                <tr>
-                  {TABLE_HEAD.map((head) => (
-                    <th
-                      key={head}
-                      className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
+        <CardBody className="overflow-hidden px-0">
+          <table className="mt-4 w-full min-w-max table-auto text-left">
+            <thead>
+              <tr>
+                {TABLE_HEAD.map((head) => (
+                  <th
+                    key={head}
+                    className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
+                  >
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="font-normal leading-none opacity-70"
                     >
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal leading-none opacity-70"
-                      >
-                        {head}
-                      </Typography>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
+                      {head}
+                    </Typography>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
                 {paginatedData.map((user, index) => {
-                  const isLast = index === paginatedData.length - 1;
-                  const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                const isLast = index === paginatedData.length - 1;
+                const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
 
-                  return (
+                return (
                     <tr key={user._id || index}>
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
+                    <td className={classes}>
+                      <div className="flex items-center gap-3">
                           <Avatar 
                             src={user.photo || "https://www.gravatar.com/avatar/?d=mp"} 
                             alt={user.nama} 
                             size="sm"
                             className="object-cover"
                           />
-                          <div className="flex flex-col">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal"
-                            >
+                        <div className="flex flex-col">
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal"
+                          >
                               {user.nama}
-                            </Typography>
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal opacity-70"
-                            >
+                          </Typography>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal opacity-70"
+                          >
                               {user.isGuru ? `NIP: ${user.nip}` : `NIS: ${user.nis}`}
-                            </Typography>
+                          </Typography>
                             {!user.isGuru && (
-                              <Typography
-                                variant="small"
-                                color="blue-gray"
-                                className="font-normal opacity-70"
-                              >
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal opacity-70"
+                          >
                                 NISN: {user.nisn}
-                              </Typography>
+                          </Typography>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td className={classes}>
+                      </div>
+                    </td>
+                    <td className={classes}>
                         <Typography
                           variant="small"
                           color="blue-gray"
@@ -993,8 +1011,8 @@ export function History() {
                         >
                           {user.email}
                         </Typography>
-                      </td>
-                      <td className={classes}>
+                    </td>
+                    <td className={classes}>
                         <Typography
                           variant="small"
                           color="blue-gray"
@@ -1002,68 +1020,68 @@ export function History() {
                         >
                           {user.role}
                         </Typography>
-                      </td>
-                      <td className={classes}>
-                        <div className="w-max">
-                          <Chip
-                            variant="ghost"
-                            size="sm"
+                    </td>
+                    <td className={classes}>
+                      <div className="w-max">
+                        <Chip
+                          variant="ghost"
+                          size="sm"
                             value={user.isGuru ? "Guru" : "Siswa"}
                             color={user.isGuru ? "green" : "blue-gray"}
-                          />
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
+                        />
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="font-normal"
+                      >
                           {new Date(user.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <Tooltip content="Edit User">
-                          <IconButton variant="text">
-                            <PencilIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip content="Delete User">
-                          <IconButton variant="text">
-                            <TrashIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                  );
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <Tooltip content="Edit User">
+                        <IconButton variant="text">
+                          <PencilIcon className="h-4 w-4" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip content="Delete User">
+                        <IconButton variant="text">
+                          <TrashIcon className="h-4 w-4" />
+                        </IconButton>
+                      </Tooltip>
+                    </td>
+                  </tr>
+                );
                 })}
-              </tbody>
-            </table>
-          </CardBody>
-          <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
-            <Typography variant="small" color="blue-gray" className="font-normal">
-              Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
-            </Typography>
-            <div className="flex gap-2">
+            </tbody>
+          </table>
+        </CardBody>
+        <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
+          <Typography variant="small" color="blue-gray" className="font-normal">
+            Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
+          </Typography>
+          <div className="flex gap-2">
               <Button
                 variant="outlined"
                 size="sm"
                 disabled={pageIndex === 0}
                 onClick={() => setPageIndex(pageIndex - 1)}
               >
-                Previous
-              </Button>
+              Previous
+            </Button>
               <Button
                 variant="outlined"
                 size="sm"
                 disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length}
                 onClick={() => setPageIndex(pageIndex + 1)}
               >
-                Next
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
+              Next
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
       )}
 
     </div>
