@@ -2,6 +2,8 @@ import Admin from '../models/Admin.models.js';
 import Auth from '../models/Auth.models.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import Siswa from '../models/Siswa.models.js';
+import Guru from '../models/Guru.models.js';
 
 // Register admin
 export const registerAdmin = async (req, res) => {
@@ -197,6 +199,70 @@ export const getAllAdmins = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data admin',
+      error: error.message
+    });
+  }
+};
+
+// Get all users (siswa dan guru)
+export const getAllUsers = async (req, res) => {
+  try {
+    const { role } = req.user;
+
+    // Pastikan user adalah admin
+    if (role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak'
+      });
+    }
+
+    // Ambil semua siswa dan guru
+    const siswa = await Siswa.find().select('-__v');
+    const guru = await Guru.find().select('-__v');
+
+    // Base URL untuk foto
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    // Gabungkan dan format data
+    const users = [
+      ...siswa.map(s => {
+        const userData = s.toObject();
+        return {
+          ...userData,
+          isGuru: false,
+          role: s.kelas,
+          photo: userData.photo ? 
+            (userData.photo.startsWith('http') ? 
+              userData.photo : 
+              `${baseUrl}/uploads/profilepicture/${userData.photo.split('/').pop()}`
+            ) : null
+        };
+      }),
+      ...guru.map(g => {
+        const userData = g.toObject();
+        return {
+          ...userData,
+          isGuru: true,
+          role: g.mataPelajaran || 'Guru',
+          photo: userData.photo ? 
+            (userData.photo.startsWith('http') ? 
+              userData.photo : 
+              `${baseUrl}/uploads/profilepicture/${userData.photo.split('/').pop()}`
+            ) : null
+        };
+      })
+    ];
+    
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data users',
       error: error.message
     });
   }

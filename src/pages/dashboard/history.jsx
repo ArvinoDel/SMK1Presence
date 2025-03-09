@@ -18,6 +18,8 @@ import {
   DialogBody,
   DialogHeader,
   DialogFooter,
+  Select,
+  Option,
 } from "@material-tailwind/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { PencilIcon, UserPlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
@@ -212,13 +214,131 @@ export function History() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [pageIndex, setPageIndex] = useState(0); // Index halaman tanpa state global
 
+  const [users, setUsers] = useState([]);
+
+  const [formData, setFormData] = useState({
+    nama: '',
+    email: '',
+    password: '',
+    role: 'siswa', // default role
+    nis: '',
+    nisn: '',
+    nip: '',
+    kelas: '',
+    mataPelajaran: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddUser = async () => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      if (!storedToken) {
+        navigate("/auth/sign-in");
+        return;
+      }
+
+      // Validate required fields
+      if (!formData.nama || !formData.email || !formData.password) {
+        alert("Please fill in all required fields");
+        return;
+      }
+
+      // Prepare data based on role
+      const userData = {
+        nama: formData.nama,
+        email: formData.email,
+        password: formData.password
+      };
+
+      if (formData.role === 'siswa') {
+        if (!formData.nis || !formData.nisn || !formData.kelas) {
+          alert("Please fill in all required fields for student");
+          return;
+        }
+        userData.nis = formData.nis;
+        userData.nisn = formData.nisn;
+        userData.kelas = formData.kelas;
+      } else if (formData.role === 'guru') {
+        if (!formData.nip || !formData.mataPelajaran) {
+          alert("Please fill in all required fields for teacher");
+          return;
+        }
+        userData.nip = formData.nip;
+        userData.mataPelajaran = formData.mataPelajaran;
+      }
+
+      const response = await fetch(`http://localhost:3000/api/${formData.role}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${storedToken}`
+        },
+        body: JSON.stringify(userData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to add user');
+      }
+
+      // Reset form and close dialog
+      setFormData({
+        nama: '',
+        email: '',
+        password: '',
+        role: 'siswa',
+        nis: '',
+        nisn: '',
+        nip: '',
+        kelas: '',
+        mataPelajaran: ''
+      });
+      setOpen(false);
+
+      // Refresh user list
+      fetchData();
+
+      // Show success message
+      alert('User added successfully!');
+
+    } catch (error) {
+      console.error('Error adding user:', error);
+      alert(error.message);
+    }
+  };
+
   // **🔍 Filter Data Berdasarkan Role dan Search Query**
   const filteredData = useMemo(() => {
-    console.log("Filtering Data...");
-    console.log("Selected Filter:", selectedFilter);
-    console.log("Search Query:", searchQuery);
+    if (userRole === "admin") {
+      return users.filter((user) => {
+        const query = searchQuery.toLowerCase();
 
-    return TABLE_ROWS.filter((user) => {
+        // **Filter Berdasarkan Role**
+        const matchRole =
+          selectedFilter === "all" ||
+          (selectedFilter === "guru" && user.isGuru === true) ||
+          (selectedFilter === "siswa" && user.isGuru === false);
+
+        // **Filter Berdasarkan Search Query**
+        const matchSearch =
+          user.nama.toLowerCase().includes(query) ||
+          (user.email && user.email.toLowerCase().includes(query)) ||
+          (user.nis && user.nis.toLowerCase().includes(query)) ||
+          (user.nip && user.nip.toLowerCase().includes(query));
+
+        // **Gabungkan Kedua Filter**
+        return matchRole && matchSearch;
+      });
+    }
+    return riwayatAbsensi.filter((user) => {
       const query = searchQuery.toLowerCase();
 
       // **Filter Berdasarkan Role**
@@ -229,13 +349,13 @@ export function History() {
 
       // **Filter Berdasarkan Search Query**
       const matchSearch =
-        user.name.toLowerCase().includes(query) ||
+        user.nama.toLowerCase().includes(query) ||
         user.email.toLowerCase().includes(query);
 
       // **Gabungkan Kedua Filter**
       return matchRole && matchSearch;
     });
-  }, [searchQuery, selectedFilter]);
+  }, [searchQuery, selectedFilter, riwayatAbsensi, users, userRole]);
 
 
   // **📌 Pagination: Ambil data berdasarkan halaman**
@@ -245,7 +365,7 @@ export function History() {
   }, [filteredData, pageIndex]);
 
   useEffect(() => {
-    const fetchRiwayatAbsensi = async () => {
+    const fetchData = async () => {
       try {
         const storedToken = localStorage.getItem("token");
         if (!storedToken) {
@@ -266,7 +386,7 @@ export function History() {
             apiUrl = "http://localhost:3000/api/absensi/wali-kelas/riwayat";
             break;
           case "admin":
-            apiUrl = "http://localhost:3000/api/admin/profile";
+            apiUrl = "http://localhost:3000/api/admin/users";
             break;
           default:
             console.warn("User role tidak valid");
@@ -300,8 +420,8 @@ export function History() {
           setRiwayatAbsensi(flattenedData);
         } else if(userRole === "siswa") {
           setRiwayatAbsensi(result.data);
-        } else {
-          
+        } else if(userRole === "admin") {
+          setUsers(result.data);
         }
 
       } catch (error) {
@@ -310,7 +430,7 @@ export function History() {
         setLoading(false);
       }
     };
-    fetchRiwayatAbsensi();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -571,7 +691,6 @@ export function History() {
 
       {userRole === "admin" && (
         <Card className="h-full w-full">
-          {/* <CardHeader floated={false} shadow={false} className="rounded-none"> */}
           <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
             <div className="flex items-center justify-between gap-8">
               <div>
@@ -584,14 +703,12 @@ export function History() {
               </div>
 
               <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                {/* Tombol untuk membuka modal */}
                 <Button onClick={handleOpen} className="flex items-center gap-3" size="sm">
                   <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add User
                 </Button>
               </div>
             </div>
 
-            {/* Modal Dialog */}
             <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
               <DialogHeader className="relative m-0 block">
                 <Typography variant="h4" color="blue-gray">
@@ -619,10 +736,12 @@ export function History() {
                     color="gray"
                     size="lg"
                     placeholder="Enter full name"
-                    name="name"
+                    name="nama"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
+                    value={formData.nama}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div>
@@ -637,49 +756,153 @@ export function History() {
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    Password
+                  </Typography>
+                  <Input
+                    type="password"
+                    color="gray"
+                    size="lg"
+                    placeholder="Enter password"
+                    name="password"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                    value={formData.password}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Role
                   </Typography>
-                  <Input
+                  <Select
                     color="gray"
                     size="lg"
-                    placeholder="e.g. Admin, User, Guest"
                     name="role"
+                    value={formData.role}
+                    onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
-                    containerProps={{ className: "!min-w-full" }}
-                    labelProps={{ className: "hidden" }}
-                  />
+                  >
+                    <Option value="siswa">Siswa</Option>
+                    <Option value="guru">Guru</Option>
+                  </Select>
                 </div>
+                {formData.role === 'siswa' && (
+                  <>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NIS
+                      </Typography>
+                      <Input
+                        color="gray"
+                        size="lg"
+                        placeholder="Enter NIS"
+                        name="nis"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                        value={formData.nis}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NISN
+                      </Typography>
+                      <Input
+                        color="gray"
+                        size="lg"
+                        placeholder="Enter NISN"
+                        name="nisn"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                        value={formData.nisn}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Kelas
+                      </Typography>
+                      <Input
+                        color="gray"
+                        size="lg"
+                        placeholder="Enter Kelas (e.g. XII RPL 2)"
+                        name="kelas"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                        value={formData.kelas}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </>
+                )}
+                {formData.role === 'guru' && (
+                  <>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NIP
+                      </Typography>
+                      <Input
+                        color="gray"
+                        size="lg"
+                        placeholder="Enter NIP"
+                        name="nip"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                        value={formData.nip}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Mata Pelajaran
+                      </Typography>
+                      <Input
+                        color="gray"
+                        size="lg"
+                        placeholder="Enter Mata Pelajaran"
+                        name="mataPelajaran"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                        value={formData.mataPelajaran}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </>
+                )}
               </DialogBody>
 
               <DialogFooter>
                 <Button variant="text" onClick={handleOpen} className="mr-2">
                   Cancel
                 </Button>
-                <Button className="ml-auto" onClick={handleOpen}>
+                <Button className="ml-auto" onClick={handleAddUser}>
                   Add User
                 </Button>
               </DialogFooter>
             </Dialog>
 
           </CardHeader>
-          {/* **FILTER DAN SEARCH** */}
+
           <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
             <Tabs value={selectedFilter} className="w-full md:w-max">
               <TabsHeader>
-                {[
-                  { label: "All", value: "all" },
-                  { label: "Guru", value: "guru" },
-                  { label: "Siswa", value: "siswa" },
-                ].map(({ label, value }) => (
+                {TABS.map(({ label, value }) => (
                   <Tab
                     key={value}
                     value={value}
                     onClick={() => {
-                      console.log("Filter yang dipilih:", value);
                       setSelectedFilter(value);
                       setPageIndex(0);
                     }}
@@ -690,7 +913,6 @@ export function History() {
               </TabsHeader>
             </Tabs>
 
-
             <div className="w-full md:w-72">
               <Input
                 label="Search"
@@ -700,7 +922,7 @@ export function History() {
               />
             </div>
           </div>
-          {/* </CardHeader> */}
+
           <CardBody className="overflow-hidden px-0">
             <table className="mt-4 w-full min-w-max table-auto text-left">
               <thead>
@@ -722,68 +944,72 @@ export function History() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map(({ img, name, nis, nisn, email, role, isGuru, date }, index) => {
+                {paginatedData.map((user, index) => {
                   const isLast = index === paginatedData.length - 1;
                   const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+
                   return (
-                    <tr key={name}>
+                    <tr key={user._id || index}>
                       <td className={classes}>
                         <div className="flex items-center gap-3">
-                          <Avatar src={img} alt={name} size="sm" />
+                          <Avatar 
+                            src={user.photo || "https://www.gravatar.com/avatar/?d=mp"} 
+                            alt={user.nama} 
+                            size="sm"
+                            className="object-cover"
+                          />
                           <div className="flex flex-col">
                             <Typography
                               variant="small"
                               color="blue-gray"
                               className="font-normal"
                             >
-                              {name}
+                              {user.nama}
                             </Typography>
                             <Typography
                               variant="small"
                               color="blue-gray"
                               className="font-normal opacity-70"
                             >
-                              NIS: {nis}
+                              {user.isGuru ? `NIP: ${user.nip}` : `NIS: ${user.nis}`}
                             </Typography>
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal opacity-70"
-                            >
-                              NISN: {nisn}
-                            </Typography>
+                            {!user.isGuru && (
+                              <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-normal opacity-70"
+                              >
+                                NISN: {user.nisn}
+                              </Typography>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className={classes}>
-                        <div className="flex flex-col">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal"
-                          >
-                            {email}
-                          </Typography>
-                        </div>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {user.email}
+                        </Typography>
                       </td>
                       <td className={classes}>
-                        <div className="flex flex-col">
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-normal"
-                          >
-                            {role}
-                          </Typography>
-                        </div>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {user.role}
+                        </Typography>
                       </td>
                       <td className={classes}>
                         <div className="w-max">
                           <Chip
                             variant="ghost"
                             size="sm"
-                            value={isGuru ? "Guru" : "Siswa"}
-                            color={isGuru ? "green" : "blue-gray"}
+                            value={user.isGuru ? "Guru" : "Siswa"}
+                            color={user.isGuru ? "green" : "blue-gray"}
                           />
                         </div>
                       </td>
@@ -793,7 +1019,7 @@ export function History() {
                           color="blue-gray"
                           className="font-normal"
                         >
-                          {date}
+                          {new Date(user.createdAt).toLocaleDateString()}
                         </Typography>
                       </td>
                       <td className={classes}>
@@ -802,7 +1028,6 @@ export function History() {
                             <PencilIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-
                         <Tooltip content="Delete User">
                           <IconButton variant="text">
                             <TrashIcon className="h-4 w-4" />
@@ -811,21 +1036,29 @@ export function History() {
                       </td>
                     </tr>
                   );
-                },
-                )}
+                })}
               </tbody>
             </table>
           </CardBody>
-          {/* PAGINATION */}
           <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
             <Typography variant="small" color="blue-gray" className="font-normal">
               Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
             </Typography>
             <div className="flex gap-2">
-              <Button variant="outlined" size="sm" disabled={pageIndex === 0} onClick={() => setPageIndex(pageIndex - 1)}>
+              <Button
+                variant="outlined"
+                size="sm"
+                disabled={pageIndex === 0}
+                onClick={() => setPageIndex(pageIndex - 1)}
+              >
                 Previous
               </Button>
-              <Button variant="outlined" size="sm" disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length} onClick={() => setPageIndex(pageIndex + 1)}>
+              <Button
+                variant="outlined"
+                size="sm"
+                disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length}
+                onClick={() => setPageIndex(pageIndex + 1)}
+              >
                 Next
               </Button>
             </div>
