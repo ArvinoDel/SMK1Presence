@@ -7,6 +7,7 @@ import barcodeRoutes from './routes/barcode.routes.js';
 import absensiRoutes from './routes/absensi.routes.js';
 import siswaRoutes from './routes/siswa.routes.js';
 import guruRoutes from './routes/Guru.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -32,6 +33,7 @@ app.use('/api/barcode', barcodeRoutes);
 app.use('/api/absensi', absensiRoutes);
 app.use('/api/siswa', siswaRoutes);
 app.use('/api/guru', guruRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/kelas-absensi', kelasAbsensiRoutes);
 
 // Ensure uploads directory exists
@@ -39,7 +41,6 @@ const uploadsDir = path.join(process.cwd(), 'public/uploads');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
 
 // Serve static files from the public directory
 app.use('/api/public', express.static(path.join(__dirname, 'public')));
@@ -49,15 +50,15 @@ app.use('/uploads/profilepicture', express.static(path.join(process.cwd(), 'publ
 app.use('/uploads/suratizin', express.static(path.join(process.cwd(), 'public/uploads/suratizin')));
 app.use('/uploads/surat', express.static(path.join(process.cwd(), 'public/uploads/surat')));
 
-
-// MongoDB connection
+// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log('Berhasil terhubung ke MongoDB');
+    console.log('Connected to MongoDB');
+    // Initialize cron jobs after DB connection
     initCronJobs();
   })
   .catch((error) => {
-    console.error('Gagal terhubung ke MongoDB:', error);
+    console.error('Error connecting to MongoDB:', error);
   });
 
 // Error handling middleware
@@ -72,8 +73,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
-    message: 'Terjadi kesalahan internal server',
-    error: err.message
+    message: 'Terjadi kesalahan internal server'
   });
 });
 

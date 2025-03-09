@@ -3,6 +3,7 @@ import Siswa from '../models/Siswa.models.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Guru from '../models/Guru.models.js';
+import Admin from '../models/Admin.models.js';
 
 // Register siswa
 export const register = async (req, res) => {
@@ -86,11 +87,12 @@ export const login = async (req, res) => {
       });
     }
 
-    // Cari di Auth dengan nis (bisa berisi NIS atau NIP)
+    // Cari di Auth dengan nis (bisa berisi NIS, NIP, atau NIP admin)
     const auth = await Auth.findOne({
       $or: [
         { nis: identifier, role: 'siswa' },
-        { nis: identifier, role: 'guru' }
+        { nis: identifier, role: 'guru' },
+        { nis: identifier, role: 'admin' }
       ]
     });
     if (!auth) {
@@ -115,6 +117,8 @@ export const login = async (req, res) => {
       userData = await Siswa.findOne({ nis: identifier });
     } else if (auth.role === 'guru') {
       userData = await Guru.findOne({ nip: identifier });
+    } else if (auth.role === 'admin') {
+      userData = await Admin.findOne({ nip: identifier });
     }
 
     if (!userData) {
@@ -145,22 +149,22 @@ export const login = async (req, res) => {
     if (auth.role === 'siswa') {
       responseData.nis = userData.nis;
       responseData.kelas = userData.kelas;
-    } else {
+    } else if (auth.role === 'guru') {
       responseData.nip = userData.nip;
       responseData.mataPelajaran = userData.mataPelajaran;
+    } else if (auth.role === 'admin') {
+      responseData.nip = userData.nip;
+      responseData.email = userData.email;
     }
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
-      data: {
-        token,
-        user: responseData
-      }
+      data: responseData,
+      token
     });
 
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal melakukan login',
