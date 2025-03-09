@@ -22,7 +22,11 @@ const siswaSchema = new mongoose.Schema({
   barcode: String,
   firstName: String,
   lastName: String,
-  email: String,
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
   alamat: {
     street: String,
     city: String,

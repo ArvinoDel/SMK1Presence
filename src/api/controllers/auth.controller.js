@@ -8,10 +8,10 @@ import Admin from '../models/Admin.models.js';
 // Register siswa
 export const register = async (req, res) => {
   try {
-    const { nis, nisn, password, nama, kelas } = req.body;
+    const { nis, nisn, password, nama, kelas, email } = req.body;
 
     // Validasi input
-    if (!nis || !nisn || !password || !nama || !kelas) {
+    if (!nis || !nisn || !password || !nama || !kelas || !email) {
       return res.status(400).json({
         success: false,
         message: 'Semua field harus diisi'
@@ -28,12 +28,12 @@ export const register = async (req, res) => {
     }
 
     const existingSiswa = await Siswa.findOne({ 
-      $or: [{ nis }, { nisn }] 
+      $or: [{ nis }, { nisn }, { email }] 
     });
     if (existingSiswa) {
       return res.status(400).json({
         success: false,
-        message: 'NIS atau NISN sudah terdaftar'
+        message: 'NIS, NISN, atau email sudah terdaftar'
       });
     }
 
@@ -50,7 +50,8 @@ export const register = async (req, res) => {
       nis,
       nisn,
       nama,
-      kelas
+      kelas,
+      email
     });
 
     await auth.save();
@@ -62,7 +63,8 @@ export const register = async (req, res) => {
       data: {
         nis: siswa.nis,
         nama: siswa.nama,
-        kelas: siswa.kelas
+        kelas: siswa.kelas,
+        email: siswa.email
       }
     });
 
@@ -178,13 +180,13 @@ export const login = async (req, res) => {
 // Register guru
 export const registerGuru = async (req, res) => {
   try {
-    const { nip, password, nama, jenisKelamin, tanggalLahir, alamat, noTelp, mataPelajaran, pendidikanTerakhir } = req.body;
+    const { nip, password, nama, jenisKelamin, tanggalLahir, alamat, noTelp, mataPelajaran, pendidikanTerakhir, email } = req.body;
 
     // Validasi input
-    if (!nip || !password || !nama) {
+    if (!nip || !password || !nama || !email) {
       return res.status(400).json({
         success: false,
-        message: 'NIP, password, dan nama harus diisi'
+        message: 'NIP, password, nama, dan email harus diisi'
       });
     }
 
@@ -197,19 +199,22 @@ export const registerGuru = async (req, res) => {
       });
     }
 
-    // Cek apakah NIP sudah terdaftar di Guru
-    const existingGuru = await Guru.findOne({ nip });
+    // Cek apakah NIP atau email sudah terdaftar di Guru
+    const existingGuru = await Guru.findOne({ 
+      $or: [{ nip }, { email }] 
+    });
     if (existingGuru) {
       return res.status(400).json({
         success: false,
-        message: 'NIP sudah terdaftar'
+        message: 'NIP atau email sudah terdaftar'
       });
     }
 
     // Buat akun auth dengan NIP sebagai username
+    const hashedPassword = await bcrypt.hash(password, 10);
     const auth = new Auth({
       nis: nip, // menggunakan field nis untuk menyimpan nip
-      password,
+      password: hashedPassword,
       role: 'guru' // tambahkan role guru
     });
 
@@ -217,6 +222,7 @@ export const registerGuru = async (req, res) => {
     const guru = new Guru({
       nip,
       nama,
+      email,
       jenisKelamin,
       tanggalLahir,
       alamat,
@@ -234,6 +240,7 @@ export const registerGuru = async (req, res) => {
       data: {
         nip: guru.nip,
         nama: guru.nama,
+        email: guru.email,
         mataPelajaran: guru.mataPelajaran
       }
     });
