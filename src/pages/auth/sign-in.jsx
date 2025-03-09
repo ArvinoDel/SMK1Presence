@@ -34,6 +34,9 @@ export function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
       const response = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
@@ -49,30 +52,28 @@ export function SignIn() {
       const result = await response.json();
 
       if (result.success) {
-        // Simpan token ke localStorage
-        localStorage.setItem('token', result.data.token);
-        localStorage.setItem('user', JSON.stringify(result.data.user));
+        // Gunakan fungsi login dari context untuk menyimpan data
+        login(result.data.user, result.data.token);
 
-        // Swal.fire({
-        //   icon: 'success',
-        //   title: 'Login Berhasil!',
-        //   text: `Selamat datang, ${result.data.user.nama}!`,
-        //   timer: 1500,
-        //   showConfirmButton: false
-        // });
+        // Tampilkan pesan sukses
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Berhasil!',
+          text: `Selamat datang, ${result.data.user.nama}!`,
+          timer: 1500,
+          showConfirmButton: false
+        });
         
-        // Redirect ke dashboard
-        window.location.href = '/dashboard/home';
-        // Atau jika menggunakan React Router:
-        // navigate('/dashboard/home');
+        // Redirect ke dashboard menggunakan navigate
+        navigate('/dashboard/home');
       } else {
-        // Handle error
-        setError(result.message);
+        setError(result.message || 'Terjadi kesalahan saat login');
       }
-
     } catch (error) {
       console.error('Login error:', error);
-      setError('Terjadi kesalahan saat login');
+      setError('Terjadi kesalahan pada server');
+    } finally {
+      setLoading(false);
     }
   };
 

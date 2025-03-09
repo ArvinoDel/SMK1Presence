@@ -132,7 +132,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { 
         id: userData._id,
-        identifier: auth.nis, // Konsisten menggunakan nis
+        identifier: auth.nis,
         role: auth.role,
         nama: userData.nama
       },
@@ -142,26 +142,28 @@ export const login = async (req, res) => {
 
     // Siapkan response data berdasarkan role
     const responseData = {
-      nama: userData.nama,
-      role: auth.role
+      user: {
+        nama: userData.nama,
+        role: auth.role
+      },
+      token
     };
 
     if (auth.role === 'siswa') {
-      responseData.nis = userData.nis;
-      responseData.kelas = userData.kelas;
+      responseData.user.nis = userData.nis;
+      responseData.user.kelas = userData.kelas;
     } else if (auth.role === 'guru') {
-      responseData.nip = userData.nip;
-      responseData.mataPelajaran = userData.mataPelajaran;
+      responseData.user.nip = userData.nip;
+      responseData.user.mataPelajaran = userData.mataPelajaran;
     } else if (auth.role === 'admin') {
-      responseData.nip = userData.nip;
-      responseData.email = userData.email;
+      responseData.user.nip = userData.nip;
+      responseData.user.email = userData.email;
     }
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
-      data: responseData,
-      token
+      data: responseData
     });
 
   } catch (error) {
