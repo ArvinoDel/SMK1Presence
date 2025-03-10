@@ -721,7 +721,7 @@ export function History() {
                 Riwayat Absensi
               </Typography>
             </CardHeader>
-            <CardBody className="overflow-hidden px-0 pt-0 pb-2">
+            <CardBody className="lg:overflow-hidden overflow-x-scroll px-0 pt-0 pb-2">
               <table className="w-full min-w-[640px] table-auto">
                 <thead>
                   <tr>
@@ -1098,7 +1098,7 @@ export function History() {
             </div>
           </div>
 
-          <CardBody className="overflow-hidden px-0">
+          <CardBody className="lg:overflow-hidden overflow-x-scroll px-0">
             <table className="mt-4 w-full min-w-max table-auto text-left">
               <thead>
                 <tr>
