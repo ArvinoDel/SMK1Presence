@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import jsQR from "jsqr";
+import JsBarcode from "jsbarcode";
 import QRCode from "react-qr-code";
 import { jwtDecode } from "jwt-decode";
 import {
@@ -61,6 +62,7 @@ export function Home() {
   const [deviceId, setDeviceId] = useState("");
   const webcamRef = useRef(null);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isOpened, setIsOpened] = useState(false);
 
   const [activeTab, setActiveTab] = useState("absen"); // Menyimpan tab yang aktif
 
@@ -231,7 +233,7 @@ export function Home() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/absensi/scan-qr`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
@@ -494,6 +496,36 @@ export function Home() {
     return riwayatAbsensi.filter(item => item.status === status).length;
   };
 
+  const barcodeRef = useRef(null);
+  const barcodeModalRef = useRef(null);
+
+
+  useEffect(() => {
+    if (nisn && barcodeRef.current) {
+      JsBarcode(barcodeRef.current, nisn, {
+        format: "CODE128",
+        width: 2,
+        height: 100,
+        displayValue: true,
+      });
+    }
+  }, [nisn]);
+
+  useEffect(() => {
+    if (isOpened && nisn && barcodeModalRef.current) {
+      setTimeout(() => {  // Tambahkan sedikit delay agar canvas ter-render
+        JsBarcode(barcodeModalRef.current, nisn, {
+          format: "CODE128",
+          width: 2,
+          height: 150, // Bisa diperbesar untuk modal
+          displayValue: true,
+        });
+      }, 100);
+    }
+  }, [isOpened, nisn]);
+
+
+
   // Update nilai kartu dengan data dinamis
   const updatedStatisticsCardsData = statisticsCardsData.map(card => {
     switch (card.title) {
@@ -524,6 +556,8 @@ export function Home() {
   });
 
 
+
+
   return (
     <div className="mt-3">
       <div className="flex flex-col items-right justify-right text-black">
@@ -531,6 +565,15 @@ export function Home() {
         <span className="text-xl font-medium">{dateString}</span>
         <span className="text-3xl font-bold">{time}<span className="text-xl font-bold">WIB</span></span>
       </div>
+      <iframe
+        style={{ borderRadius: "12px" }}
+        src="https://open.spotify.com/embed/playlist/37i9dQZF1FoOkwqHhdNOkk?utm_source=generator"
+        width="100%"
+        height="152"
+        frameBorder="0"
+        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+        loading="lazy"
+      />
       {userRole == "guru" &&
         <div className="bg-transparent p-6">
           <h1 className="text-2xl font-bold">{greeting}, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
@@ -806,21 +849,17 @@ export function Home() {
                           <div className="sm:col-span-3">
                             <label htmlFor="FormAbsen" className="block text-2xl font-medium text-gray-900 my-5">
                               {userRole === "siswa" ? "Silahkan Absen" : userRole === "guru" ? "Silahkan Menginput Absen" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
-
                             </label>
-
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-
-                        <div className="col-span-full">
+                        <div className="col-span-full border-b border-gray-900/10 pb-12">
                           <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
                             {userRole === "siswa" ? "QR Code" : userRole === "guru" ? "Scan QR Code" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
-
                           </label>
+
                           {userRole === "guru" && (
                             <div className="flex flex-col items-center rounded-lg justify-center my-10">
                               {/* Kamera Scanner */}
@@ -896,13 +935,63 @@ export function Home() {
                                   </div>
                                 </div>
                               )}
+
                             </>
                           )}
+                        </div>
+                        <div className="col-span-full">
+                          {userRole === "siswa" && nisn && (
+                            <>
+                              <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
+                                {userRole === "siswa" ? "Barcode" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
+                              </label>
 
 
+                              <div
+                                className="mt-6 flex flex-col items-center p-6 border border-gray-300 rounded-2xl shadow-lg bg-white max-w-sm sm:max-w-md md:max-w-lg mx-auto cursor-pointer"
+                                onClick={() => setIsOpened(true)}
+                              >
+                                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Barcode Anda</h2>
+
+                                {/* QR Code responsif */}
+                                <div className="p-4">
+                                  <canvas ref={barcodeRef}></canvas>
+                                </div>
+
+                                <p className="mt-4 text-lg font-medium text-gray-700">
+                                  NISN: <span className="text-blue-600">{nisn}</span>
+                                </p>
+                              </div>
+
+                              {/* Overlay zoom-in saat diklik */}
+                              {isOpened && (
+                                <div
+                                  className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+                                  onClick={() => setIsOpened(false)} // Klik di luar = close
+                                >
+                                  {/* Container untuk QR dan tombol close */}
+                                  <div
+                                    className="relative bg-white p-6 rounded-2xl shadow-xl"
+                                    onClick={(e) => e.stopPropagation()} // Mencegah klik di dalam QR menutup overlay
+                                  >
+                                    {/* Tombol Close */}
+                                    <button
+                                      className="absolute top-1 right-1 text-gray-600 hover:text-gray-900 text-3xl font-bold"
+                                      onClick={() => setIsOpened(false)}
+                                    >
+                                      &times;
+                                    </button>
+
+                                    {/* Barcode besar */}
+                                    <canvas ref={barcodeModalRef} className="mx-auto w-[500px] h-[300px]"></canvas>
+
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
-
                     </div>
                   </div>
 
@@ -931,9 +1020,6 @@ export function Home() {
 
                             <div className="border-b border-gray-900/10 pb-12">
                               <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-
-
                                 <div className="sm:col-span-3">
                                   <label htmlFor="FormIzin" className="block text-2xl font-medium text-gray-900 my-5">
                                     Form Izin

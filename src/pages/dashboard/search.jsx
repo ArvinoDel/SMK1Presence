@@ -109,16 +109,18 @@ export function Search() {
 
   return (
     <>
-
-      <div className="flex flex-col items-center justify-center min-h-[200px] my-10">
+      <div className="flex flex-col items-center justify-center min-h-[200px] my-10 w-full">
         <div className="bg-transparent p-6">
-          <h1 className="text-2xl font-bold">Selamat Pagi, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <h1 className="text-2xl font-bold">
+            Selamat Pagi, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !
+          </h1>
           <p className="text-gray-600">Masukkan Kode Kelas Untuk Mencari Absensi Hari Ini.</p>
         </div>
+
         {/* SEARCH INPUT */}
         <motion.div
           initial={{ width: "80px" }}
-          animate={{ width: query.length > 0 ? "350px" : "80px" }} // Tetap besar saat ada input
+          animate={{ width: query.length > 0 ? "350px" : "80px" }}
           whileHover={{ width: "500px" }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className="relative"
@@ -134,7 +136,7 @@ export function Search() {
           />
         </motion.div>
 
-        {/* TABLE MUNCUL DI BAWAH SEARCH */}
+        {/* TABLE RESPONSIVE */}
         <AnimatePresence>
           {showTable && kelasAbsensi.length > 0 && (
             <motion.div
@@ -142,48 +144,56 @@ export function Search() {
               animate={{ opacity: 1, y: 20, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="mt-4 w-[500px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              className="mt-4 w-full max-w-screen-lg bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
             >
-              <table className="w-full text-white">
-                <thead>
-                  <tr className="bg-gray-700">
-                    <th className="px-4 py-2 text-left">NIS</th>
-                    <th className="px-4 py-2 text-left">NISN</th>
-                    <th className="px-4 py-2 text-left">Nama</th>
-                    <th className="px-4 py-2 text-left">Kelas</th>
-                    <th className="px-4 py-2 text-left">Absensi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {kelasAbsensi.map((siswa, index) => (
-                    <motion.tr
-                      key={siswa.nis}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      transition={{ duration: 0.2, delay: index * 0.05 }}
-                      className="hover:bg-gray-700"
-                    >
-                      <td className="px-4 py-2">{siswa.nis}</td>
-                      <td className="px-4 py-2">{siswa.nisn}</td>
-                      <td className="px-4 py-2">{siswa.name}</td>
-                      <td className="px-4 py-2">{siswa.class}</td>
-                      <td className={`px-4 py-2 font-semibold ${
-                        siswa.attendance === "HADIR" ? "text-green-400" :
-                        siswa.attendance === "IZIN" ? "text-yellow-400" :
-                        siswa.attendance === "SAKIT" ? "text-orange-400" :
-                        "text-red-400"
-                      }`}>
-                        {siswa.attendance}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* WRAPPER SCROLL UNTUK MOBILE */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px] text-white">
+                  <thead>
+                    <tr className="bg-gray-700">
+                      <th className="px-4 py-2 text-left">NIS</th>
+                      <th className="px-4 py-2 text-left">NISN</th>
+                      <th className="px-4 py-2 text-left">Nama</th>
+                      <th className="px-4 py-2 text-left">Kelas</th>
+                      <th className="px-4 py-2 text-left">Absensi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kelasAbsensi.map((siswa, index) => (
+                      <motion.tr
+                        key={siswa.nis}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                        className="hover:bg-gray-700"
+                      >
+                        <td className="px-4 py-2">{siswa.nis}</td>
+                        <td className="px-4 py-2">{siswa.nisn}</td>
+                        <td className="px-4 py-2">{siswa.name}</td>
+                        <td className="px-4 py-2">{siswa.class}</td>
+                        <td
+                          className={`px-4 py-2 font-semibold ${siswa.attendance === "HADIR"
+                              ? "text-green-400"
+                              : siswa.attendance === "IZIN"
+                                ? "text-yellow-400"
+                                : siswa.attendance === "SAKIT"
+                                  ? "text-orange-400"
+                                  : "text-red-400"
+                            }`}
+                        >
+                          {siswa.attendance}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
     </>
   );
 }
