@@ -12,6 +12,7 @@ import { authAPI } from '@/services/api';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import Swal from 'sweetalert2';
 import { Navigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 // import { useAuth } from '@/context/AuthContext';
 
 
@@ -38,7 +39,7 @@ export function SignIn() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

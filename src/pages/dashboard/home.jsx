@@ -43,6 +43,7 @@ import {
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 import Swal from 'sweetalert2';
 import statisticsCardsData from "./../../data/statistics-cards-data";
+import { API_BASE_URL } from "@/config";
 
 export function Home() {
 
@@ -61,33 +62,156 @@ export function Home() {
   const webcamRef = useRef(null);
   const [isZoomed, setIsZoomed] = useState(false);
 
-  useEffect(() => {
-    // Ambil daftar perangkat yang tersedia
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter(device => device.kind === "videoinput");
+  const [activeTab, setActiveTab] = useState("absen"); // Menyimpan tab yang aktif
 
-      // Pilih kamera belakang
-      const backCamera = videoDevices.find(device => device.label.toLowerCase().includes("back")) || videoDevices[0];
-      if (backCamera) setDeviceId(backCamera.deviceId);
-    });
-  }, []);
+  const [previewImage, setPreviewImage] = useState(null); // Nama const berbeda
+
+  const [formData, setFormData] = useState({
+    keterangan: '',
+    description: '',
+    suratIzin: null
+  });
+
+  const navigate = useNavigate(); // Hook untuk redirect
+  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
+  const [nisn, setNisn] = useState(""); // State untuk menyimpan NISN siswa
+  const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
+  // Tambahkan useEffect untuk mengambil data user
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
+          navigate("auth/sign-in");
+          return;
+        }
+
+        // Decode JWT Token
+        const decodedToken = jwtDecode(storedToken);
+        const currentTime = Date.now() / 1000;
+        if (decodedToken.exp < currentTime) {
+          localStorage.removeItem("token");
+          navigate("auth/sign-in");
+          return;
+        }
+
+        setUserRole(decodedToken.role);
+        const userRole = decodedToken.role;
+        let apiUrl;
+
+        switch (userRole) {
+          case "siswa":
+            apiUrl = `${API_BASE_URL}/api/siswa/profile`;
+            break;
+          case "guru":
+            apiUrl = `${API_BASE_URL}/api/guru/profile`;
+            break;
+          case "admin":
+            apiUrl = `${API_BASE_URL}/api/admin/profile`;
+            break;
+          default:
+            console.warn("User role tidak valid");
+            navigate("auth/sign-in");
+            return;
+        }
+
+        const response = await fetch(apiUrl, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+          }
+          navigate("/auth/sign-in");
+          return;
+        }
+
+        const data = await response.json();
+        setUserData(data.data);
+
+        // Simpan NISN jika user adalah siswa
+        if (userRole === "siswa" && data.data.nisn) {
+          setNisn(data.data.nisn);
+        }
+
+        if (!localStorage.getItem("swalShown")) {
+          showWelcomeMessage(userRole);
+          localStorage.setItem("swalShown", "true");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        navigate("/auth/sign-in");
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
+  const showWelcomeMessage = (role) => {
+    const messages = {
+      admin: { title: "Selamat Datang, Admin!", text: "Anda berhasil login sebagai admin." },
+      siswa: { title: "Halo, Siswa!", text: "Selamat datang di dashboard siswa." },
+      guru: { title: "Selamat Datang, Guru!", text: "Anda berhasil masuk sebagai guru." }
+    };
+
+    if (messages[role]) {
+      Swal.fire({
+        title: messages[role].title,
+        text: messages[role].text,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  useEffect(() => {
+    // Hanya jalankan kode kamera jika user adalah guru
+    if (userRole === "guru") {
+      // Cek apakah browser mendukung mediaDevices
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        // Minta izin akses kamera
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(() => {
+            if (typeof navigator.mediaDevices.enumerateDevices === 'function') {
+              // Setelah mendapat izin, ambil daftar perangkat
+              navigator.mediaDevices.enumerateDevices()
+                .then((devices) => {
+                  const videoDevices = devices.filter(device => device.kind === "videoinput");
+                  // Pilih kamera belakang atau kamera pertama
+                  const backCamera = videoDevices.find(device => 
+                    device.label.toLowerCase().includes("back")) || videoDevices[0];
+                  if (backCamera) setDeviceId(backCamera.deviceId);
+                })
+                .catch(err => console.error("Error enumerating devices:", err));
+            }
+          })
+          .catch(err => console.error("Error accessing camera:", err));
+      }
+    }
+  }, [userRole]); // Tambahkan userRole sebagai dependency
 
   const scanBarcode = () => {
-    if (webcamRef.current) {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+    if (userRole !== "guru") return; // Hanya jalankan untuk guru
+    
+    if (webcamRef.current && webcamRef.current.video) {
       const video = webcamRef.current.video;
-
       if (video.readyState === 4) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-        if (code) {
-          setScannedData(code.data);
-          sendToBackend(code.data);
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code) {
+            setScannedData(code.data);
+            sendToBackend(code.data);
+          }
+        } catch (err) {
+          console.error("Error scanning QR code:", err);
         }
       }
     }
@@ -95,7 +219,7 @@ export function Home() {
 
   const sendToBackend = async (qrData) => {
     try {
-      const response = await fetch("http://localhost:3000/api/absensi/scan-qr", {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/scan-qr`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -240,112 +364,6 @@ export function Home() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState("absen"); // Menyimpan tab yang aktif
-
-  const [previewImage, setPreviewImage] = useState(null); // Nama const berbeda
-
-  const [formData, setFormData] = useState({
-    keterangan: '',
-    description: '',
-    suratIzin: null
-  });
-
-
-  const navigate = useNavigate(); // Hook untuk redirect
-  const [userRole, setUserRole] = useState(null); // ✅ Tambahkan state untuk role
-  const [nisn, setNisn] = useState(""); // State untuk menyimpan NISN siswa
-  const [swalShown, setSwalShown] = useState(false); // ✅ Tambahkan state untuk Swal
-  // Tambahkan useEffect untuk mengambil data user
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedToken = localStorage.getItem("token");
-        if (!storedToken) {
-          navigate("auth/sign-in");
-          return;
-        }
-
-        // Decode JWT Token
-        const decodedToken = jwtDecode(storedToken);
-        const currentTime = Date.now() / 1000;
-        if (decodedToken.exp < currentTime) {
-          localStorage.removeItem("token");
-          navigate("auth/sign-in");
-          return;
-        }
-
-        setUserRole(decodedToken.role);
-        const userRole = decodedToken.role;
-        let apiUrl;
-
-        switch (userRole) {
-          case "siswa":
-            apiUrl = "http://localhost:3000/api/siswa/profile";
-            break;
-          case "guru":
-            apiUrl = "http://localhost:3000/api/guru/profile";
-            break;
-          case "admin":
-            apiUrl = "http://localhost:3000/api/admin/profile";
-            break;
-          default:
-            console.warn("User role tidak valid");
-            navigate("auth/sign-in");
-            return;
-        }
-
-        const response = await fetch(apiUrl, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem("token");
-          }
-          navigate("/auth/sign-in");
-          return;
-        }
-
-        const data = await response.json();
-        setUserData(data.data);
-
-        // Simpan NISN jika user adalah siswa
-        if (userRole === "siswa" && data.data.nisn) {
-          setNisn(data.data.nisn);
-        }
-
-        if (!localStorage.getItem("swalShown")) {
-          showWelcomeMessage(userRole);
-          localStorage.setItem("swalShown", "true");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        navigate("/auth/sign-in");
-      }
-    };
-
-    fetchUserData();
-  }, [navigate]);
-
-  const showWelcomeMessage = (role) => {
-    const messages = {
-      admin: { title: "Selamat Datang, Admin!", text: "Anda berhasil login sebagai admin." },
-      siswa: { title: "Halo, Siswa!", text: "Selamat datang di dashboard siswa." },
-      guru: { title: "Selamat Datang, Guru!", text: "Anda berhasil masuk sebagai guru." }
-    };
-
-    if (messages[role]) {
-      Swal.fire({
-        title: messages[role].title,
-        text: messages[role].text,
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    }
-  };
-
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -375,7 +393,7 @@ export function Home() {
         formDataToSend.append('suratIzin', formData.suratIzin);
       }
 
-      const response = await fetch('http://localhost:3000/api/absensi/izin', {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/izin`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -433,15 +451,15 @@ export function Home() {
 
         let response;
         if (userRole === "siswa") {
-          response = await fetch("http://localhost:3000/api/absensi/riwayat", {
+          response = await fetch(`${API_BASE_URL}/api/absensi/riwayat`, {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
         } else if (userRole === "guru") {
-          // response = await fetch("http://localhost:3000/api/guru/profile", {
+          // response = await fetch("http://103.196.153.54:3000/api/guru/profile", {
           //   headers: { Authorization: `Bearer ${storedToken}` },
           // });
         } else if (userRole === "admin") {
-          // response = await fetch("http://localhost:3000/api/admin/profile", {
+          // response = await fetch("http://103.196.153.54:3000/api/admin/profile", {
           //   headers: { Authorization: `Bearer ${storedToken}` },
           // });
         }

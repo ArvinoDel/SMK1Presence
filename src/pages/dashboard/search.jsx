@@ -10,6 +10,7 @@ import {
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/config";
 
 export function Search() {
 
@@ -46,7 +47,7 @@ export function Search() {
           profileEndpoint = '/api/admin/profile';
         }
 
-        const response = await fetch(`http://localhost:3000${profileEndpoint}`, {
+        const response = await fetch(`${API_BASE_URL}${profileEndpoint}`, {
           headers: {
             'Authorization': `Bearer ${storedToken}`
           }
@@ -69,7 +70,7 @@ export function Search() {
   // Function to fetch class attendance data
   const fetchKelasAbsensi = async (kodeKelas) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/absensi/kelas/${kodeKelas}`, {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/kelas/${kodeKelas}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`
         }

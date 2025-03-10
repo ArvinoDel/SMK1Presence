@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css"; // Tambahkan ini
+import { API_BASE_URL } from "@/config";
 
 function DigitalClock() {
   const [time, setTime] = useState(new Date());
@@ -19,7 +20,7 @@ function DigitalClock() {
     try {
       console.log('Raw scan data:', scanData); // Debugging
 
-      const response = await fetch('http://localhost:3000/api/absensi/scan', {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/scan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
