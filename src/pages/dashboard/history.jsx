@@ -713,7 +713,7 @@ export function History() {
       )}
 
 
-      {userRole === "siswa" && (
+      {userRole === "siswa" || userRole === "guru" && (
         <>
           <Card>
             <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
