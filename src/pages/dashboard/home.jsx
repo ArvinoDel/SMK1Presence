@@ -818,7 +818,7 @@ export function Home() {
                       </div>
 
                       <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                        <div className="col-span-full">
+                        <div className="col-span-full border-b border-gray-900/10 pb-12">
                           <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
                             {userRole === "siswa" ? "QR Code" : userRole === "guru" ? "Scan QR Code" : userRole === "admin" ? "Administrator SMKN 1 Cirebon" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
                           </label>
