@@ -169,35 +169,45 @@ export function Home() {
   useEffect(() => {
     // Hanya jalankan kode kamera jika user adalah guru
     if (userRole === "guru") {
-      // Cek apakah browser mendukung mediaDevices
-      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-        // Minta izin akses kamera
-        navigator.mediaDevices.getUserMedia({ video: true })
-          .then(() => {
-            if (typeof navigator.mediaDevices.enumerateDevices === 'function') {
-              // Setelah mendapat izin, ambil daftar perangkat
-              navigator.mediaDevices.enumerateDevices()
-                .then((devices) => {
-                  const videoDevices = devices.filter(device => device.kind === "videoinput");
-                  // Pilih kamera belakang atau kamera pertama
-                  const backCamera = videoDevices.find(device => 
-                    device.label.toLowerCase().includes("back")) || videoDevices[0];
-                  if (backCamera) setDeviceId(backCamera.deviceId);
-                })
-                .catch(err => console.error("Error enumerating devices:", err));
-            }
-          })
-          .catch(err => console.error("Error accessing camera:", err));
-      }
+      const setupCamera = async () => {
+        try {
+          // Cek dukungan mediaDevices
+          if (!navigator.mediaDevices?.getUserMedia) {
+            console.error('Browser tidak mendukung getUserMedia');
+            return;
+          }
+
+          // Minta izin kamera
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } 
+          });
+
+          // Set stream ke webcam ref jika ada
+          if (webcamRef.current) {
+            webcamRef.current.video.srcObject = stream;
+          }
+
+        } catch (err) {
+          console.error("Error accessing camera:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal Mengakses Kamera',
+            text: 'Pastikan browser mendukung kamera dan izin kamera diberikan',
+            confirmButtonText: 'OK'
+          });
+        }
+      };
+
+      setupCamera();
     }
-  }, [userRole]); // Tambahkan userRole sebagai dependency
+  }, [userRole]);
 
   const scanBarcode = () => {
-    if (userRole !== "guru") return; // Hanya jalankan untuk guru
+    if (userRole !== "guru") return;
     
     if (webcamRef.current && webcamRef.current.video) {
       const video = webcamRef.current.video;
-      if (video.readyState === 4) {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
         try {
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
