@@ -31,6 +31,7 @@ import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
+import { API_BASE_URL, UPLOADS_BASE_URL } from "@/config";
 
 
 const SkeletonRow = () => {
@@ -251,7 +252,7 @@ export function History() {
     e.preventDefault();
     try {
       const storedToken = localStorage.getItem("token");
-      const endpoint = `http://localhost:3000/api/admin/users/${selectedUser._id}`;
+      const endpoint = `${API_BASE_URL}/api/admin/users/${selectedUser._id}`;
       const payload = {
         role: editFormData.role,
         nama: editFormData.nama,
@@ -319,7 +320,7 @@ export function History() {
 
       if (result.isConfirmed) {
         const storedToken = localStorage.getItem("token");
-        const endpoint = `http://localhost:3000/api/admin/users/${user._id}?role=${user.isGuru ? 'guru' : 'siswa'}`;
+        const endpoint = `${API_BASE_URL}/api/admin/users/${user._id}?role=${user.isGuru ? 'guru' : 'siswa'}`;
 
         const response = await fetch(endpoint, {
           method: 'DELETE',
@@ -401,7 +402,7 @@ export function History() {
       let payload;
 
       if (formData.role === 'siswa') {
-        endpoint = 'http://localhost:3000/api/auth/register';
+        endpoint = `${API_BASE_URL}/api/auth/register`;
         payload = {
           nis: formData.nis,
           nisn: formData.nisn,
@@ -411,7 +412,7 @@ export function History() {
           kelas: formData.kelas
         };
       } else if (formData.role === 'guru') {
-        endpoint = 'http://localhost:3000/api/auth/register-guru';
+        endpoint = `${API_BASE_URL}/api/auth/register-guru`;
         payload = {
           nip: formData.nip,
           nama: formData.nama,
@@ -536,13 +537,13 @@ export function History() {
 
       switch (userRole) {
         case "siswa":
-          apiUrl = "http://localhost:3000/api/absensi/riwayat";
+          apiUrl = `${API_BASE_URL}/api/absensi/riwayat`;
           break;
         case "guru":
-          apiUrl = "http://localhost:3000/api/absensi/wali-kelas/riwayat";
+          apiUrl = `${API_BASE_URL}/api/absensi/wali-kelas/riwayat`;
           break;
         case "admin":
-          apiUrl = "http://localhost:3000/api/admin/users";
+          apiUrl = `${API_BASE_URL}/api/admin/users`;
           break;
         default:
           console.warn("User role tidak valid");
@@ -631,14 +632,14 @@ export function History() {
   const getPhotoUrl = (photo) => {
     if (!photo) return "https://www.gravatar.com/avatar/?d=mp";
     if (photo.startsWith('http')) return photo;
-    return `/uploads/${photo.split('/').pop()}`; // Ambil nama file saja
+    return `${UPLOADS_BASE_URL}/suratizin/${photo.split('/').pop()}`;
   };
 
   useEffect(() => {
     const fetchKelasInfo = async () => {
       try {
         const storedToken = localStorage.getItem("token");
-        const response = await fetch("http://localhost:3000/api/guru/profile", {
+        const response = await fetch(`${API_BASE_URL}/api/guru/profile`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
         const result = await response.json();
@@ -659,8 +660,7 @@ export function History() {
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
-  const baseUrl =
-    "http://localhost:3000/api/absensi/rekapan-semester/download";
+  const baseUrl = `${API_BASE_URL}/api/absensi/rekapan-semester/download`;
 
   return (
 
@@ -789,7 +789,7 @@ export function History() {
                                       ? URL.createObjectURL(absen.suratIzin)
                                       : absen.suratIzin.startsWith('http')
                                         ? absen.suratIzin
-                                        : `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`;
+                                        : `${UPLOADS_BASE_URL}/suratizin/${absen.suratIzin.split('/').pop()}`;
 
                                     img.onload = () => {
                                       el.setAttribute("data-pswp-src", img.src);
@@ -804,7 +804,7 @@ export function History() {
                                 <img src={
                                   absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
                                     absen.suratIzin.startsWith('http') ? absen.suratIzin :
-                                      `http://localhost:3000/uploads/suratizin/${absen.suratIzin.split('/').pop()}`
+                                      `${UPLOADS_BASE_URL}/suratizin/${absen.suratIzin.split('/').pop()}`
                                 } alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
 
                               </a>

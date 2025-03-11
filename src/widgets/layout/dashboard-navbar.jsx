@@ -29,6 +29,7 @@ import {
 } from "@/context";
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/config";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -60,11 +61,11 @@ export function DashboardNavbar() {
 
         // Tentukan endpoint berdasarkan role
         if (userRole === "siswa") {
-          endpoint = "http://localhost:3000/api/siswa/profile";
+          endpoint = `${API_BASE_URL}/api/siswa/profile`;
         } else if (userRole === "guru") {
-          endpoint = "http://localhost:3000/api/guru/profile";
+          endpoint = `${API_BASE_URL}/api/guru/profile`;
         } else if (userRole === "admin") {
-          endpoint = "http://localhost:3000/api/admin/profile";
+          endpoint = `${API_BASE_URL}/api/admin/profile`;
         } else {
           throw new Error("Role tidak dikenali");
         }

@@ -34,6 +34,7 @@ import { Link } from "react-router-dom";
 import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
 import { platformSettingsData, conversationsData, projectsData } from "@/data";
 import { useAuth } from '@/context/AuthContext';
+import { API_BASE_URL } from "@/config";
 
 export function Profile() {
   const [isZoomed, setIsZoomed] = useState(false);
@@ -166,15 +167,15 @@ export function Profile() {
         // Tentukan endpoint berdasarkan role
         let response;
         if (userRole === "siswa") {
-          response = await fetch("http://localhost:3000/api/siswa/profile", {
+          response = await fetch(`${API_BASE_URL}/api/siswa/profile`, {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
         } else if (userRole === "guru") {
-          response = await fetch("http://localhost:3000/api/guru/profile", {
+          response = await fetch(`${API_BASE_URL}/api/guru/profile`, {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
         } else if (userRole === "admin") {
-          response = await fetch("http://localhost:3000/api/admin/profile", {
+          response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
         }
@@ -289,7 +290,7 @@ export function Profile() {
       // Tentukan endpoint berdasarkan role
       let response;
       if (userRole === "siswa") {
-        response = await fetch('http://localhost:3000/api/siswa/profile', {
+        response = await fetch(`${API_BASE_URL}/api/siswa/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -297,7 +298,7 @@ export function Profile() {
           body: formDataToSend
         });
       } else if (userRole === "guru") {
-        response = await fetch('http://localhost:3000/api/guru/profile', {
+        response = await fetch(`${API_BASE_URL}/api/guru/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -305,7 +306,7 @@ export function Profile() {
           body: formDataToSend
         });
       } else if (userRole === "admin") {
-        response = await fetch('http://localhost:3000/api/admin/profile', {
+        response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
