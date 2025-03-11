@@ -243,27 +243,35 @@ export function Home() {
               webcamRef.current.video.srcObject = stream;
             }
           } catch (err) {
-            // Jika gagal dengan kamera belakang, coba kamera depan
             console.log('Mencoba menggunakan kamera depan...');
-            const frontCameraStream = await getCameraStream({
-              video: {
-                facingMode: 'user',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-              }
-            });
+            try {
+              const frontCameraStream = await getCameraStream({
+                video: {
+                  facingMode: 'user',
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 }
+                }
+              });
 
-            if (webcamRef.current && webcamRef.current.video) {
-              webcamRef.current.video.srcObject = frontCameraStream;
+              if (webcamRef.current && webcamRef.current.video) {
+                webcamRef.current.video.srcObject = frontCameraStream;
+              }
+            } catch (frontErr) {
+              console.error("Error accessing front camera:", frontErr);
+              Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mengakses Kamera',
+                text: 'Pastikan browser mendukung kamera dan izin kamera diberikan. Coba refresh halaman atau gunakan browser lain.',
+                confirmButtonText: 'OK'
+              });
             }
           }
-
         } catch (err) {
           console.error("Error accessing camera:", err);
           Swal.fire({
             icon: 'error',
             title: 'Gagal Mengakses Kamera',
-            text: 'Pastikan browser mendukung kamera dan izin kamera diberikan. Error: ' + err.message,
+            text: 'Pastikan browser mendukung kamera dan izin kamera diberikan. Coba refresh halaman atau gunakan browser lain.',
             confirmButtonText: 'OK'
           });
         }
