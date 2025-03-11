@@ -38,10 +38,9 @@ export const register = async (req, res) => {
     }
 
     // Buat akun auth dengan NIS sebagai identifier
-    const hashedPassword = await bcrypt.hash(password, 10);
     const auth = new Auth({
       nis: nis,
-      password: hashedPassword,
+      password: password, // Password akan di-hash oleh middleware pre-save
       role: 'siswa'
     });
 
