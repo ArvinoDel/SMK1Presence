@@ -398,12 +398,12 @@ export function History() {
     e.preventDefault();
     try {
       const storedToken = localStorage.getItem("token");
-      let endpoint;
       let payload;
 
+      // Prepare payload
       if (formData.role === 'siswa') {
-        endpoint = `${API_BASE_URL}/api/auth/register`;
         payload = {
+          role: 'siswa',
           nis: formData.nis,
           nisn: formData.nisn,
           nama: formData.nama,
@@ -412,8 +412,8 @@ export function History() {
           kelas: formData.kelas
         };
       } else if (formData.role === 'guru') {
-        endpoint = `${API_BASE_URL}/api/auth/register-guru`;
         payload = {
+          role: 'guru',
           nip: formData.nip,
           nama: formData.nama,
           email: formData.email,
@@ -422,7 +422,7 @@ export function History() {
         };
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

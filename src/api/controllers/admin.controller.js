@@ -389,4 +389,88 @@ export const deleteUser = async (req, res) => {
       error: error.message
     });
   }
+};
+
+// Create new user (siswa atau guru) by admin
+export const createUser = async (req, res) => {
+  try {
+    const { role } = req.user;
+    const { nis, nisn, nip, password, nama, kelas, email, mataPelajaran } = req.body;
+
+    // Pastikan user adalah admin
+    if (role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak'
+      });
+    }
+
+    // Buat akun auth
+    const auth = new Auth({
+      nis: req.body.role === 'siswa' ? nis : nip, // gunakan NIS untuk siswa, NIP untuk guru
+      password: password, // Password akan di-hash oleh middleware pre-save
+      role: req.body.role
+    });
+
+    // Buat data user berdasarkan role
+    let user;
+    if (req.body.role === 'siswa') {
+      // Cek duplikat untuk siswa
+      const existingSiswa = await Siswa.findOne({
+        $or: [{ nis }, { nisn }, { email }]
+      });
+      if (existingSiswa) {
+        return res.status(400).json({
+          success: false,
+          message: 'NIS, NISN, atau email sudah terdaftar'
+        });
+      }
+
+      user = new Siswa({
+        nis,
+        nisn,
+        nama,
+        kelas,
+        email
+      });
+    } else if (req.body.role === 'guru') {
+      // Cek duplikat untuk guru
+      const existingGuru = await Guru.findOne({
+        $or: [{ nip }, { email }]
+      });
+      if (existingGuru) {
+        return res.status(400).json({
+          success: false,
+          message: 'NIP atau email sudah terdaftar'
+        });
+      }
+
+      user = new Guru({
+        nip,
+        nama,
+        email,
+        mataPelajaran
+      });
+    }
+
+    await auth.save();
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'User berhasil dibuat',
+      data: {
+        nama: user.nama,
+        email: user.email,
+        role: req.body.role
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal membuat user',
+      error: error.message
+    });
+  }
 }; 
