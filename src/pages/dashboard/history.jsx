@@ -181,7 +181,7 @@ const TABS = [
   { label: "Siswa", value: "siswa" },
 ];
 
-const TABLE_HEAD = ["Users", "Email", "Kelas", "Status", "Employed", "Action"];
+const TABLE_HEAD = ["Users", "Email", "Kelas", "Status", "Dibuat", "Action"];
 
 const TABLE_ROWS = [
   { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "John Michael", nis: "12228442", nisn: "0022299922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
@@ -291,7 +291,8 @@ export function History() {
         title: 'Success!',
         text: 'User has been updated successfully',
         icon: 'success',
-        confirmButtonText: 'OK'
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
 
     } catch (error) {
@@ -300,7 +301,8 @@ export function History() {
         title: 'Error!',
         text: error.message,
         icon: 'error',
-        confirmButtonText: 'OK'
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
     }
   };
@@ -348,7 +350,8 @@ export function History() {
         title: 'Error!',
         text: error.message,
         icon: 'error',
-        confirmButtonText: 'OK'
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
     }
   };
@@ -459,7 +462,8 @@ export function History() {
         title: 'Success!',
         text: 'User has been added successfully',
         icon: 'success',
-        confirmButtonText: 'OK'
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
 
     } catch (error) {
@@ -468,7 +472,8 @@ export function History() {
         title: 'Error!',
         text: error.message,
         icon: 'error',
-        confirmButtonText: 'OK'
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
     }
   };

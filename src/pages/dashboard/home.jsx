@@ -195,7 +195,8 @@ export function Home() {
             icon: 'error',
             title: 'Gagal Mengakses Kamera',
             text: 'Pastikan browser mendukung kamera dan izin kamera diberikan',
-            confirmButtonText: 'OK'
+            timer: 2000, // Timer 2 detik (2000ms)
+            showConfirmButton: false,
           });
         }
       };
@@ -285,7 +286,8 @@ export function Home() {
           title: "Oops!",
           html: errorMessage,
           confirmButtonColor: "#d33",
-          confirmButtonText: "OK"
+          timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
         });
       }
     } catch (error) {
@@ -294,8 +296,8 @@ export function Home() {
         icon: "error",
         title: "Gagal!",
         text: "❌ Error: Gagal memproses absensi. Silakan coba lagi.",
-        confirmButtonColor: "#d33",
-        confirmButtonText: "OK"
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
     }
   };
@@ -358,8 +360,8 @@ export function Home() {
         icon: "warning",
         title: "Hari Libur!",
         text: "Anda tidak bisa mengakses ini di hari libur!",
-        confirmButtonColor: "#3085d6",
-        confirmButtonText: "OK",
+        timer: 4000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
       return;
     }
@@ -584,6 +586,12 @@ export function Home() {
         <div className="bg-transparent p-6">
           <h1 className="text-2xl font-bold">Halo, {greeting} {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
           <p className="text-gray-600">Selamat Belajar, dan Semoga Sukses!</p>
+        </div>
+      }
+      {userRole == "admin" &&
+        <div className="bg-transparent p-6">
+          <h1 className="text-2xl font-bold">Halo, {greeting} {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
+          <p className="text-gray-600">Selamat Datang, Administrator!</p>
         </div>
       }
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">

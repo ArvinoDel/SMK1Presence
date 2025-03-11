@@ -74,7 +74,8 @@ export function Profile() {
           title: "Error!",
           text: "File size should not exceed 5MB",
           icon: "error",
-          confirmButtonText: "OK",
+          timer: 2000, // Timer 2 detik (2000ms)
+          showConfirmButton: false,
         });
         e.target.value = '';
         return;
@@ -85,7 +86,8 @@ export function Profile() {
           title: "Error!",
           text: "Only image files are allowed",
           icon: "error",
-          confirmButtonText: "OK",
+          timer: 2000, // Timer 2 detik (2000ms)
+          showConfirmButton: false,
         });
         e.target.value = '';
         return;
@@ -109,7 +111,8 @@ export function Profile() {
           title: "Error!",
           text: "File size should not exceed 5MB",
           icon: "error",
-          confirmButtonText: "OK",
+          timer: 2000, // Timer 2 detik (2000ms)
+          showConfirmButton: false,
         });
         e.target.value = '';
         return;
@@ -120,7 +123,8 @@ export function Profile() {
           title: "Error!",
           text: "Only image files are allowed",
           icon: "error",
-          confirmButtonText: "OK",
+          timer: 2000, // Timer 2 detik (2000ms)
+          showConfirmButton: false,
         });
         e.target.value = '';
         return;
@@ -342,7 +346,8 @@ export function Profile() {
         title: "Success!",
         text: "Profile updated successfully!",
         icon: "success",
-        confirmButtonText: "OK",
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
 
     } catch (error) {
@@ -351,7 +356,8 @@ export function Profile() {
         title: "Error!",
         text: error.message,
         icon: "error",
-        confirmButtonText: "OK",
+        timer: 2000, // Timer 2 detik (2000ms)
+        showConfirmButton: false,
       });
     }
   };
