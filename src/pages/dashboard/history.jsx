@@ -181,20 +181,7 @@ const TABS = [
   { label: "Siswa", value: "siswa" },
 ];
 
-const TABLE_HEAD = ["Users", "Email", "Kelas", "Status", "Dibuat", "Action"];
-
-const TABLE_ROWS = [
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "John Michael", nis: "12228442", nisn: "0022299922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg", name: "Alexa Liras", nis: "12228443", nisn: "0022299923", role: "XII RPL 2", email: "siswa1@gmail.com", isGuru: false, date: "23/04/18" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg", name: "Laurent Perrier", nis: "12228444", nisn: "0022299924", role: "XII RPL 2", email: "siswa2@gmail.com", isGuru: true, date: "19/09/17" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Michael Levi", nis: "12228345", nisn: "0022259925", role: "XII RPL 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Richard Gran", nis: "12228346", nisn: "0022249926", role: "XII RPL 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-3.jpg", name: "Jihn Miracle", nis: "12228432", nisn: "0022296922", role: "XII RPL 2", email: "siswa@gmail.com", isGuru: true, date: "23/04/18" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-2.jpg", name: "Kobe Liras", nis: "12228343", nisn: "0022297923", role: "XII DPIB 2", email: "siswa1@gmail.com", isGuru: false, date: "23/04/18" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-1.jpg", name: "Sabrina Perrier", nis: "12258444", nisn: "0021299924", role: "XII RPL 2", email: "siswa2@gmail.com", isGuru: true, date: "19/09/17" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-4.jpg", name: "Trevor Levi", nis: "12228475", nisn: "0022299921", role: "XII TOI 2", email: "siswa3@gmail.com", isGuru: false, date: "24/12/08" },
-  { img: "https://demos.creative-tim.com/test/corporate-ui-dashboard/assets/img/team-5.jpg", name: "Lee Gran", nis: "12228432", nisn: "0022299226", role: "XII TKJ 2", email: "siswa4@gmail.com", isGuru: true, date: "04/10/21" },
-];
+const TABLE_HEAD = ["Users", "Email", "Kelas", "Mata Pelajaran", "Status", "Dibuat", "Action"];
 
 export function History() {
   const [openEdit, setOpenEdit] = useState(false);
@@ -421,7 +408,8 @@ export function History() {
           nama: formData.nama,
           email: formData.email,
           password: formData.password,
-          mataPelajaran: formData.mataPelajaran
+          mataPelajaran: formData.mataPelajaran,
+          kelas: formData.kelas
         };
       }
 
@@ -1103,7 +1091,7 @@ export function History() {
             </div>
           </div>
 
-          <CardBody className="lg:overflow-hidden overflow-x-scroll px-0">
+          <CardBody className="overflow-x-scroll px-0">
             <table className="mt-4 w-full min-w-max table-auto text-left">
               <thead>
                 <tr>
@@ -1180,9 +1168,26 @@ export function History() {
                           color="blue-gray"
                           className="font-normal"
                         >
-                          {user.role}
+                          {user.kelas}
                         </Typography>
                       </td>
+                      {user.isGuru ? <> <td className={classes}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal"
+                        >
+                          {user.mataPelajaran}
+                        </Typography>
+                      </td></> : <> <td className={classes}>
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal text-center"
+                        >
+                          -
+                        </Typography>
+                      </td></>}
                       <td className={classes}>
                         <div className="w-max">
                           <Chip
@@ -1304,6 +1309,26 @@ export function History() {
               />
             </div>
 
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                Role
+              </Typography>
+              <Select
+                required
+                color="gray"
+                size="lg"
+                name="role"
+                value={editFormData.role}
+                onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
+                className="placeholder:opacity-100 focus:!border-t-gray-900"
+                containerProps={{ className: "!min-w-full" }}
+                labelProps={{ className: "hidden" }}
+              >
+                <Option value="siswa">Siswa</Option>
+                <Option value="guru">Guru</Option>
+              </Select>
+            </div>
+
             {editFormData.role === 'siswa' ? (
               <>
                 <div>
@@ -1372,6 +1397,23 @@ export function History() {
                     value={editFormData.nip}
                     onChange={handleEditInputChange}
                     placeholder="Enter NIP"
+                    className="placeholder:opacity-100 focus:!border-t-gray-900"
+                    containerProps={{ className: "!min-w-full" }}
+                    labelProps={{ className: "hidden" }}
+                  />
+                </div>
+                <div>
+                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                    Kelas
+                  </Typography>
+                  <Input
+                    required
+                    color="gray"
+                    size="lg"
+                    name="kelas"
+                    value={editFormData.kelas}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter Kelas (e.g. XII RPL 2)"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
