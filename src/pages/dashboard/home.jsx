@@ -642,7 +642,7 @@ export function Home() {
         <span className="text-xl font-medium">{dateString}</span>
         <span className="text-3xl font-bold">{time}<span className="text-xl font-bold">WIB</span></span>
       </div>
-      <iframe
+      {/* <iframe
         style={{ borderRadius: "12px" }}
         src="https://open.spotify.com/embed/playlist/37i9dQZF1FoOkwqHhdNOkk?utm_source=generator"
         width="100%"
@@ -650,7 +650,7 @@ export function Home() {
         frameBorder="0"
         allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
         loading="lazy"
-      />
+      /> */}
       {userRole == "guru" &&
         <div className="bg-transparent p-6">
           <h1 className="text-2xl font-bold">{greeting}, {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>} !</h1>
