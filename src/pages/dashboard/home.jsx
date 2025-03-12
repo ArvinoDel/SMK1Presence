@@ -46,52 +46,69 @@ import Swal from 'sweetalert2';
 import statisticsCardsData from "./../../data/statistics-cards-data";
 import { API_BASE_URL } from "@/config";
 
-// Polyfill untuk getUserMedia
+// Polyfill untuk getUserMedia yang lebih universal
 if (navigator.mediaDevices === undefined) {
   navigator.mediaDevices = {};
 }
 
-if (navigator.mediaDevices.getUserMedia === undefined) {
-  navigator.mediaDevices.getUserMedia = function(constraints) {
-    const getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-
-    if (!getUserMedia) {
-      return Promise.reject(new Error('getUserMedia is not implemented in this browser'));
-    }
-
-    return new Promise(function(resolve, reject) {
-      getUserMedia.call(navigator, constraints, resolve, reject);
-    });
-  };
-}
-
-// Tambahkan fungsi helper untuk mengecek dukungan kamera
+// Fungsi helper untuk mengecek dukungan kamera yang lebih komprehensif
 const checkCameraSupport = () => {
-  return !!(navigator.mediaDevices && 
-    navigator.mediaDevices.getUserMedia || 
+  return !!(
+    (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ||
     navigator.webkitGetUserMedia || 
     navigator.mozGetUserMedia || 
-    navigator.msGetUserMedia);
+    navigator.msGetUserMedia ||
+    navigator.getUserMedia
+  );
 };
 
-// Fungsi untuk mendapatkan stream kamera dengan fallback
+// Fungsi untuk mendapatkan stream kamera dengan fallback yang lebih robust
 const getCameraStream = async (constraints) => {
+  try {
+    // Coba menggunakan API standar terlebih dahulu
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     return await navigator.mediaDevices.getUserMedia(constraints);
-  } else if (navigator.webkitGetUserMedia) {
+    }
+
+    // Fallback untuk browser lama
+    const getUserMedia = (
+      navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia ||
+      navigator.msGetUserMedia
+    );
+
+    if (!getUserMedia) {
+      throw new Error('Browser tidak mendukung akses kamera');
+    }
+
+    // Wrap dalam Promise untuk API lama
     return new Promise((resolve, reject) => {
-      navigator.webkitGetUserMedia(constraints, resolve, reject);
+      getUserMedia.call(navigator, constraints, resolve, reject);
     });
-  } else if (navigator.mozGetUserMedia) {
-    return new Promise((resolve, reject) => {
-      navigator.mozGetUserMedia(constraints, resolve, reject);
-    });
-  } else if (navigator.msGetUserMedia) {
-    return new Promise((resolve, reject) => {
-      navigator.msGetUserMedia(constraints, resolve, reject);
-    });
+  } catch (error) {
+    console.error('Error accessing camera:', error);
+    throw error;
   }
-  throw new Error('No getUserMedia support');
+};
+
+// Fungsi untuk mendapatkan constraints kamera yang optimal
+const getVideoConstraints = (facingMode = 'environment') => ({
+  facingMode,
+  width: { ideal: 1280 },
+  height: { ideal: 720 }
+});
+
+// Fungsi untuk mengecek dan meminta izin kamera
+const requestCameraPermission = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream.getTracks().forEach(track => track.stop());
+    return true;
+  } catch (err) {
+    console.error('Error checking camera permission:', err);
+    return false;
+  }
 };
 
 export function Home() {
@@ -221,59 +238,50 @@ export function Home() {
     if (userRole === "guru") {
       const setupCamera = async () => {
         try {
-          // Cek dukungan kamera
-          if (!checkCameraSupport()) {
+          // Cek apakah browser mendukung getUserMedia
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             throw new Error('Browser tidak mendukung akses kamera');
           }
 
-          // Coba akses kamera dengan fallback options
-          const constraints = {
-            video: {
-              facingMode: 'environment',
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            }
-          };
+          // Minta izin kamera terlebih dahulu
+          const hasPermission = await requestCameraPermission();
+          if (!hasPermission) {
+            throw new Error('Izin kamera ditolak');
+          }
 
+          // Coba akses kamera belakang terlebih dahulu
           try {
-            const stream = await getCameraStream(constraints);
-            
-            // Set stream ke video element
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: getVideoConstraints('environment')
+            });
+
             if (webcamRef.current && webcamRef.current.video) {
               webcamRef.current.video.srcObject = stream;
             }
-          } catch (err) {
-            console.log('Mencoba menggunakan kamera depan...');
+          } catch (backCameraError) {
+            console.log('Mencoba menggunakan kamera depan...', backCameraError);
+            
+            // Jika kamera belakang gagal, coba kamera depan
             try {
-              const frontCameraStream = await getCameraStream({
-                video: {
-                  facingMode: 'user',
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 }
-                }
+              const frontStream = await navigator.mediaDevices.getUserMedia({
+                video: getVideoConstraints('user')
               });
 
               if (webcamRef.current && webcamRef.current.video) {
-                webcamRef.current.video.srcObject = frontCameraStream;
+                webcamRef.current.video.srcObject = frontStream;
               }
-            } catch (frontErr) {
-              console.error("Error accessing front camera:", frontErr);
-              Swal.fire({
-                icon: 'error',
-                title: 'Gagal Mengakses Kamera',
-                text: 'Pastikan browser mendukung kamera dan izin kamera diberikan. Coba refresh halaman atau gunakan browser lain.',
-                confirmButtonText: 'OK'
-              });
+            } catch (frontCameraError) {
+              console.error('Error accessing front camera:', frontCameraError);
+              throw new Error('Gagal mengakses kamera depan dan belakang');
             }
           }
         } catch (err) {
-          console.error("Error accessing camera:", err);
+          console.error("Error in camera setup:", err);
           Swal.fire({
             icon: 'error',
             title: 'Gagal Mengakses Kamera',
-            text: 'Pastikan browser mendukung kamera dan izin kamera diberikan',
-            timer: 2000, // Timer 2 detik (2000ms)
-            showConfirmButton: false,
+            text: 'Pastikan browser mendukung kamera dan izin kamera diberikan. Coba refresh halaman atau gunakan browser lain.',
+            confirmButtonText: 'OK'
           });
         }
       };
