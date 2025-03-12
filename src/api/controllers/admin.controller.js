@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Siswa from '../models/Siswa.models.js';
 import Guru from '../models/Guru.models.js';
+import path from 'path';
+import fs from 'fs/promises';
 
 // Register admin
 export const registerAdmin = async (req, res) => {
@@ -107,9 +109,17 @@ export const getProfile = async (req, res) => {
       data: {
         nip: admin.nip,
         nama: admin.nama,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
         email: admin.email,
         jenisKelamin: admin.jenisKelamin,
         noTelp: admin.noTelp,
+        alamat: {
+          street: admin.alamat?.street || '',
+          city: admin.alamat?.city || '',
+          state: admin.alamat?.state || '',
+          postalCode: admin.alamat?.postalCode || ''
+        },
         photo: photoUrl,
         coverPhoto: coverPhotoUrl
       }
@@ -128,7 +138,8 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { identifier, role } = req.user;
-    const { nama, email, jenisKelamin, noTelp } = req.body;
+    const { firstName, lastName, email, jenisKelamin, noTelp } = req.body;
+    const alamat = req.body.alamat ? JSON.parse(req.body.alamat) : {};
 
     // Pastikan user adalah admin
     if (role !== 'admin') {
@@ -147,26 +158,77 @@ export const updateProfile = async (req, res) => {
     }
 
     // Update fields
-    if (nama) admin.nama = nama;
-    if (email) admin.email = email;
-    if (jenisKelamin) admin.jenisKelamin = jenisKelamin;
-    if (noTelp) admin.noTelp = noTelp;
+    const updateData = {
+      firstName: firstName || admin.firstName,
+      lastName: lastName || admin.lastName,
+      email: email || admin.email,
+      jenisKelamin: jenisKelamin || admin.jenisKelamin,
+      noTelp: noTelp || admin.noTelp,
+      alamat: {
+        street: alamat.street || admin.alamat?.street || '',
+        city: alamat.city || admin.alamat?.city || '',
+        state: alamat.state || admin.alamat?.state || '',
+        postalCode: alamat.postalCode || admin.alamat?.postalCode || ''
+      },
+      updatedAt: new Date()
+    };
 
-    await admin.save();
+    // Handle photo uploads
+    if (req.files) {
+      if (req.files.photo) {
+        updateData.photo = `/uploads/profilepicture/${req.files.photo[0].filename}`;
+        
+        // Delete old photo if exists
+        if (admin.photo) {
+          const oldPhotoPath = path.join(process.cwd(), 'public', admin.photo);
+          try {
+            await fs.access(oldPhotoPath);
+            await fs.unlink(oldPhotoPath);
+          } catch (error) {
+            console.log('Old photo not found:', error.message);
+          }
+        }
+      }
+      if (req.files.coverPhoto) {
+        updateData.coverPhoto = `/uploads/profilepicture/${req.files.coverPhoto[0].filename}`;
+        
+        // Delete old cover photo if exists
+        if (admin.coverPhoto) {
+          const oldCoverPath = path.join(process.cwd(), 'public', admin.coverPhoto);
+          try {
+            await fs.access(oldCoverPath);
+            await fs.unlink(oldCoverPath);
+          } catch (error) {
+            console.log('Old cover photo not found:', error.message);
+          }
+        }
+      }
+    }
+
+    // Update admin data
+    const updatedAdmin = await Admin.findOneAndUpdate(
+      { nip: identifier },
+      { $set: updateData },
+      { new: true }
+    );
+
+    // Create full URLs for photos
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const photoUrl = updatedAdmin.photo ? `${baseUrl}${updatedAdmin.photo}` : null;
+    const coverPhotoUrl = updatedAdmin.coverPhoto ? `${baseUrl}${updatedAdmin.coverPhoto}` : null;
 
     res.status(200).json({
       success: true,
       message: 'Profile berhasil diupdate',
       data: {
-        nip: admin.nip,
-        nama: admin.nama,
-        email: admin.email,
-        jenisKelamin: admin.jenisKelamin,
-        noTelp: admin.noTelp
+        ...updatedAdmin.toObject(),
+        photo: photoUrl,
+        coverPhoto: coverPhotoUrl
       }
     });
 
   } catch (error) {
+    console.error('Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal mengupdate profile',
@@ -285,6 +347,8 @@ export const updateUser = async (req, res) => {
 
     // Cek apakah user yang akan diupdate adalah siswa atau guru
     let updatedUser;
+    let identifier;
+
     if (updateData.role === 'siswa') {
       // Update data siswa
       updatedUser = await Siswa.findByIdAndUpdate(
@@ -298,6 +362,7 @@ export const updateUser = async (req, res) => {
         },
         { new: true }
       );
+      identifier = updatedUser.nis;
     } else if (updateData.role === 'guru') {
       // Update data guru
       updatedUser = await Guru.findByIdAndUpdate(
@@ -310,6 +375,7 @@ export const updateUser = async (req, res) => {
         },
         { new: true }
       );
+      identifier = updatedUser.nip;
     }
 
     if (!updatedUser) {
@@ -317,6 +383,15 @@ export const updateUser = async (req, res) => {
         success: false,
         message: 'User tidak ditemukan'
       });
+    }
+
+    // Update password if provided
+    if (updateData.password) {
+      const auth = await Auth.findOne({ nis: identifier });
+      if (auth) {
+        auth.password = updateData.password;
+        await auth.save();
+      }
     }
 
     res.status(200).json({

@@ -10,6 +10,12 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  firstName: {
+    type: String
+  },
+  lastName: {
+    type: String
+  },
   email: {
     type: String,
     required: true,
@@ -21,6 +27,12 @@ const adminSchema = new mongoose.Schema({
   },
   noTelp: {
     type: String
+  },
+  alamat: {
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String
   },
   photo: String,
   coverPhoto: String,

@@ -194,7 +194,8 @@ export function History() {
     nisn: '',
     nip: '',
     kelas: '',
-    mataPelajaran: ''
+    mataPelajaran: '',
+    password: ''
   });
 
   const handleOpenEdit = (user) => {
@@ -207,7 +208,8 @@ export function History() {
       nisn: user.nisn || '',
       nip: user.nip || '',
       kelas: user.kelas || '',
-      mataPelajaran: user.mataPelajaran || ''
+      mataPelajaran: user.mataPelajaran || '',
+      password: ''
     });
     setOpenEdit(true);
   };
@@ -223,7 +225,8 @@ export function History() {
       nisn: '',
       nip: '',
       kelas: '',
-      mataPelajaran: ''
+      mataPelajaran: '',
+      password: ''
     });
   };
 
@@ -253,6 +256,10 @@ export function History() {
           mataPelajaran: editFormData.mataPelajaran
         })
       };
+
+      if (editFormData.password) {
+        payload.password = editFormData.password;
+      }
 
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -1438,6 +1445,24 @@ export function History() {
                 </div>
               </>
             )}
+
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                Password
+              </Typography>
+              <Input
+                type="password"
+                color="gray"
+                size="lg"
+                name="password"
+                value={editFormData.password}
+                onChange={handleEditInputChange}
+                placeholder="Enter new password (leave empty to keep current)"
+                className="placeholder:opacity-100 focus:!border-t-gray-900"
+                containerProps={{ className: "!min-w-full" }}
+                labelProps={{ className: "hidden" }}
+              />
+            </div>
           </DialogBody>
 
           <DialogFooter>

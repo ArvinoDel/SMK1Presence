@@ -225,8 +225,10 @@ export function Profile() {
           setFormData({
             firstName: data.data.firstName || '',
             lastName: data.data.lastName || '',
+            nama: data.data.nama || '',
             email: data.data.email || '',
             jenisKelamin: data.data.jenisKelamin || '',
+            noTelp: data.data.noTelp || '',
             street: data.data.alamat?.street || '',
             city: data.data.alamat?.city || '',
             state: data.data.alamat?.state || '',
@@ -285,39 +287,13 @@ export function Profile() {
       }
 
       const storedToken = localStorage.getItem("token");
-
-      // Decode JWT untuk mendapatkan role
-      const decodedToken = jwtDecode(storedToken);
-      const userRole = decodedToken.role;
-      setUserRole(userRole);
-
-      // Tentukan endpoint berdasarkan role
-      let response;
-      if (userRole === "siswa") {
-        response = await fetch(`${API_BASE_URL}/api/siswa/profile`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formDataToSend
-        });
-      } else if (userRole === "guru") {
-        response = await fetch(`${API_BASE_URL}/api/guru/profile`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formDataToSend
-        });
-      } else if (userRole === "admin") {
-        response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formDataToSend
-        });
-      }
+      const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${storedToken}`
+        },
+        body: formDataToSend
+      });
 
       const result = await response.json();
 
@@ -325,28 +301,16 @@ export function Profile() {
         throw new Error(result.message || 'Failed to update profile');
       }
 
-      // Update displayed image URLs
-      if (result.data.photo) {
-        setImage(result.data.photo.startsWith('http') ?
-          result.data.photo :
-          `/uploads/profilepicture/${result.data.photo.split('/').pop()}`
-        );
-      }
-
-      if (result.data.coverPhoto) {
-        setPreviewImage(result.data.coverPhoto.startsWith('http') ?
-          result.data.coverPhoto :
-          `/uploads/profilepicture/${result.data.coverPhoto.split('/').pop()}`
-        );
-      }
-
+      // Update displayed data
       setUserData(result.data);
+      if (result.data.photo) setImage(result.data.photo);
+      if (result.data.coverPhoto) setPreviewImage(result.data.coverPhoto);
 
       Swal.fire({
         title: "Success!",
         text: "Profile updated successfully!",
         icon: "success",
-        timer: 2000, // Timer 2 detik (2000ms)
+        timer: 2000,
         showConfirmButton: false,
       });
 
@@ -356,7 +320,7 @@ export function Profile() {
         title: "Error!",
         text: error.message,
         icon: "error",
-        timer: 2000, // Timer 2 detik (2000ms)
+        timer: 2000,
         showConfirmButton: false,
       });
     }
@@ -514,7 +478,20 @@ export function Profile() {
                           </div>
                         </> :
                           userRole === 'admin' ? <>
-
+                            <div className="sm:col-span-full">
+                              <label htmlFor="noTelp" className="block text-sm/6 font-medium text-gray-900">
+                                No Telepon
+                              </label>
+                              <div className="mt-2">
+                                <input
+                                  type="tel"
+                                  name="noTelp"
+                                  value={formData.noTelp || ''}
+                                  onChange={handleInputChange}
+                                  className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                />
+                              </div>
+                            </div>
                           </> :
                             <div className="h-4 bg-gray-300 rounded w-20"></div>}
 
