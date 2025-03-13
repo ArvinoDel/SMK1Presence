@@ -169,15 +169,16 @@ export function DashboardNavbar() {
                 <Avatar
                   variant="circular"
                   alt="User"
-                  className="cursor-pointer"
+                  className="cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-blue-500 hover:scale-105"
                   src={userData?.photo || 'https://www.gravatar.com/avatar/?d=mp'}
                 />
               </MenuHandler>
+
               <MenuList>
                 <Typography variant="medium" className="font-medium text-black">
                   {userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>}
                 </Typography>
-                
+
                 {userRole === "guru" || userRole === "siswa" && (
                   <Typography variant="small" className="font-medium text-black">
                     {userData?.kelas ? `Kelas ${userData.kelas}` : <div className="h-3 bg-gray-200 rounded w-16"></div>}
