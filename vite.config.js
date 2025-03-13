@@ -11,10 +11,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        // target: 'http://103.196.153.54:3000',
-        target: 'http://103.196.153.54:3000',
+        target: 'https://api.muhfaz.my.id',
         changeOrigin: true,
-        secure: false,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
@@ -29,9 +28,9 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'http://103.196.153.54:3000',
+        target: 'https://api.muhfaz.my.id',
         changeOrigin: true,
-        secure: false
+        secure: true
       }
     },
     cors: true
