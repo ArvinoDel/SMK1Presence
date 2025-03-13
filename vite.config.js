@@ -9,14 +9,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    https: {
-      key: '/etc/nginx/ssl/nginx.key',
-      cert: '/etc/nginx/ssl/nginx.crt'
-    },
     proxy: {
       '/api': {
-        // target: 'http://103.196.153.54:3000',
-        target: 'http://103.196.153.54:3000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
@@ -33,7 +28,7 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'http://103.196.153.54:3000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false
       }
