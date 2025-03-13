@@ -169,7 +169,7 @@ export function DashboardNavbar() {
                 <Avatar
                   variant="circular"
                   alt="User"
-                  className="cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-gray-9upda00 hover:scale-105"
+                  className="cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-gray-900 hover:scale-105"
                   src={userData?.photo || 'https://www.gravatar.com/avatar/?d=mp'}
                 />
               </MenuHandler>
