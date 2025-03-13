@@ -16,7 +16,7 @@ const absensiSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['HADIR', 'TERLAMBAT', 'SAKIT', 'IZIN'],
+    enum: ['HADIR', 'TERLAMBAT', 'SAKIT', 'IZIN', 'ALFA'],
     required: true
   },
   keterangan: {
