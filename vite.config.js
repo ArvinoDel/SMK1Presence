@@ -7,8 +7,12 @@ export default defineConfig({
     alias: [{ find: "@", replacement: "/src" }],
   },
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: 5173,
+    https: {
+      key: '/etc/nginx/ssl/nginx.key',
+      cert: '/etc/nginx/ssl/nginx.crt'
+    },
     proxy: {
       '/api': {
         // target: 'http://103.196.153.54:3000',
