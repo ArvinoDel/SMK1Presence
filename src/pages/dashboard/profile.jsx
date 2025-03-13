@@ -287,7 +287,20 @@ export function Profile() {
       }
 
       const storedToken = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/admin/profile`, {
+      
+      // Determine endpoint based on user role
+      let endpoint;
+      if (userRole === "siswa") {
+        endpoint = `${API_BASE_URL}/api/siswa/profile`;
+      } else if (userRole === "guru") {
+        endpoint = `${API_BASE_URL}/api/guru/profile`;
+      } else if (userRole === "admin") {
+        endpoint = `${API_BASE_URL}/api/admin/profile`;
+      } else {
+        throw new Error('Invalid user role');
+      }
+
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${storedToken}`
