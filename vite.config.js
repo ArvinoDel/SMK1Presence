@@ -7,29 +7,18 @@ export default defineConfig({
     alias: [{ find: "@", replacement: "/src" }],
   },
   server: {
-    host: true,
+    host: "0.0.0.0",
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://api.muhfaz.my.id',
-        changeOrigin: true,
+        target: 'http://103.196.153.54:3000',
+        changeOrigin: false,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response:', proxyRes.statusCode, req.url);
-          });
-        }
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       '/uploads': {
-        target: 'http://api.muhfaz.my.id',
-        changeOrigin: true,
+        target: 'http://103.196.153.54:3000',
+        changeOrigin: false,
         secure: false
       }
     },
