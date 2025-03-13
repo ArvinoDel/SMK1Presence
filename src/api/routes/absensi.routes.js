@@ -15,7 +15,7 @@ import {
   downloadRekapanSemester,
   processAlfa
 } from '../controllers/absensi.controller.js';
-import upload from '../middleware/upload.middleware.js';
+import { upload } from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
