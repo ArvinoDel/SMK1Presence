@@ -2,15 +2,16 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import cors from 'cors';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.routes.js';
 import barcodeRoutes from './routes/barcode.routes.js';
 import absensiRoutes from './routes/absensi.routes.js';
 import siswaRoutes from './routes/siswa.routes.js';
 import guruRoutes from './routes/Guru.routes.js';
 import adminRoutes from './routes/admin.routes.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { initCronJobs } from './services/cronService.js';
 import kelasAbsensiRoutes from './routes/kelasAbsensi.routes.js';
 dotenv.config();
@@ -18,6 +19,12 @@ dotenv.config();
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// SSL configuration
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'ssl/private.key')),
+  cert: fs.readFileSync(path.join(__dirname, 'ssl/certificate.crt'))
+};
 
 // Middleware
 app.use(cors({
@@ -80,8 +87,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log("Server is running on port 3000");
+// Create HTTPS server
+const httpsServer = https.createServer(sslOptions, app);
+
+// Start the HTTPS server
+httpsServer.listen(3000, '0.0.0.0', () => {
+  console.log("HTTPS Server is running on port 3000");
 });
 
 // if ("serviceWorker" in navigator) {
