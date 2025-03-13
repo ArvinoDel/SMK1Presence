@@ -86,7 +86,7 @@ Navbar.defaultProps = {
   brandName: "SMK1Presence",
   action: (
     <a
-      href="http://smkn1-cirebon.sch.id/"
+      href="https://smkn1-cirebon.sch.id/"
       target="_blank"
     >
     </a>

@@ -33,9 +33,9 @@ export function Footer({ brandName, brandLink, routes }) {
 
 Footer.defaultProps = {
   brandName: "Web Sekolah",
-  brandLink: "http://smkn1-cirebon.sch.id/",
+  brandLink: "https://smkn1-cirebon.sch.id/",
   routes: [
-    { name: "Web Sekolah", path: "http://smkn1-cirebon.sch.id/" },
+    { name: "Web Sekolah", path: "https://smkn1-cirebon.sch.id/" },
     { name: "Web PPLG", path: "https://pplg-smkn1cirebon.sch.id/" },
   ],
 };
