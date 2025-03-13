@@ -3,7 +3,19 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { prosesAbsensi, prosesIzin, getRiwayatAbsensi, getMyAbsensi, getRiwayatAbsensiByNIS, scanQRCode, getKelasAbsensi, getRiwayatAbsensiByWaliKelas, downloadRekapanSemester } from '../controllers/absensi.controller.js';
+import {
+  prosesAbsensi,
+  prosesIzin,
+  getRiwayatAbsensi,
+  getMyAbsensi,
+  getRiwayatAbsensiByNIS,
+  scanQRCode,
+  getKelasAbsensi,
+  getRiwayatAbsensiByWaliKelas,
+  downloadRekapanSemester,
+  processAlfa
+} from '../controllers/absensi.controller.js';
+import upload from '../middleware/upload.middleware.js';
 
 const router = express.Router();
 
@@ -36,14 +48,6 @@ const storage = multer.diskStorage({
 });
 
 // Tambahkan error handling untuk multer
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-}).single('suratIzin');
-
-// Wrap upload middleware dengan error handling
 const uploadMiddleware = (req, res, next) => {
   upload(req, res, function(err) {
     if (err instanceof multer.MulterError) {
@@ -64,7 +68,7 @@ const uploadMiddleware = (req, res, next) => {
 };
 
 router.post('/scan', prosesAbsensi);
-router.post('/izin', uploadMiddleware, prosesIzin);
+router.post('/izin', authMiddleware, upload.single('suratIzin'), prosesIzin);
 router.get('/riwayat/:nisn', getRiwayatAbsensi);
 router.get('/fetch', authMiddleware, getMyAbsensi);
 router.get('/riwayat', authMiddleware, getRiwayatAbsensiByNIS);
@@ -72,5 +76,8 @@ router.post('/scan-qr', authMiddleware, scanQRCode);
 router.get('/kelas/:kodeKelas', authMiddleware, getKelasAbsensi);
 router.get('/wali-kelas/riwayat', authMiddleware, getRiwayatAbsensiByWaliKelas);
 router.get('/rekapan-semester/download', authMiddleware, downloadRekapanSemester);
+
+// New route for processing ALFA
+router.post('/process-alfa/:kodeKelas', authMiddleware, processAlfa);
 
 export default router; 

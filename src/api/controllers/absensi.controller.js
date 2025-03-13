@@ -446,16 +446,68 @@ export const getKelasAbsensi = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Get current time in WIB (UTC+7)
+    const now = new Date();
+    const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const wibHour = wibTime.getHours();
+
     // Get all students in the class
     const siswaKelas = await Siswa.find({ 
       kelas: { $regex: new RegExp(kodeKelas, 'i') }
     });
+
+    if (siswaKelas.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tidak ada siswa ditemukan untuk kelas ini'
+      });
+    }
 
     // Get today's attendance for these students
     const absensiHariIni = await Absensi.find({
       siswa: { $in: siswaKelas.map(s => s._id) },
       tanggal: today
     });
+
+    // If it's 8 AM or later, automatically create ALFA records
+    if (wibHour >= 8) {
+      for (const siswa of siswaKelas) {
+        const hasAttendance = absensiHariIni.some(a => 
+          a.siswa.toString() === siswa._id.toString()
+        );
+
+        if (!hasAttendance) {
+          try {
+            // Check if ALFA record already exists
+            const existingAlfa = await Absensi.findOne({
+              siswa: siswa._id,
+              tanggal: today,
+              status: 'ALFA'
+            });
+
+            if (!existingAlfa) {
+              const alfaRecord = new Absensi({
+                siswa: siswa._id,
+                tanggal: today,
+                jamMasuk: now,
+                status: 'ALFA',
+                keterangan: 'Tidak hadir tanpa keterangan'
+              });
+              
+              const savedRecord = await alfaRecord.save();
+              absensiHariIni.push(savedRecord);
+              console.log(`Created ALFA record for student ${siswa.nama}`);
+            }
+          } catch (error) {
+            if (error.code === 11000) {
+              console.log(`ALFA record already exists for student ${siswa.nama}`);
+            } else {
+              console.error(`Error creating ALFA record for student ${siswa.nama}:`, error);
+            }
+          }
+        }
+      }
+    }
 
     // Combine student data with attendance
     const data = siswaKelas.map(siswa => {
@@ -468,16 +520,25 @@ export const getKelasAbsensi = async (req, res) => {
         nisn: siswa.nisn,
         nama: siswa.nama,
         kelas: siswa.kelas,
-        status: absensi ? absensi.status : 'ALFA'
+        status: absensi ? absensi.status : (wibHour >= 8 ? 'ALFA' : '-')
       };
     });
 
     res.status(200).json({
       success: true,
-      data
+      data,
+      summary: {
+        total: siswaKelas.length,
+        hadir: data.filter(s => s.status === 'HADIR').length,
+        alfa: data.filter(s => s.status === 'ALFA').length,
+        izin: data.filter(s => s.status === 'IZIN').length,
+        sakit: data.filter(s => s.status === 'SAKIT').length,
+        timestamp: wibTime.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+      }
     });
 
   } catch (error) {
+    console.error('Error in getKelasAbsensi:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data absensi kelas',
@@ -691,6 +752,96 @@ export const downloadRekapanSemester = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Gagal mengunduh rekapan semester',
+      error: error.message
+    });
+  }
+};
+
+export const processAlfa = async (req, res) => {
+  try {
+    const { kodeKelas } = req.params;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get all students in the class
+    const siswaKelas = await Siswa.find({ 
+      kelas: { $regex: new RegExp(kodeKelas, 'i') }
+    });
+
+    if (siswaKelas.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tidak ada siswa ditemukan untuk kelas ini'
+      });
+    }
+
+    // Get today's attendance for these students
+    const absensiHariIni = await Absensi.find({
+      siswa: { $in: siswaKelas.map(s => s._id) },
+      tanggal: today
+    });
+
+    // Process ALFA records
+    const alfaRecords = [];
+    const errors = [];
+    
+    for (const siswa of siswaKelas) {
+      const hasAttendance = absensiHariIni.some(a => 
+        a.siswa.toString() === siswa._id.toString()
+      );
+
+      if (!hasAttendance) {
+        try {
+          // Check if ALFA record already exists
+          const existingAlfa = await Absensi.findOne({
+            siswa: siswa._id,
+            tanggal: today,
+            status: 'ALFA'
+          });
+
+          if (!existingAlfa) {
+            const alfaRecord = new Absensi({
+              siswa: siswa._id,
+              tanggal: today,
+              jamMasuk: new Date(),
+              status: 'ALFA',
+              keterangan: 'Tidak hadir tanpa keterangan'
+            });
+            
+            const savedRecord = await alfaRecord.save();
+            alfaRecords.push({
+              nama: siswa.nama,
+              nis: siswa.nis,
+              status: 'ALFA'
+            });
+          }
+        } catch (error) {
+          errors.push({
+            siswa: siswa.nama,
+            error: error.message
+          });
+        }
+      }
+    }
+
+    // Update kelas summary after processing ALFA
+    await updateKelasAbsensiOnChange(alfaRecords[0]);
+
+    res.status(200).json({
+      success: true,
+      message: `Berhasil memproses ${alfaRecords.length} record ALFA`,
+      data: {
+        processed: alfaRecords,
+        errors: errors,
+        timestamp: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+      }
+    });
+
+  } catch (error) {
+    console.error('Error processing ALFA:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal memproses ALFA',
       error: error.message
     });
   }
