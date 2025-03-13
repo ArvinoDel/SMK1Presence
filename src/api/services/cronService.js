@@ -57,37 +57,39 @@ export const initCronJobs = () => {
   
   if (hour >= 8) {
     console.log('Running immediate ALFA check as it is after 8 AM...');
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    (async () => {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      const allStudents = await Siswa.find();
-      console.log(`Processing ${allStudents.length} students for immediate ALFA check...`);
+        const allStudents = await Siswa.find();
+        console.log(`Processing ${allStudents.length} students for immediate ALFA check...`);
 
-      let alfaCount = 0;
-      for (const student of allStudents) {
-        const hasAttendance = await Absensi.findOne({
-          siswa: student._id,
-          tanggal: today
-        });
-
-        if (!hasAttendance) {
-          const alfaRecord = new Absensi({
+        let alfaCount = 0;
+        for (const student of allStudents) {
+          const hasAttendance = await Absensi.findOne({
             siswa: student._id,
-            tanggal: today,
-            jamMasuk: new Date(),
-            status: 'ALFA',
-            keterangan: 'Tidak hadir tanpa keterangan'
+            tanggal: today
           });
 
-          await alfaRecord.save();
-          alfaCount++;
-        }
-      }
+          if (!hasAttendance) {
+            const alfaRecord = new Absensi({
+              siswa: student._id,
+              tanggal: today,
+              jamMasuk: new Date(),
+              status: 'ALFA',
+              keterangan: 'Tidak hadir tanpa keterangan'
+            });
 
-      console.log(`Immediate ALFA check completed. ${alfaCount} ALFA records created.`);
-    } catch (error) {
-      console.error('Error during immediate ALFA check:', error);
-    }
+            await alfaRecord.save();
+            alfaCount++;
+          }
+        }
+
+        console.log(`Immediate ALFA check completed. ${alfaCount} ALFA records created.`);
+      } catch (error) {
+        console.error('Error during immediate ALFA check:', error);
+      }
+    })();
   }
 }; 
