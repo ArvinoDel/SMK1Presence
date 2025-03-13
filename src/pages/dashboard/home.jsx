@@ -694,7 +694,7 @@ export function Home() {
             {...rest}
             title={title}
             icon={React.createElement(icon, {
-              className: "w-6 h-6 text-white",
+              className: "w-6 h-6 text-white shadow-lg",
             })}
             footer={
               <Typography className="font-normal text-blue-gray-600">
