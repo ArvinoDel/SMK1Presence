@@ -7,11 +7,12 @@ export default defineConfig({
     alias: [{ find: "@", replacement: "/src" }],
   },
   server: {
-    host: '0.0.0.0',
+    host: true,
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        // target: 'http://103.196.153.54:3000',
+        target: 'http://103.196.153.54:3000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
@@ -28,7 +29,7 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: 'http://103.196.153.54:3000',
         changeOrigin: true,
         secure: false
       }
