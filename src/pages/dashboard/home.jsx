@@ -55,8 +55,8 @@ if (navigator.mediaDevices === undefined) {
 const checkCameraSupport = () => {
   return !!(
     (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ||
-    navigator.webkitGetUserMedia || 
-    navigator.mozGetUserMedia || 
+    navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia ||
     navigator.msGetUserMedia ||
     navigator.getUserMedia
   );
@@ -66,8 +66,8 @@ const checkCameraSupport = () => {
 const getCameraStream = async (constraints) => {
   try {
     // Coba menggunakan API standar terlebih dahulu
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    return await navigator.mediaDevices.getUserMedia(constraints);
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      return await navigator.mediaDevices.getUserMedia(constraints);
     }
 
     // Fallback untuk browser lama
@@ -260,7 +260,7 @@ export function Home() {
             }
           } catch (backCameraError) {
             console.log('Mencoba menggunakan kamera depan...', backCameraError);
-            
+
             // Jika kamera belakang gagal, coba kamera depan
             try {
               const frontStream = await navigator.mediaDevices.getUserMedia({
@@ -300,7 +300,7 @@ export function Home() {
 
   const scanBarcode = () => {
     if (userRole !== "guru") return;
-    
+
     if (webcamRef.current && webcamRef.current.video) {
       const video = webcamRef.current.video;
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -380,7 +380,7 @@ export function Home() {
           html: errorMessage,
           confirmButtonColor: "#d33",
           timer: 2000, // Timer 2 detik (2000ms)
-        showConfirmButton: false,
+          showConfirmButton: false,
         });
       }
     } catch (error) {
@@ -472,7 +472,15 @@ export function Home() {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    e.preventDefault();
+    let file;
+
+    if (e.type === "drop") {
+      file = e.dataTransfer.files[0]; // Mengambil file dari event drop
+    } else {
+      file = e.target.files[0]; // Mengambil file dari input
+    }
+
     if (file) {
       setFormData(prev => ({ ...prev, suratIzin: file }));
       setPreviewImage(URL.createObjectURL(file));
@@ -1174,11 +1182,15 @@ export function Home() {
                                 <label htmlFor="cover-photo" className="block text-sm/6 font-medium text-gray-900">
                                   Sertakan Surat Izin
                                 </label>
-                                <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                                <div
+                                  className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10"
+                                  onDragOver={(e) => e.preventDefault()} // Mencegah perilaku default browser
+                                  onDrop={handleImageChange} // Menangani drop event
+                                >
                                   <div className="text-center">
                                     <div
                                       className="border-gray-300 p-6 rounded-md text-center cursor-pointer hover:bg-gray-50"
-                                      onClick={() => document.getElementById("image-upload-input").click()} // ID unik
+                                      onClick={() => document.getElementById("image-upload-input").click()}
                                     >
                                       {previewImage ? (
                                         <img src={previewImage} alt="Selected Preview" className="mx-auto size-24 rounded-md object-cover" />
@@ -1193,13 +1205,13 @@ export function Home() {
                                         >
                                           <span>Upload a file</span>
                                           <input
-                                            id="image-upload-input" // ID unik agar tidak bentrok
+                                            id="image-upload-input"
                                             name="image-upload"
                                             type="file"
                                             className="sr-only"
                                             required
                                             accept="image/*"
-                                            onChange={handleImageChange} // Handler berbeda
+                                            onChange={handleImageChange} // Handler untuk klik input
                                           />
                                         </label>
                                         <p className="pl-1">or drag and drop</p>
