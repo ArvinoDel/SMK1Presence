@@ -1,7 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import fs from 'fs';
-import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -11,15 +9,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    https: {
-      key: fs.readFileSync('ssl/frontend-key.pem'),
-      cert: fs.readFileSync('ssl/frontend-cert.pem'),
-    },
     proxy: {
       '/api': {
-        target: 'https://api.muhfaz.my.id',
+        target: 'http://api.muhfaz.my.id',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
@@ -34,9 +28,9 @@ export default defineConfig({
         }
       },
       '/uploads': {
-        target: 'https://api.muhfaz.my.id',
+        target: 'http://api.muhfaz.my.id',
         changeOrigin: true,
-        secure: true
+        secure: false
       }
     },
     cors: true

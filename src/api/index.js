@@ -33,39 +33,11 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// SSL configuration for production
-const sslOptions = {
-  key: fs.readFileSync('/etc/letsencrypt/live/api.muhfaz.my.id/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/api.muhfaz.my.id/fullchain.pem'),
-  ca: fs.readFileSync('/etc/letsencrypt/live/api.muhfaz.my.id/chain.pem')
-};
-
 // Middleware
-const corsOptions = {
-  origin: ['https://muhfaz.my.id', 'https://www.muhfaz.my.id'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-};
-
-app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors()); // Allow all origins
 
 // Security middleware
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
-// Redirect HTTP to HTTPS
-app.use((req, res, next) => {
-  if (!req.secure) {
-    return res.redirect('https://' + req.headers.host + req.url);
-  }
   next();
 });
 
@@ -125,17 +97,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Create both HTTP and HTTPS servers
+// Create HTTP server only
 const httpServer = http.createServer(app);
-const httpsServer = https.createServer(sslOptions, app);
 
-// Start the servers
-httpServer.listen(80, '0.0.0.0', () => {
-  console.log('HTTP Server running on port 80');
-});
-
-httpsServer.listen(443, '0.0.0.0', () => {
-  console.log('HTTPS Server running on port 443');
+// Start the server
+httpServer.listen(3000, '0.0.0.0', () => {
+  console.log('HTTP Server running on port 3000');
 });
 
 // if ("serviceWorker" in navigator) {
