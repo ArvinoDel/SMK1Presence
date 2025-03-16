@@ -4,7 +4,7 @@ import Siswa from '../models/Siswa.models.js';
 import Absensi from '../models/Absensi.models.js';
 
 // Run every minute for realtime summary
-export const initCronJobs = () => {
+export const initCronJobs = async () => {
   // Generate realtime summary every minute
   cron.schedule('* * * * *', async () => {
     console.log('Running realtime attendance summary generation...');

@@ -57,12 +57,7 @@ export function Profile() {
   const imageUrl =
     formData.photo instanceof File
       ? URL.createObjectURL(formData.photo)
-      : formData.photo
-        ? formData.photo.startsWith("http")
-          ? formData.photo
-          : `/uploads/profilepicture/${formData.photo.split("/").pop()}`
-        : "https://www.gravatar.com/avatar/?d=mp";
-
+      : formData.photo || "https://www.gravatar.com/avatar/?d=mp";
 
   const [image, setImage] = useState(null);
 
@@ -238,9 +233,21 @@ export function Profile() {
           });
         }
 
-        // Jika ada foto, set preview
-        if (data.data.photo) setImage(data.data.photo);
-        if (data.data.coverPhoto) setPreviewImage(data.data.coverPhoto);
+        // Jika ada foto, gunakan URL langsung dari API
+        if (data.data.photo) {
+          setImage(data.data.photo);
+          setFormData(prev => ({
+            ...prev,
+            photo: data.data.photo
+          }));
+        }
+        if (data.data.coverPhoto) {
+          setPreviewImage(data.data.coverPhoto);
+          setFormData(prev => ({
+            ...prev,
+            coverPhoto: data.data.coverPhoto
+          }));
+        }
 
       } catch (error) {
         console.error("Error fetching user data:", error);

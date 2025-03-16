@@ -657,15 +657,51 @@ export function History() {
     }
   }, [userRole]);
 
+  const getProfilePhotoUrl = (photo) => {
+    if (!photo) return "https://www.gravatar.com/avatar/?d=mp";
+    if (photo.startsWith('http')) return photo;
+    if (photo.startsWith('/uploads')) return `${API_BASE_URL}${photo}`;
+    return `${API_BASE_URL}/uploads/profilepicture/${photo}`;
+  };
+
+  const [kelasAbsensi, setKelasAbsensi] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Function to fetch attendance data grouped by class
+  const fetchKelasAbsensi = async () => {
+    try {
+      const endpoint = selectedDate 
+        ? `${API_BASE_URL}/api/kelasAbsensi/summary?tanggal=${selectedDate}`
+        : `${API_BASE_URL}/api/kelasAbsensi/summary`;
+
+      const response = await fetch(endpoint, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setKelasAbsensi(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching kelas absensi:', error);
+    }
+  };
+
+  // Update useEffect to include selectedDate dependency
+  useEffect(() => {
+    fetchData();
+    fetchKelasAbsensi();
+  }, [currentPage, searchQuery, selectedFilter, selectedDate]);
+
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
   const baseUrl = `${API_BASE_URL}/api/absensi/rekapan-semester/download`;
 
   return (
-
     <div className="mt-12 mb-8 flex flex-col gap-12">
-
       {userRole === "guru" && kelasInfo.kelas && (
         <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-xl">
           <Typography variant="h6" color="dark" className="text-xl font-semibold">
@@ -712,7 +748,6 @@ export function History() {
         </div>
       )}
 
-
       {userRole !== "admin" && (
         <>
           <Card>
@@ -750,7 +785,7 @@ export function History() {
                           <td className={className}>
                             <div className="flex items-center gap-4">
                               <Avatar
-                                src={getPhotoUrl(absen.photo)}
+                                src={getProfilePhotoUrl(absen.photo)}
                                 alt={absen.nama}
                                 size="sm"
                                 variant="rounded"
@@ -799,14 +834,11 @@ export function History() {
                                   }
                                 }}
                               >
-
-
                                 <img src={
                                   absen.suratIzin instanceof File ? URL.createObjectURL(absen.suratIzin) :
                                     absen.suratIzin.startsWith('http') ? absen.suratIzin :
                                       `${UPLOADS_BASE_URL}/suratizin/${absen.suratIzin.split('/').pop()}`
                                 } alt="Surat Izin" className="w-12 h-12 rounded cursor-pointer shadow" />
-
                               </a>
                             ) : (
                               <Typography className="text-xs font-semibold text-gray-600">-</Typography>
@@ -839,8 +871,6 @@ export function History() {
                     </td>
                   </tr>
                 </tfoot>
-
-
               </table>
             </CardBody>
           </Card>
@@ -1067,7 +1097,6 @@ export function History() {
                 </DialogFooter>
               </form>
             </Dialog>
-
           </CardHeader>
 
           <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
@@ -1128,7 +1157,7 @@ export function History() {
                       <td className={classes}>
                         <div className="flex items-center gap-3">
                           <Avatar
-                            src={user.photo || "https://www.gravatar.com/avatar/?d=mp"}
+                            src={getProfilePhotoUrl(user.photo)}
                             alt={user.nama}
                             size="sm"
                             className="object-cover"
@@ -1476,6 +1505,120 @@ export function History() {
         </form>
       </Dialog>
 
+      {/* New attendance section grouped by class */}
+      <Card>
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <div className="flex items-center justify-between">
+            <Typography variant="h6" color="white">
+              Absensi Per Kelas
+            </Typography>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-48 text-white"
+            />
+          </div>
+        </CardHeader>
+        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+          {kelasAbsensi.map((kelas) => (
+            <div key={kelas.classCode} className="mb-8">
+              <div className="px-6 py-3">
+                <Typography variant="h6" className="text-blue-gray-800">
+                  Kelas {kelas.kelas}
+                </Typography>
+                <div className="mt-2 grid grid-cols-5 gap-4">
+                  <div className="rounded-lg bg-blue-500 p-4 text-white">
+                    <div className="text-sm">Total</div>
+                    <div className="text-2xl font-bold">{kelas.summary.total}</div>
+                  </div>
+                  <div className="rounded-lg bg-green-500 p-4 text-white">
+                    <div className="text-sm">Hadir</div>
+                    <div className="text-2xl font-bold">{kelas.summary.hadir}</div>
+                  </div>
+                  <div className="rounded-lg bg-yellow-500 p-4 text-white">
+                    <div className="text-sm">Sakit</div>
+                    <div className="text-2xl font-bold">{kelas.summary.sakit}</div>
+                  </div>
+                  <div className="rounded-lg bg-orange-500 p-4 text-white">
+                    <div className="text-sm">Izin</div>
+                    <div className="text-2xl font-bold">{kelas.summary.izin}</div>
+                  </div>
+                  <div className="rounded-lg bg-red-500 p-4 text-white">
+                    <div className="text-sm">Alfa</div>
+                    <div className="text-2xl font-bold">{kelas.summary.alfa}</div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <table className="w-full min-w-[640px] table-auto">
+                    <thead>
+                      <tr>
+                        {["Nama", "NIS", "Status", "Jam Masuk", "Keterangan"].map((el) => (
+                          <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
+                            <Typography
+                              variant="small"
+                              className="text-[11px] font-medium uppercase text-blue-gray-400"
+                            >
+                              {el}
+                            </Typography>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {kelas.detailSiswa.map((siswa, index) => (
+                        <tr key={index}>
+                          <td className="py-3 px-6">
+                            <div className="flex items-center gap-4">
+                              <Typography
+                                variant="small"
+                                className="text-sm font-medium text-blue-gray-600"
+                              >
+                                {siswa.siswa.nama}
+                              </Typography>
+                            </div>
+                          </td>
+                          <td className="py-3 px-6">
+                            <Typography className="text-sm font-medium text-blue-gray-600">
+                              {siswa.siswa.nis}
+                            </Typography>
+                          </td>
+                          <td className="py-3 px-6">
+                            <Chip
+                              variant="gradient"
+                              color={
+                                siswa.status === 'HADIR' ? 'green' :
+                                siswa.status === 'SAKIT' ? 'yellow' :
+                                siswa.status === 'IZIN' ? 'orange' :
+                                'red'
+                              }
+                              value={siswa.status}
+                              className="py-0.5 px-2 text-[11px] font-medium"
+                            />
+                          </td>
+                          <td className="py-3 px-6">
+                            <Typography className="text-sm font-medium text-blue-gray-600">
+                              {siswa.jamMasuk ? new Date(siswa.jamMasuk).toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : '-'}
+                            </Typography>
+                          </td>
+                          <td className="py-3 px-6">
+                            <Typography className="text-sm font-medium text-blue-gray-600">
+                              {siswa.keterangan || '-'}
+                            </Typography>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </CardBody>
+      </Card>
     </div>
   );
 }

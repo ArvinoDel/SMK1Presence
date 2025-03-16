@@ -570,11 +570,11 @@ export function Home() {
             headers: { Authorization: `Bearer ${storedToken}` },
           });
         } else if (userRole === "guru") {
-          // response = await fetch("http://103.196.153.54:3000/api/guru/profile", {
+          // response = await fetch("http://localhost:3000/api/guru/profile", {
           //   headers: { Authorization: `Bearer ${storedToken}` },
           // });
         } else if (userRole === "admin") {
-          // response = await fetch("http://103.196.153.54:3000/api/admin/profile", {
+          // response = await fetch("http://localhost:3000/api/admin/profile", {
           //   headers: { Authorization: `Bearer ${storedToken}` },
           // });
         }

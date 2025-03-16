@@ -55,10 +55,10 @@ app.use('/uploads/surat', express.static(path.join(process.cwd(), 'public/upload
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
+  .then(async () => {
     console.log('Connected to MongoDB');
     // Initialize cron jobs after DB connection
-    initCronJobs();
+    await initCronJobs();
   })
   .catch((error) => {
     console.error('Error connecting to MongoDB:', error);
