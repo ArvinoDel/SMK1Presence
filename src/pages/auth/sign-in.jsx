@@ -61,7 +61,7 @@ export function SignIn() {
           icon: 'success',
           title: 'Login Berhasil!',
           text: `Selamat datang, ${result.data.user.nama}!`,
-          timer: 1500,
+          timer: 3000,
           showConfirmButton: false
         });
         

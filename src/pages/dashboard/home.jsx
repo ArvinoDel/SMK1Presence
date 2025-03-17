@@ -5,6 +5,7 @@ import jsQR from "jsqr";
 import JsBarcode from "jsbarcode";
 import QRCode from "react-qr-code";
 import { jwtDecode } from "jwt-decode";
+import { motion } from "framer-motion";
 import {
   Typography,
   Card,
@@ -112,6 +113,7 @@ const requestCameraPermission = async () => {
 };
 
 export function Home() {
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const [image, setImage] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -202,10 +204,10 @@ export function Home() {
           setNisn(data.data.nisn);
         }
 
-        if (!localStorage.getItem("swalShown")) {
-          showWelcomeMessage(userRole);
-          localStorage.setItem("swalShown", "true");
-        }
+        // if (!localStorage.getItem("swalShown")) {
+        //   showWelcomeMessage(userRole);
+        //   localStorage.setItem("swalShown", "true");
+        // }
       } catch (error) {
         console.error("Error fetching user data:", error);
         navigate("/auth/sign-in");
@@ -215,23 +217,23 @@ export function Home() {
     fetchUserData();
   }, [navigate]);
 
-  const showWelcomeMessage = (role) => {
-    const messages = {
-      admin: { title: "Selamat Datang, Admin!", text: "Anda berhasil login sebagai admin." },
-      siswa: { title: "Halo, Siswa!", text: "Selamat datang di dashboard siswa." },
-      guru: { title: "Selamat Datang, Guru!", text: "Anda berhasil masuk sebagai guru." }
-    };
+  // const showWelcomeMessage = (role) => {
+  //   const messages = {
+  //     admin: { title: "Selamat Datang, Admin!", text: "Anda berhasil login sebagai admin." },
+  //     siswa: { title: "Halo, Siswa!", text: "Selamat datang di dashboard siswa." },
+  //     guru: { title: "Selamat Datang, Guru!", text: "Anda berhasil masuk sebagai guru." }
+  //   };
 
-    if (messages[role]) {
-      Swal.fire({
-        title: messages[role].title,
-        text: messages[role].text,
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    }
-  };
+  //   if (messages[role]) {
+  //     Swal.fire({
+  //       title: messages[role].title,
+  //       text: messages[role].text,
+  //       icon: "success",
+  //       timer: 2000,
+  //       showConfirmButton: false,
+  //     });
+  //   }
+  // };
 
   useEffect(() => {
     // Hanya jalankan kode kamera jika user adalah guru
@@ -938,6 +940,17 @@ export function Home() {
                 Izin/Sakit
               </Tab>
             )}
+
+            {userRole === "siswa" && (
+              <Tab
+                value="card"
+                onClick={() => setActiveTab("card")}
+                className=""
+              >
+                <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                Kartu Siswa
+              </Tab>
+            )}
           </TabsHeader>
         </Tabs>
 
@@ -1234,6 +1247,106 @@ export function Home() {
                           </button>
                         </div>
                       </form>
+                    </div>
+                  </CardBody>
+                </Card>
+              </>
+            )}
+
+            {activeTab === "card" && (
+              <>
+                <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
+
+                  <div className="absolute inset-0 h-full w-full bg-gray-100/75" />
+                </div>
+                <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
+                  <CardBody className="p-4">
+                    <div className="px-4 pb-4">
+                      <div className="space-y-12">
+                        <div className="border-b border-gray-900/10 pb-12">
+
+                          <div className="border-b border-gray-900/10 pb-12">
+                            <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                              <div className="sm:col-span-3">
+                                <label htmlFor="Card" className="block text-2xl font-medium text-gray-900 my-5">
+                                  {userRole === "siswa" ? "Kartu Siswa" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                            <div className="col-span-full border-b border-gray-900/10 pb-12">
+                              <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
+                                {userRole === "siswa" ? "Kartu Siswa Anda" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
+                              </label>
+
+                              <div
+                                className="w-[90vw] max-w-[500px] h-[50vw] max-h-[300px] mx-auto relative perspective-1000"
+                                onClick={() => setIsFlipped(!isFlipped)}
+                              >
+                                <motion.div
+                                  className="relative w-full h-full transform-style-preserve-3d"
+                                  animate={{ rotateY: isFlipped ? 180 : 0 }}
+                                  transition={{ duration: 0.6 }}
+                                  style={{ transformStyle: "preserve-3d" }}
+                                >
+                                  {/* Front Side */}
+                                  <div
+                                    className="absolute w-full h-full bg-gray-100 shadow-lg rounded-xl border border-gray-300 flex flex-col items-center overflow-hidden"
+                                    style={{ backfaceVisibility: "hidden" }}
+                                  >
+                                    {/* Header */}
+                                    <div className="w-full bg-blue-700 text-white text-center py-2 px-4">
+                                      <h2 className="text-xs sm:text-sm font-bold">PEMERINTAH KOTA CIREBON</h2>
+                                      <h1 className="text-sm sm:text-lg font-bold">SMK NEGERI 1 KOTA CIREBON</h1>
+                                      <p className="text-[10px] sm:text-xs">Jl. Perjuangan, Kesambi, Kota Cirebon</p>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex p-3 w-full flex-col sm:flex-row items-center max-sm:scale-[0.85] max-sm:origin-top">
+                                      {/* Photo */}
+                                      <img
+                                        src={userData?.photo || "https://www.gravatar.com/avatar/?d=mp"}
+                                        alt="Student"
+                                        className="w-20 h-24 sm:w-24 sm:h-28 object-cover border-4 border-red-500 rounded"
+                                      />
+
+                                      {/* Info */}
+                                      <div className="mt-2 sm:ml-4 text-xs sm:text-sm flex flex-col justify-center text-center sm:text-left">
+                                        <h3 className="text-sm sm:text-md font-bold underline text-center">KARTU PELAJAR</h3>
+                                        <p><strong>NISN: </strong>{userData?.nisn || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                        <p><strong>Nama: </strong>{userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                        <p><strong>Email: </strong>{userData?.email || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                        <p><strong>Jenis Kelamin: </strong>{userData?.jenisKelamin === "L" ? "Laki-laki" : "Perempuan" || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                        <p><strong>Kelas: </strong><span className="font-bold">{userData?.kelas || <div className="h-3 bg-gray-200 rounded w-16"></div>}</span></p>
+                                        <p><strong>Alamat:</strong> {userData?.alamat?.street || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                      </div>
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="w-full px-4 py-1 text-xs text-center border-t border-gray-300">
+                                      <p>Kartu ini berlaku selama menjadi siswa</p>
+                                      <p>SMKN 1 Kota Cirebon</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Back Side */}
+                                  <div
+                                    className="absolute w-full h-full bg-white shadow-lg rounded-xl flex flex-col items-center justify-center"
+                                    style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}
+                                  >
+                                    <h2 className="text-sm sm:text-lg font-semibold text-gray-800 mb-4">Scan QR & Barcode</h2>
+                                    <QRCode value={nisn} size={60} sm:size={80} />
+                                    <canvas ref={barcodeRef}></canvas>
+                                  </div>
+                                </motion.div>
+                              </div>
+
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </CardBody>
                 </Card>
