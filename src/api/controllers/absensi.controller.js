@@ -632,115 +632,219 @@ export const downloadRekapanSemester = async (req, res) => {
   try {
     // Cek role dari token
     const { role } = req.user;
-    if (role !== 'guru') {
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(403).json({
-        success: false,
-        message: 'Akses ditolak. Hanya guru yang dapat mengunduh rekapan.'
-      });
-    }
-
     const { kelas, semester, tahun } = req.query;
-    if (!kelas || !semester || !tahun) {
+
+    if (!kelas) {
       res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({
         success: false,
-        message: 'Kelas, semester, dan tahun harus diisi'
+        message: 'Parameter kelas harus diisi'
       });
     }
-
-    // Tentukan range tanggal semester (6 bulan)
-    let startDate, endDate;
-    if (semester === '1') {
-      startDate = new Date(tahun, 6, 1); // Juli
-      endDate = new Date(tahun, 11, 31); // Desember
-    } else {
-      startDate = new Date(tahun, 0, 1); // Januari
-      endDate = new Date(tahun, 5, 30); // Juni
-    }
-
-    // Ambil semua siswa dalam kelas tersebut
-    const siswaList = await Siswa.find({ kelas }).sort({ nama: 1 });
 
     // Buat workbook baru
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Rekapan Absensi');
 
-    // Styling untuk header
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(2).font = { bold: true };
-    worksheet.getRow(4).font = { bold: true };
-
-    // Tambahkan header
-    worksheet.mergeCells('A1:H1');
-    worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${semester} TAHUN ${tahun}`;
-    worksheet.getCell('A1').alignment = { horizontal: 'center' };
-
-    worksheet.mergeCells('A2:H2');
-    worksheet.getCell('A2').value = `Kelas: ${kelas}`;
-    worksheet.getCell('A2').alignment = { horizontal: 'center' };
-
-    worksheet.mergeCells('A3:H3');
-    worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
-    worksheet.getCell('A3').alignment = { horizontal: 'center' };
-
-    // Header tabel
-    worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
-
-    // Set lebar kolom
-    worksheet.getColumn('A').width = 5;
-    worksheet.getColumn('B').width = 12;
-    worksheet.getColumn('C').width = 12;
-    worksheet.getColumn('D').width = 30;
-    worksheet.getColumn('E').width = 10;
-    worksheet.getColumn('F').width = 10;
-    worksheet.getColumn('G').width = 10;
-    worksheet.getColumn('H').width = 10;
-
-    // Isi data siswa
-    let rowNumber = 5;
-    for (const [index, siswa] of siswaList.entries()) {
-      const absensiList = await Absensi.find({
-        siswa: siswa._id,
-        tanggal: {
-          $gte: startDate,
-          $lte: endDate
-        }
-      });
-
-      const summary = {
-        HADIR: 0,
-        SAKIT: 0,
-        IZIN: 0,
-        ALFA: 0
-      };
-
-      absensiList.forEach(absen => {
-        // Jika status TERLAMBAT, hitung sebagai HADIR
-        if (absen.status === 'TERLAMBAT') {
-          summary.HADIR++;
+    if (role === 'admin') {
+      // Admin view: 6 semester dalam satu file
+      for (let sem = 1; sem <= 6; sem++) {
+        const tahunAjaran = Math.floor((sem - 1) / 2) + parseInt(tahun);
+        const semesterGanjil = sem % 2 === 1;
+        
+        let startDate, endDate;
+        if (semesterGanjil) {
+          startDate = new Date(tahunAjaran, 6, 1); // Juli
+          endDate = new Date(tahunAjaran, 11, 31); // Desember
         } else {
-          summary[absen.status]++;
+          startDate = new Date(tahunAjaran, 0, 1); // Januari
+          endDate = new Date(tahunAjaran, 5, 30); // Juni
         }
+
+        const worksheet = workbook.addWorksheet(`Semester ${sem}`);
+
+        // Styling untuk header
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(2).font = { bold: true };
+        worksheet.getRow(4).font = { bold: true };
+
+        // Tambahkan header
+        worksheet.mergeCells('A1:H1');
+        worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${sem} TAHUN ${tahunAjaran}`;
+        worksheet.getCell('A1').alignment = { horizontal: 'center' };
+
+        worksheet.mergeCells('A2:H2');
+        worksheet.getCell('A2').value = `Kelas: ${kelas}`;
+        worksheet.getCell('A2').alignment = { horizontal: 'center' };
+
+        worksheet.mergeCells('A3:H3');
+        worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+        worksheet.getCell('A3').alignment = { horizontal: 'center' };
+
+        // Header tabel
+        worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
+
+        // Set lebar kolom
+        worksheet.getColumn('A').width = 5;
+        worksheet.getColumn('B').width = 12;
+        worksheet.getColumn('C').width = 12;
+        worksheet.getColumn('D').width = 30;
+        worksheet.getColumn('E').width = 10;
+        worksheet.getColumn('F').width = 10;
+        worksheet.getColumn('G').width = 10;
+        worksheet.getColumn('H').width = 10;
+
+        // Ambil semua siswa dalam kelas tersebut
+        const siswaList = await Siswa.find({ kelas }).sort({ nama: 1 });
+
+        // Isi data siswa
+        let rowNumber = 5;
+        for (const [index, siswa] of siswaList.entries()) {
+          const absensiList = await Absensi.find({
+            siswa: siswa._id,
+            tanggal: {
+              $gte: startDate,
+              $lte: endDate
+            }
+          });
+
+          const summary = {
+            HADIR: 0,
+            SAKIT: 0,
+            IZIN: 0,
+            ALFA: 0
+          };
+
+          absensiList.forEach(absen => {
+            // Jika status TERLAMBAT, hitung sebagai HADIR
+            if (absen.status === 'TERLAMBAT') {
+              summary.HADIR++;
+            } else {
+              summary[absen.status]++;
+            }
+          });
+
+          worksheet.getRow(rowNumber).values = [
+            index + 1,
+            siswa.nis,
+            siswa.nisn,
+            siswa.nama,
+            summary.HADIR,
+            summary.SAKIT,
+            summary.IZIN,
+            summary.ALFA
+          ];
+
+          rowNumber++;
+        }
+      }
+    } else if (role === 'guru') {
+      // Guru view: 1 semester saja
+      if (!semester || !tahun) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({
+          success: false,
+          message: 'Parameter semester dan tahun harus diisi untuk role guru'
+        });
+      }
+
+      let startDate, endDate;
+      if (semester === '1') {
+        startDate = new Date(tahun, 6, 1); // Juli
+        endDate = new Date(tahun, 11, 31); // Desember
+      } else {
+        startDate = new Date(tahun, 0, 1); // Januari
+        endDate = new Date(tahun, 5, 30); // Juni
+      }
+
+      const worksheet = workbook.addWorksheet('Rekapan Absensi');
+
+      // Styling untuk header
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(2).font = { bold: true };
+      worksheet.getRow(4).font = { bold: true };
+
+      // Tambahkan header
+      worksheet.mergeCells('A1:H1');
+      worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${semester} TAHUN ${tahun}`;
+      worksheet.getCell('A1').alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A2:H2');
+      worksheet.getCell('A2').value = `Kelas: ${kelas}`;
+      worksheet.getCell('A2').alignment = { horizontal: 'center' };
+
+      worksheet.mergeCells('A3:H3');
+      worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+      worksheet.getCell('A3').alignment = { horizontal: 'center' };
+
+      // Header tabel
+      worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
+
+      // Set lebar kolom
+      worksheet.getColumn('A').width = 5;
+      worksheet.getColumn('B').width = 12;
+      worksheet.getColumn('C').width = 12;
+      worksheet.getColumn('D').width = 30;
+      worksheet.getColumn('E').width = 10;
+      worksheet.getColumn('F').width = 10;
+      worksheet.getColumn('G').width = 10;
+      worksheet.getColumn('H').width = 10;
+
+      // Ambil semua siswa dalam kelas tersebut
+      const siswaList = await Siswa.find({ kelas }).sort({ nama: 1 });
+
+      // Isi data siswa
+      let rowNumber = 5;
+      for (const [index, siswa] of siswaList.entries()) {
+        const absensiList = await Absensi.find({
+          siswa: siswa._id,
+          tanggal: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        });
+
+        const summary = {
+          HADIR: 0,
+          SAKIT: 0,
+          IZIN: 0,
+          ALFA: 0
+        };
+
+        absensiList.forEach(absen => {
+          // Jika status TERLAMBAT, hitung sebagai HADIR
+          if (absen.status === 'TERLAMBAT') {
+            summary.HADIR++;
+          } else {
+            summary[absen.status]++;
+          }
+        });
+
+        worksheet.getRow(rowNumber).values = [
+          index + 1,
+          siswa.nis,
+          siswa.nisn,
+          siswa.nama,
+          summary.HADIR,
+          summary.SAKIT,
+          summary.IZIN,
+          summary.ALFA
+        ];
+
+        rowNumber++;
+      }
+    } else {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Hanya guru dan admin yang dapat mengunduh rekapan.'
       });
-
-      worksheet.getRow(rowNumber).values = [
-        index + 1,
-        siswa.nis,
-        siswa.nisn,
-        siswa.nama,
-        summary.HADIR,
-        summary.SAKIT,
-        summary.IZIN,
-        summary.ALFA
-      ];
-
-      rowNumber++;
     }
 
     // Set response headers untuk file Excel
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=rekapan_${kelas}_semester${semester}_${tahun}.xlsx`);
+    res.setHeader('Content-Disposition', role === 'admin' ? 
+      `attachment; filename=rekapan_${kelas}_6semester_${tahun}.xlsx` :
+      `attachment; filename=rekapan_${kelas}_semester${semester}_${tahun}.xlsx`);
 
     // Kirim workbook ke response
     await workbook.xlsx.write(res);
