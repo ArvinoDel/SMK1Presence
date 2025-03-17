@@ -193,32 +193,6 @@ const SkeletonRow = () => {
           <div className="h-4 bg-gray-300 rounded w-10"></div>
         </td>
       </tr>
-      <tr className="animate-pulse">
-        <td className="py-3 px-5 border-b border-blue-gray-50">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
-            <div>
-              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
-              <div className="h-3 bg-gray-200 rounded w-16"></div>
-            </div>
-          </div>
-        </td>
-        <td className="py-3 px-5 border-b border-blue-gray-50">
-          <div className="h-4 bg-gray-300 rounded w-20"></div>
-        </td>
-        <td className="py-3 px-5 border-b border-blue-gray-50">
-          <div className="h-4 bg-gray-300 rounded w-16"></div>
-        </td>
-        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
-          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
-        </td>
-        <td className="py-3 px-5 border-b border-blue-gray-50">
-          <div className="h-4 bg-gray-300 rounded w-32"></div>
-        </td>
-        <td className="py-3 px-5 border-b border-blue-gray-50">
-          <div className="h-4 bg-gray-300 rounded w-10"></div>
-        </td>
-      </tr>
     </th>
   );
 };
@@ -790,6 +764,55 @@ export function History() {
     return result;
   };
 
+  const handleDownloadUsers = async (selectedRole) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/absensi/users/download?role=${selectedRole.toLowerCase()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download user records');
+      }
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : `rekapan_${selectedRole.toLowerCase()}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+      // Convert response to blob
+      const blob = await response.blob();
+      
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Data ${selectedRole} berhasil diunduh`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error downloading user records:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `Gagal mengunduh data ${selectedRole}`
+      });
+    }
+  };
+
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
@@ -1267,25 +1290,22 @@ export function History() {
                   {isModalOpen && (
                     <div
                       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-                      onClick={toggleModal} // Klik di luar modal untuk close
+                      onClick={toggleModal}
                     >
                       <div
                         className="bg-white rounded-lg shadow-2xl p-5 w-80 text-center relative transform transition-all duration-300 scale-95 hover:scale-100"
-                        onClick={(e) => e.stopPropagation()} // Klik dalam modal tidak close
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {/* Close Button */}
-
                         <IconButton
                           size="sm"
                           variant="text"
                           className="!absolute right-3.5 top-3.5"
                           onClick={toggleModal}
                         >
-                        <XMarkIcon className="h-5 w-5 stroke-2" />
-
+                          <XMarkIcon className="h-5 w-5 stroke-2" />
                         </IconButton>
 
-                        <h2 className="text-lg font-semibold mb-3 text-gray-900">Pilih Role </h2>
+                        <h2 className="text-lg font-semibold mb-3 text-gray-900">Pilih Role</h2>
 
                         <div className="flex flex-col gap-3">
                           {["Siswa", "Guru", "Admin"].map((role) => (
@@ -1293,9 +1313,8 @@ export function History() {
                               key={role}
                               className="w-full bg-gray-800 text-white hover:bg-gray-900 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md"
                               onClick={() => {
+                                handleDownloadUsers(role);
                                 toggleModal();
-                                console.log(`Download Rekapan ${role}`);
-                                // Tambahkan logika download sesuai role di sini
                               }}
                             >
                               {role}
