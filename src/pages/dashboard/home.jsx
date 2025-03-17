@@ -6,6 +6,8 @@ import JsBarcode from "jsbarcode";
 import QRCode from "react-qr-code";
 import { jwtDecode } from "jwt-decode";
 import { motion } from "framer-motion";
+import html2canvas from "html2canvas";
+import { saveAs } from "file-saver";
 import {
   Typography,
   Card,
@@ -42,7 +44,7 @@ import {
   projectsTableData,
   ordersOverviewData,
 } from "@/data";
-import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
+import { ArrowDownTrayIcon, CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 import Swal from 'sweetalert2';
 import statisticsCardsData from "./../../data/statistics-cards-data";
 import { API_BASE_URL } from "@/config";
@@ -114,6 +116,38 @@ const requestCameraPermission = async () => {
 
 export function Home() {
   const [isFlipped, setIsFlipped] = useState(false);
+  const frontRef = useRef(null);
+  const backRef = useRef(null);
+
+  const handleDownload = async () => {
+    const originalFlipState = isFlipped; // Simpan posisi awal
+
+    setIsFlipped(false); // Paksa tampilan ke depan
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Tunggu animasi selesai
+
+    const downloadImage = async (ref, filename, isBack = false) => {
+      if (!ref.current) return;
+
+      if (isBack) ref.current.style.transform = "rotateY(180deg) scaleX(-1)"; // Flip hanya saat capture
+
+      const imagesdownload = await html2canvas(ref.current, { scale: 2, useCORS: true });
+      const image = imagesdownload.toDataURL("image/jpeg", 1.0);
+
+      if (isBack) ref.current.style.transform = "rotateY(180deg)"; // Kembalikan flip setelah capture
+
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = filename;
+      link.click();
+    };
+
+    await downloadImage(frontRef, "kartu_pelajar_depan.jpg"); // Unduh bagian depan
+    await downloadImage(backRef, "kartu_pelajar_belakang.jpg", true); // Unduh bagian belakang dengan flip
+
+    setIsFlipped(originalFlipState); // Kembalikan tampilan ke posisi awal
+  };
+
+
 
   const [image, setImage] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -603,7 +637,12 @@ export function Home() {
 
   const barcodeRef = useRef(null);
   const barcodeModalRef = useRef(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  // Paksa refresh dengan mengganti key
+  const refreshBarcode = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   useEffect(() => {
     if (nisn && barcodeRef.current) {
@@ -614,7 +653,7 @@ export function Home() {
         displayValue: true,
       });
     }
-  }, [nisn]);
+  }, [refreshKey]); // <--- Sekarang barcode akan di-refresh tiap kali refreshKey berubah
 
   useEffect(() => {
     if (isOpened && nisn && barcodeModalRef.current) {
@@ -923,7 +962,10 @@ export function Home() {
       <div className="w-full">
         <Tabs value={activeTab}>
           <TabsHeader>
-            <Tab value="absen" onClick={() => setActiveTab("absen")}>
+            <Tab value="absen" onClick={() => {
+                  refreshBarcode();  // Panggil fungsi pertama
+                  setActiveTab("absen") // Panggil fungsi kedua
+                }}>
               <ClipboardDocumentCheckIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
               Absen
             </Tab>
@@ -944,7 +986,10 @@ export function Home() {
             {userRole === "siswa" && (
               <Tab
                 value="card"
-                onClick={() => setActiveTab("card")}
+                onClick={() => {
+                  refreshBarcode();  // Panggil fungsi pertama
+                  setActiveTab("card") // Panggil fungsi kedua
+                }}
                 className=""
               >
                 <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
@@ -1276,14 +1321,18 @@ export function Home() {
                           </div>
 
                           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <div className="col-span-full border-b border-gray-900/10 pb-12">
-                              <label htmlFor="qr" className="block text-sm/6 font-medium text-gray-900">
+                            <div className="col-span-full pb-12">
+                              <label htmlFor="qr" className="mb-10 block text-sm/6 font-medium text-gray-900">
                                 {userRole === "siswa" ? "Kartu Siswa Anda" : <div className="h-3 bg-gray-200 rounded w-16"></div>}
                               </label>
 
+                              {/* Kartu */}
                               <div
-                                className="w-[90vw] max-w-[500px] h-[50vw] max-h-[300px] mx-auto relative perspective-1000"
-                                onClick={() => setIsFlipped(!isFlipped)}
+                                className="w-[73vw] max-w-[480px] h-[57vw] max-h-[320px] sm:h-[50vw] sm:max-h-[300px] mx-auto relative perspective-1000"
+                                onClick={() => {
+                                  refreshBarcode();  // Panggil fungsi pertama
+                                  setIsFlipped(!isFlipped); // Panggil fungsi kedua
+                                }}
                               >
                                 <motion.div
                                   className="relative w-full h-full transform-style-preserve-3d"
@@ -1293,39 +1342,34 @@ export function Home() {
                                 >
                                   {/* Front Side */}
                                   <div
+                                    ref={frontRef}
                                     className="absolute w-full h-full bg-gray-100 shadow-lg rounded-xl border border-gray-300 flex flex-col items-center overflow-hidden"
                                     style={{ backfaceVisibility: "hidden" }}
                                   >
-                                    {/* Header */}
                                     <div className="w-full bg-blue-700 text-white text-center py-2 px-4">
                                       <h2 className="text-xs sm:text-sm font-bold">PEMERINTAH KOTA CIREBON</h2>
                                       <h1 className="text-sm sm:text-lg font-bold">SMK NEGERI 1 KOTA CIREBON</h1>
                                       <p className="text-[10px] sm:text-xs">Jl. Perjuangan, Kesambi, Kota Cirebon</p>
                                     </div>
 
-                                    {/* Content */}
-                                    <div className="flex p-3 w-full flex-col sm:flex-row items-center max-sm:scale-[0.85] max-sm:origin-top">
-                                      {/* Photo */}
+                                    <div className="flex px-3 my-1 w-full flex-row items-center gap-5 max-sm:flex-col max-sm:items-start sm:gap-6">
                                       <img
                                         src={userData?.photo || "https://www.gravatar.com/avatar/?d=mp"}
                                         alt="Student"
-                                        className="w-20 h-24 sm:w-24 sm:h-28 object-cover border-4 border-red-500 rounded"
+                                        className="w-14 h-18 sm:w-24 sm:h-28 object-cover rounded max-sm:mx-auto"
                                       />
-
-                                      {/* Info */}
-                                      <div className="mt-2 sm:ml-4 text-xs sm:text-sm flex flex-col justify-center text-center sm:text-left">
-                                        <h3 className="text-sm sm:text-md font-bold underline text-center">KARTU PELAJAR</h3>
-                                        <p><strong>NISN: </strong>{userData?.nisn || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
-                                        <p><strong>Nama: </strong>{userData?.nama || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
-                                        <p><strong>Email: </strong>{userData?.email || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
-                                        <p><strong>Jenis Kelamin: </strong>{userData?.jenisKelamin === "L" ? "Laki-laki" : "Perempuan" || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
-                                        <p><strong>Kelas: </strong><span className="font-bold">{userData?.kelas || <div className="h-3 bg-gray-200 rounded w-16"></div>}</span></p>
-                                        <p><strong>Alamat:</strong> {userData?.alamat?.street || <div className="h-3 bg-gray-200 rounded w-16"></div>}</p>
+                                      <div className="mt-2 sm:ml-4 text-xs sm:text-sm flex flex-col justify-center text-left">
+                                        <h3 className="text-sm sm:text-md font-bold underline text-center sm:text-center">KARTU PELAJAR</h3>
+                                        <p><strong>NISN: </strong>{userData?.nisn || "..."}</p>
+                                        <p><strong>Nama: </strong>{userData?.nama || "..."}</p>
+                                        <p><strong>Email: </strong>{userData?.email || "..."}</p>
+                                        <p><strong>Jenis Kelamin: </strong>{userData?.jenisKelamin === "L" ? "Laki-laki" : "Perempuan"}</p>
+                                        <p><strong>Kelas: </strong><span className="font-bold">{userData?.kelas || "..."}</span></p>
+                                        <p><strong>Alamat:</strong> {userData?.alamat?.street || "..."}</p>
                                       </div>
                                     </div>
 
-                                    {/* Footer */}
-                                    <div className="w-full px-4 py-1 text-xs text-center border-t border-gray-300">
+                                    <div className="w-full px-4 py-1 mt-1 sm:py-4 text-xs text-center border-t border-gray-300">
                                       <p>Kartu ini berlaku selama menjadi siswa</p>
                                       <p>SMKN 1 Kota Cirebon</p>
                                     </div>
@@ -1333,15 +1377,27 @@ export function Home() {
 
                                   {/* Back Side */}
                                   <div
+                                    ref={backRef}
                                     className="absolute w-full h-full bg-white shadow-lg rounded-xl flex flex-col items-center justify-center"
                                     style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}
                                   >
-                                    <h2 className="text-sm sm:text-lg font-semibold text-gray-800 mb-4">Scan QR & Barcode</h2>
-                                    <QRCode value={nisn} size={60} sm:size={80} />
-                                    <canvas ref={barcodeRef}></canvas>
+                                    <h2 className="text-sm sm:text-lg font-semibold text-gray-800 mb-2">Scan QR & Barcode</h2>
+                                    <QRCode value={nisn} className="w-20 h-20 sm:w-24 sm:h-24" />
+                                    <canvas key={refreshKey} ref={barcodeRef} className="w-44 sm:w-60 h-20 sm:h-28 mt-2"></canvas>
                                   </div>
                                 </motion.div>
                               </div>
+
+                              <button
+                                onClick={handleDownload}
+                                className="mt-10 flex items-center justify-center gap-2 px-6 py-3 bg-black text-white font-semibold rounded-xl 
+             shadow-lg hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 active:scale-95 
+             transition-all duration-300"
+                              >
+                                <ArrowDownTrayIcon className="w-5 h-5" />
+                                Download Kartu
+                              </button>
+
 
                             </div>
                           </div>
