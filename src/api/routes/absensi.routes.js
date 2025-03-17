@@ -13,7 +13,8 @@ import {
   getKelasAbsensi,
   getRiwayatAbsensiByWaliKelas,
   downloadRekapanSemester,
-  processAlfa
+  processAlfa,
+  getAbsensiPerKelas
 } from '../controllers/absensi.controller.js';
 import { upload } from '../middleware/upload.middleware.js';
 
@@ -79,5 +80,8 @@ router.get('/rekapan-semester/download', authMiddleware, downloadRekapanSemester
 
 // New route for processing ALFA
 router.post('/process-alfa/:kodeKelas', authMiddleware, processAlfa);
+
+// Get attendance data grouped by class
+router.get('/per-kelas', authMiddleware, getAbsensiPerKelas);
 
 export default router; 

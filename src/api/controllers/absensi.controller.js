@@ -845,4 +845,91 @@ export const processAlfa = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const getAbsensiPerKelas = async (req, res) => {
+  try {
+    // Get all unique classes
+    const allKelas = await Siswa.distinct('kelas');
+    const result = [];
+
+    // Process each class
+    for (const kelas of allKelas) {
+      // Get all students in this class
+      const siswaKelas = await Siswa.find({ kelas });
+      const siswaIds = siswaKelas.map(s => s._id);
+
+      // Get all attendance records for these students
+      const absensiRecords = await Absensi.find({
+        siswa: { $in: siswaIds }
+      }).populate('siswa', 'nama nis kelas photo');
+
+      // Calculate summary
+      const summary = {
+        total: siswaKelas.length,
+        hadir: 0,
+        sakit: 0,
+        izin: 0,
+        alfa: 0
+      };
+
+      // Group attendance records by student
+      const detailSiswa = [];
+      
+      // Process each attendance record
+      absensiRecords.forEach(record => {
+        // Update summary based on status
+        if (record.status === 'HADIR') summary.hadir++;
+        else if (record.status === 'SAKIT') summary.sakit++;
+        else if (record.status === 'IZIN') summary.izin++;
+        else if (record.status === 'ALFA') summary.alfa++;
+
+        // Add to details with complete information
+        detailSiswa.push({
+          siswa: {
+            nama: record.siswa.nama,
+            nis: record.siswa.nis,
+            kelas: record.siswa.kelas,
+            photo: record.siswa.photo
+          },
+          status: record.status,
+          tanggal: record.tanggal,
+          jamMasuk: record.jamMasuk,
+          keterangan: record.keterangan
+        });
+      });
+
+      // Sort detail by date (newest first) and then by student name
+      detailSiswa.sort((a, b) => {
+        if (a.tanggal === b.tanggal) {
+          return a.siswa.nama.localeCompare(b.siswa.nama);
+        }
+        return new Date(b.tanggal) - new Date(a.tanggal);
+      });
+
+      // Add class data to result
+      result.push({
+        kelas,
+        classCode: kelas.replace(/\s+/g, ''),
+        summary,
+        detailSiswa
+      });
+    }
+
+    // Sort classes
+    result.sort((a, b) => a.kelas.localeCompare(b.kelas));
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('Error in getAbsensiPerKelas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data absensi per kelas',
+      error: error.message
+    });
+  }
 }; 

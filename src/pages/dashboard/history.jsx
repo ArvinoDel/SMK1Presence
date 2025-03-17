@@ -167,6 +167,58 @@ const SkeletonRow = () => {
           <div className="h-4 bg-gray-300 rounded w-10"></div>
         </td>
       </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
+      <tr className="animate-pulse">
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
+            <div>
+              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-20"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50 text-center">
+          <div className="h-5 bg-gray-300 rounded w-14 mx-auto"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </td>
+        <td className="py-3 px-5 border-b border-blue-gray-50">
+          <div className="h-4 bg-gray-300 rounded w-10"></div>
+        </td>
+      </tr>
     </th>
   );
 };
@@ -665,16 +717,11 @@ export function History() {
   };
 
   const [kelasAbsensi, setKelasAbsensi] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Function to fetch attendance data grouped by class
   const fetchKelasAbsensi = async () => {
     try {
-      const endpoint = selectedDate 
-        ? `${API_BASE_URL}/api/kelasAbsensi/summary?tanggal=${selectedDate}`
-        : `${API_BASE_URL}/api/kelasAbsensi/summary`;
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/per-kelas`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`
         }
@@ -689,11 +736,56 @@ export function History() {
     }
   };
 
-  // Update useEffect to include selectedDate dependency
+  // Update useEffect to remove selectedDate dependency
   useEffect(() => {
     fetchData();
     fetchKelasAbsensi();
-  }, [currentPage, searchQuery, selectedFilter, selectedDate]);
+  }, [currentPage, searchQuery, selectedFilter]);
+
+  const [selectedKelas, setSelectedKelas] = useState(null);
+  const [currentDateIndex, setCurrentDateIndex] = useState(0);
+
+  // Function to group attendance records by date and include all students
+  const groupAbsensiByDate = (detailSiswa, allStudents) => {
+    if (!Array.isArray(detailSiswa) || !Array.isArray(allStudents)) {
+      console.error('Invalid parameters passed to groupAbsensiByDate');
+      return {};
+    }
+
+    const grouped = {};
+    
+    // First, group existing attendance records by date
+    detailSiswa.forEach(record => {
+      if (!record || !record.tanggal || !record.siswa || !record.siswa.nis) return;
+      
+      const date = new Date(record.tanggal).toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      if (!grouped[date]) {
+        grouped[date] = {};
+      }
+      grouped[date][record.siswa.nis] = record;
+    });
+
+    // Convert to array format with all students
+    const result = {};
+    Object.keys(grouped).forEach(date => {
+      result[date] = allStudents.map(student => {
+        if (!student || !student.nis) return null;
+        return grouped[date][student.nis] || {
+          siswa: student,
+          status: 'ALFA',
+          jamMasuk: null,
+          keterangan: 'Tidak hadir tanpa keterangan'
+        };
+      }).filter(Boolean);
+    });
+
+    return result;
+  };
 
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
@@ -805,7 +897,7 @@ export function History() {
                             <Typography className="text-xs font-semibold text-blue-gray-600">{absen.tanggal}</Typography>
                           </td>
                           <td className={className}>
-                            <Typography className="text-xs font-semibold text-blue-gray-600">{absen.jamMasuk}</Typography>
+                            <Typography className="text-xs font-semibold text-blue-gray-600">{absen.jamMasuk === null ? '-' : absen.jamMasuk}</Typography>
                           </td>
                           <td className={`text-center ${className}`}>
                             <Chip variant="gradient" color={getStatusColor(absen.status)} value={absen.status} className="py-0.5 px-2 text-[11px] font-medium" />
@@ -1505,118 +1597,190 @@ export function History() {
         </form>
       </Dialog>
 
-      {/* New attendance section grouped by class */}
+      {/* New attendance section with tabs and date pagination */}
       <Card>
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <div className="flex items-center justify-between">
-            <Typography variant="h6" color="white">
-              Absensi Per Kelas
-            </Typography>
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-48 text-white"
-            />
-          </div>
+          <Typography variant="h6" color="white">
+            Absensi Per Kelas
+          </Typography>
         </CardHeader>
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          {kelasAbsensi.map((kelas) => (
-            <div key={kelas.classCode} className="mb-8">
-              <div className="px-6 py-3">
-                <Typography variant="h6" className="text-blue-gray-800">
-                  Kelas {kelas.kelas}
-                </Typography>
-                <div className="mt-2 grid grid-cols-5 gap-4">
-                  <div className="rounded-lg bg-blue-500 p-4 text-white">
-                    <div className="text-sm">Total</div>
-                    <div className="text-2xl font-bold">{kelas.summary.total}</div>
+        <CardBody className="px-0 pt-0 pb-2">
+          <div className="px-6">
+            <Tabs value={selectedKelas}>
+              <TabsHeader className="overflow-x-auto">
+                {kelasAbsensi.map((kelas) => (
+                  <Tab
+                    key={kelas.classCode}
+                    value={kelas.kelas}
+                    onClick={() => {
+                      setSelectedKelas(kelas.kelas);
+                      setCurrentDateIndex(0);
+                    }}
+                    className={selectedKelas === kelas.kelas ? "font-bold" : ""}
+                  >
+                    {kelas.kelas}
+                  </Tab>
+                ))}
+              </TabsHeader>
+            </Tabs>
+          </div>
+
+          {kelasAbsensi.map((kelas) => {
+            if (kelas.kelas !== selectedKelas) return null;
+            if (!kelas.detailSiswa || !Array.isArray(kelas.detailSiswa)) return null;
+
+            // Get all students in the class
+            const allStudents = kelas.detailSiswa.reduce((acc, record) => {
+              if (!record.siswa) return acc;
+              const existingStudent = acc.find(s => s.nis === record.siswa.nis);
+              if (!existingStudent) {
+                acc.push(record.siswa);
+              }
+              return acc;
+            }, []);
+
+            if (allStudents.length === 0) return null;
+
+            const groupedByDate = groupAbsensiByDate(kelas.detailSiswa, allStudents);
+            const dates = Object.keys(groupedByDate).sort((a, b) => 
+              new Date(b.split(', ')[1]) - new Date(a.split(', ')[1])
+            );
+            const currentDate = dates[currentDateIndex];
+            const currentRecords = groupedByDate[currentDate] || [];
+
+            const todayTotal = currentRecords.length;
+            const todayHadir = currentRecords.filter(r => r.status === 'HADIR').length;
+            const todaySakit = currentRecords.filter(r => r.status === 'SAKIT').length;
+            const todayIzin = currentRecords.filter(r => r.status === 'IZIN').length;
+            const todayAlfa = currentRecords.filter(r => r.status === 'ALFA').length;
+
+            return (
+              <div key={kelas.classCode} className="mt-4">
+                <div className="px-6 py-3">
+                  <div className="flex justify-between items-center mb-4">
+                    <Typography variant="h6" className="text-blue-gray-800">
+                      {currentDate}
+                    </Typography>
                   </div>
-                  <div className="rounded-lg bg-green-500 p-4 text-white">
-                    <div className="text-sm">Hadir</div>
-                    <div className="text-2xl font-bold">{kelas.summary.hadir}</div>
+
+                  <div className="grid grid-cols-5 gap-4">
+                    <div className="rounded-lg bg-blue-500 p-4 text-white">
+                      <div className="text-sm">Total</div>
+                      <div className="text-2xl font-bold">{todayTotal}</div>
+                    </div>
+                    <div className="rounded-lg bg-green-500 p-4 text-white">
+                      <div className="text-sm">Hadir</div>
+                      <div className="text-2xl font-bold">{todayHadir}</div>
+                    </div>
+                    <div className="rounded-lg bg-yellow-500 p-4 text-white">
+                      <div className="text-sm">Sakit</div>
+                      <div className="text-2xl font-bold">{todaySakit}</div>
+                    </div>
+                    <div className="rounded-lg bg-orange-500 p-4 text-white">
+                      <div className="text-sm">Izin</div>
+                      <div className="text-2xl font-bold">{todayIzin}</div>
+                    </div>
+                    <div className="rounded-lg bg-red-500 p-4 text-white">
+                      <div className="text-sm">Alfa</div>
+                      <div className="text-2xl font-bold">{todayAlfa}</div>
+                    </div>
                   </div>
-                  <div className="rounded-lg bg-yellow-500 p-4 text-white">
-                    <div className="text-sm">Sakit</div>
-                    <div className="text-2xl font-bold">{kelas.summary.sakit}</div>
-                  </div>
-                  <div className="rounded-lg bg-orange-500 p-4 text-white">
-                    <div className="text-sm">Izin</div>
-                    <div className="text-2xl font-bold">{kelas.summary.izin}</div>
-                  </div>
-                  <div className="rounded-lg bg-red-500 p-4 text-white">
-                    <div className="text-sm">Alfa</div>
-                    <div className="text-2xl font-bold">{kelas.summary.alfa}</div>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <table className="w-full min-w-[640px] table-auto">
-                    <thead>
-                      <tr>
-                        {["Nama", "NIS", "Status", "Jam Masuk", "Keterangan"].map((el) => (
-                          <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
-                            <Typography
-                              variant="small"
-                              className="text-[11px] font-medium uppercase text-blue-gray-400"
-                            >
-                              {el}
-                            </Typography>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {kelas.detailSiswa.map((siswa, index) => (
-                        <tr key={index}>
-                          <td className="py-3 px-6">
-                            <div className="flex items-center gap-4">
+
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full min-w-[640px] table-auto">
+                      <thead>
+                        <tr>
+                          {["No", "Nama", "NIS", "Status", "Jam Masuk", "Keterangan"].map((el) => (
+                            <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
                               <Typography
                                 variant="small"
-                                className="text-sm font-medium text-blue-gray-600"
+                                className="text-[11px] font-medium uppercase text-blue-gray-400"
                               >
-                                {siswa.siswa.nama}
+                                {el}
                               </Typography>
-                            </div>
-                          </td>
-                          <td className="py-3 px-6">
-                            <Typography className="text-sm font-medium text-blue-gray-600">
-                              {siswa.siswa.nis}
-                            </Typography>
-                          </td>
-                          <td className="py-3 px-6">
-                            <Chip
-                              variant="gradient"
-                              color={
-                                siswa.status === 'HADIR' ? 'green' :
-                                siswa.status === 'SAKIT' ? 'yellow' :
-                                siswa.status === 'IZIN' ? 'orange' :
-                                'red'
-                              }
-                              value={siswa.status}
-                              className="py-0.5 px-2 text-[11px] font-medium"
-                            />
-                          </td>
-                          <td className="py-3 px-6">
-                            <Typography className="text-sm font-medium text-blue-gray-600">
-                              {siswa.jamMasuk ? new Date(siswa.jamMasuk).toLocaleTimeString('id-ID', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) : '-'}
-                            </Typography>
-                          </td>
-                          <td className="py-3 px-6">
-                            <Typography className="text-sm font-medium text-blue-gray-600">
-                              {siswa.keterangan || '-'}
-                            </Typography>
-                          </td>
+                            </th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {currentRecords.map((siswa, index) => (
+                          <tr key={index}>
+                            <td className="py-3 px-6">
+                              <Typography className="text-sm font-medium text-blue-gray-600">
+                                {index + 1}
+                              </Typography>
+                            </td>
+                            <td className="py-3 px-6">
+                              <div className="flex items-center gap-4">
+                                <Typography
+                                  variant="small"
+                                  className="text-sm font-medium text-blue-gray-600"
+                                >
+                                  {siswa.siswa.nama}
+                                </Typography>
+                              </div>
+                            </td>
+                            <td className="py-3 px-6">
+                              <Typography className="text-sm font-medium text-blue-gray-600">
+                                {siswa.siswa.nis}
+                              </Typography>
+                            </td>
+                            <td className="py-3 px-6">
+                              <Chip
+                                variant="gradient"
+                                color={
+                                  siswa.status === 'HADIR' ? 'green' :
+                                  siswa.status === 'SAKIT' ? 'yellow' :
+                                  siswa.status === 'IZIN' ? 'orange' :
+                                  'red'
+                                }
+                                value={siswa.status}
+                                className="py-0.5 px-2 text-[11px] font-medium"
+                              />
+                            </td>
+                            <td className="py-3 px-6">
+                              <Typography className="text-sm font-medium text-blue-gray-600">
+                                {siswa.status === 'ALFA' ? '-' : 
+                                  siswa.jamMasuk ? new Date(siswa.jamMasuk).toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  }) : '-'}
+                              </Typography>
+                            </td>
+                            <td className="py-3 px-6">
+                              <Typography className="text-sm font-medium text-blue-gray-600">
+                                {siswa.keterangan || '-'}
+                              </Typography>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    
+                    <div className="flex justify-end items-center gap-2 mt-4 px-6">
+                      <button
+                        onClick={() => setCurrentDateIndex(prev => prev - 1)}
+                        className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                        disabled={currentDateIndex === 0}
+                      >
+                        PREVIOUS
+                      </button>
+                      <span className="px-3 py-1 border rounded-md bg-gray-100">
+                        {currentDateIndex + 1} / {dates.length}
+                      </span>
+                      <button
+                        onClick={() => setCurrentDateIndex(prev => prev + 1)}
+                        className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                        disabled={currentDateIndex >= dates.length - 1}
+                      >
+                        NEXT
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </CardBody>
       </Card>
     </div>
