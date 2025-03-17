@@ -35,6 +35,7 @@ import {
   UserCircleIcon,
   PhotoIcon,
   ClipboardDocumentCheckIcon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
@@ -992,7 +993,7 @@ export function Home() {
                 }}
                 className=""
               >
-                <EnvelopeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
+                <CreditCardIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
                 Kartu Siswa
               </Tab>
             )}
