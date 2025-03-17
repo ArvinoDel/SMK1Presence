@@ -14,7 +14,8 @@ import {
   getRiwayatAbsensiByWaliKelas,
   downloadRekapanSemester,
   processAlfa,
-  getAbsensiPerKelas
+  getAbsensiPerKelas,
+  downloadRekapanUsers
 } from '../controllers/absensi.controller.js';
 import { upload } from '../middleware/upload.middleware.js';
 
@@ -83,5 +84,8 @@ router.post('/process-alfa/:kodeKelas', authMiddleware, processAlfa);
 
 // Get attendance data grouped by class
 router.get('/per-kelas', authMiddleware, getAbsensiPerKelas);
+
+// Download user records (admin only)
+router.get('/users/download', authMiddleware, downloadRekapanUsers);
 
 export default router; 

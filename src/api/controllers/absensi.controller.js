@@ -740,97 +740,97 @@ export const downloadRekapanSemester = async (req, res) => {
     } else if (role === 'guru') {
       // Guru view: 1 semester saja
       if (!semester || !tahun) {
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(400).json({
-          success: false,
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(400).json({
+        success: false,
           message: 'Parameter semester dan tahun harus diisi untuk role guru'
-        });
-      }
+      });
+    }
 
-      let startDate, endDate;
-      if (semester === '1') {
-        startDate = new Date(tahun, 6, 1); // Juli
-        endDate = new Date(tahun, 11, 31); // Desember
-      } else {
-        startDate = new Date(tahun, 0, 1); // Januari
-        endDate = new Date(tahun, 5, 30); // Juni
-      }
+    let startDate, endDate;
+    if (semester === '1') {
+      startDate = new Date(tahun, 6, 1); // Juli
+      endDate = new Date(tahun, 11, 31); // Desember
+    } else {
+      startDate = new Date(tahun, 0, 1); // Januari
+      endDate = new Date(tahun, 5, 30); // Juni
+    }
 
-      const worksheet = workbook.addWorksheet('Rekapan Absensi');
+    const worksheet = workbook.addWorksheet('Rekapan Absensi');
 
-      // Styling untuk header
-      worksheet.getRow(1).font = { bold: true };
-      worksheet.getRow(2).font = { bold: true };
-      worksheet.getRow(4).font = { bold: true };
+    // Styling untuk header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(2).font = { bold: true };
+    worksheet.getRow(4).font = { bold: true };
 
-      // Tambahkan header
-      worksheet.mergeCells('A1:H1');
-      worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${semester} TAHUN ${tahun}`;
-      worksheet.getCell('A1').alignment = { horizontal: 'center' };
+    // Tambahkan header
+    worksheet.mergeCells('A1:H1');
+    worksheet.getCell('A1').value = `REKAPITULASI ABSENSI SEMESTER ${semester} TAHUN ${tahun}`;
+    worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
-      worksheet.mergeCells('A2:H2');
-      worksheet.getCell('A2').value = `Kelas: ${kelas}`;
-      worksheet.getCell('A2').alignment = { horizontal: 'center' };
+    worksheet.mergeCells('A2:H2');
+    worksheet.getCell('A2').value = `Kelas: ${kelas}`;
+    worksheet.getCell('A2').alignment = { horizontal: 'center' };
 
-      worksheet.mergeCells('A3:H3');
-      worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
-      worksheet.getCell('A3').alignment = { horizontal: 'center' };
+    worksheet.mergeCells('A3:H3');
+    worksheet.getCell('A3').value = `Periode: ${startDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+    worksheet.getCell('A3').alignment = { horizontal: 'center' };
 
-      // Header tabel
-      worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
+    // Header tabel
+    worksheet.getRow(4).values = ['No', 'NIS', 'NISN', 'Nama Siswa', 'Hadir', 'Sakit', 'Izin', 'Alfa'];
 
-      // Set lebar kolom
-      worksheet.getColumn('A').width = 5;
-      worksheet.getColumn('B').width = 12;
-      worksheet.getColumn('C').width = 12;
-      worksheet.getColumn('D').width = 30;
-      worksheet.getColumn('E').width = 10;
-      worksheet.getColumn('F').width = 10;
-      worksheet.getColumn('G').width = 10;
-      worksheet.getColumn('H').width = 10;
+    // Set lebar kolom
+    worksheet.getColumn('A').width = 5;
+    worksheet.getColumn('B').width = 12;
+    worksheet.getColumn('C').width = 12;
+    worksheet.getColumn('D').width = 30;
+    worksheet.getColumn('E').width = 10;
+    worksheet.getColumn('F').width = 10;
+    worksheet.getColumn('G').width = 10;
+    worksheet.getColumn('H').width = 10;
 
       // Ambil semua siswa dalam kelas tersebut
       const siswaList = await Siswa.find({ kelas }).sort({ nama: 1 });
 
-      // Isi data siswa
-      let rowNumber = 5;
-      for (const [index, siswa] of siswaList.entries()) {
-        const absensiList = await Absensi.find({
-          siswa: siswa._id,
-          tanggal: {
-            $gte: startDate,
-            $lte: endDate
-          }
-        });
+    // Isi data siswa
+    let rowNumber = 5;
+    for (const [index, siswa] of siswaList.entries()) {
+      const absensiList = await Absensi.find({
+        siswa: siswa._id,
+        tanggal: {
+          $gte: startDate,
+          $lte: endDate
+        }
+      });
 
-        const summary = {
-          HADIR: 0,
-          SAKIT: 0,
-          IZIN: 0,
-          ALFA: 0
-        };
+      const summary = {
+        HADIR: 0,
+        SAKIT: 0,
+        IZIN: 0,
+        ALFA: 0
+      };
 
-        absensiList.forEach(absen => {
-          // Jika status TERLAMBAT, hitung sebagai HADIR
-          if (absen.status === 'TERLAMBAT') {
-            summary.HADIR++;
-          } else {
-            summary[absen.status]++;
-          }
-        });
+      absensiList.forEach(absen => {
+        // Jika status TERLAMBAT, hitung sebagai HADIR
+        if (absen.status === 'TERLAMBAT') {
+          summary.HADIR++;
+        } else {
+          summary[absen.status]++;
+        }
+      });
 
-        worksheet.getRow(rowNumber).values = [
-          index + 1,
-          siswa.nis,
-          siswa.nisn,
-          siswa.nama,
-          summary.HADIR,
-          summary.SAKIT,
-          summary.IZIN,
-          summary.ALFA
-        ];
+      worksheet.getRow(rowNumber).values = [
+        index + 1,
+        siswa.nis,
+        siswa.nisn,
+        siswa.nama,
+        summary.HADIR,
+        summary.SAKIT,
+        summary.IZIN,
+        summary.ALFA
+      ];
 
-        rowNumber++;
+      rowNumber++;
       }
     } else {
       res.setHeader('Content-Type', 'application/json');
@@ -1033,6 +1033,102 @@ export const getAbsensiPerKelas = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data absensi per kelas',
+      error: error.message
+    });
+  }
+};
+
+export const downloadRekapanUsers = async (req, res) => {
+  try {
+    const { role } = req.user;
+    if (role !== 'admin') {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Hanya admin yang dapat mengunduh rekapan users.'
+      });
+    }
+
+    // Buat workbook baru
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Rekapan Users');
+
+    // Styling untuk header
+    worksheet.getRow(1).font = { bold: true };
+
+    // Header tabel
+    worksheet.getRow(1).values = [
+      'No', 
+      'NIS/NIP', 
+      'NISN/NUPTK', 
+      'Nama', 
+      'Email', 
+      'Kelas', 
+      'Role', 
+      'Status'
+    ];
+
+    // Set lebar kolom
+    worksheet.getColumn('A').width = 5;  // No
+    worksheet.getColumn('B').width = 15; // NIS/NIP
+    worksheet.getColumn('C').width = 15; // NISN/NUPTK
+    worksheet.getColumn('D').width = 30; // Nama
+    worksheet.getColumn('E').width = 30; // Email
+    worksheet.getColumn('F').width = 15; // Kelas
+    worksheet.getColumn('G').width = 10; // Role
+    worksheet.getColumn('H').width = 10; // Status
+
+    // Ambil data siswa
+    const siswaList = await Siswa.find().sort({ nama: 1 });
+    let rowNumber = 2;
+    
+    // Isi data siswa
+    for (const [index, siswa] of siswaList.entries()) {
+      worksheet.getRow(rowNumber).values = [
+        index + 1,
+        siswa.nis,
+        siswa.nisn,
+        siswa.nama,
+        siswa.email,
+        siswa.kelas,
+        'SISWA',
+        siswa.status || 'AKTIF'
+      ];
+      rowNumber++;
+    }
+
+    // Ambil data guru
+    const guruList = await Guru.find().sort({ nama: 1 });
+    
+    // Isi data guru
+    for (const [index, guru] of guruList.entries()) {
+      worksheet.getRow(rowNumber).values = [
+        rowNumber - 1,
+        guru.nip,
+        guru.nuptk || '-',
+        guru.nama,
+        guru.email,
+        guru.kelas || '-',
+        'GURU',
+        guru.status || 'AKTIF'
+      ];
+      rowNumber++;
+    }
+
+    // Set response headers untuk file Excel
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=rekapan_users_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    // Kirim workbook ke response
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Error:', error);
+    res.setHeader('Content-Type', 'application/json');
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengunduh rekapan users',
       error: error.message
     });
   }
