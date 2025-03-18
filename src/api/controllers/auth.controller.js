@@ -194,7 +194,7 @@ export const registerGuru = async (req, res) => {
     if (existingWaliKelas) {
       return res.status(400).json({
         success: false,
-        message: `Kelas ${kelas} sudah memiliki wali kelas`
+        message: `Kelas ${kelas} sudah memiliki wali kelas (${existingWaliKelas.nama})`
       });
     }
 
@@ -223,7 +223,7 @@ export const registerGuru = async (req, res) => {
     const auth = new Auth({
       nis: nip,
       password: hashedPassword,
-      role: 'walikelas' // Ubah role menjadi walikelas
+      role: 'guru'  // Tetap pakai 'guru'
     });
 
     // Buat data walikelas

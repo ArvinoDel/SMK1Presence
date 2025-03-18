@@ -395,18 +395,16 @@ export function History() {
     tahun: new Date().getFullYear()
   });
 
-  const kelasList = ["XII RPL 2", "XII RPL 1", "XII TOI 1", "XII TJKT 1", "XII DPIB 3", "XII TKR 1"];
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [pageIndex, setPageIndex] = useState(0); // Index halaman tanpa state global
 
   const [users, setUsers] = useState([]);
-
   const [formData, setFormData] = useState({
     nama: '',
     email: '',
     password: '',
-    role: 'siswa', // default role
+    role: 'siswa',
     nis: '',
     nisn: '',
     nip: '',
@@ -849,6 +847,26 @@ export function History() {
       fetchAvailableClasses();
     }
   }, [userRole]);
+
+  // Gunakan state untuk kelasList
+  const [kelasList, setKelasList] = useState([]);
+
+  // Tambahkan useEffect untuk fetch daftar kelas
+  useEffect(() => {
+    const fetchKelas = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/kelas`);
+        const data = await response.json();
+        if (data.success) {
+          setKelasList(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching kelas:', error);
+      }
+    };
+
+    fetchKelas();
+  }, []);
 
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
@@ -1460,7 +1478,7 @@ export function History() {
                     </Select>
                   </div>
 
-                  {formData.role === 'siswa' ? (
+                  {formData.role === 'siswa' && (
                     <>
                       <div>
                         <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
@@ -1500,55 +1518,23 @@ export function History() {
                         <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                           Kelas
                         </Typography>
-                        <Input
+                        <Select
                           required
                           color="gray"
                           size="lg"
                           name="kelas"
                           value={formData.kelas}
-                          onChange={handleInputChange}
-                          placeholder="Enter Kelas (e.g. XII RPL 2)"
+                          onChange={(value) => handleInputChange({ target: { name: 'kelas', value } })}
                           className="placeholder:opacity-100 focus:!border-t-gray-900"
                           containerProps={{ className: "!min-w-full" }}
                           labelProps={{ className: "hidden" }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          NIP
-                        </Typography>
-                        <Input
-                          required
-                          color="gray"
-                          size="lg"
-                          name="nip"
-                          value={formData.nip}
-                          onChange={handleInputChange}
-                          placeholder="Enter NIP"
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        />
-                      </div>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          Kelas
-                        </Typography>
-                        <Input
-                          required
-                          color="gray"
-                          size="lg"
-                          name="kelas"
-                          value={formData.kelas}
-                          onChange={handleInputChange}
-                          placeholder="Enter Kelas (e.g. XII RPL 2)"
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        />
+                        >
+                          {kelasList.map((kelas) => (
+                            <Option key={kelas} value={kelas}>
+                              {kelas}
+                            </Option>
+                          ))}
+                        </Select>
                       </div>
                     </>
                   )}

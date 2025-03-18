@@ -309,7 +309,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Update user (siswa atau guru)
+// Update user
 export const updateUser = async (req, res) => {
   try {
     const { role } = req.user;
@@ -355,6 +355,21 @@ export const updateUser = async (req, res) => {
         { new: true }
       );
       identifier = updatedUser.nip;
+
+      if (updateData.kelas) {
+        // Cek apakah kelas yang baru sudah memiliki wali kelas
+        const existingWaliKelas = await Guru.findOne({
+          kelas: updateData.kelas,
+          _id: { $ne: userId } // Exclude current user
+        });
+
+        if (existingWaliKelas) {
+          return res.status(400).json({
+            success: false,
+            message: `Kelas ${updateData.kelas} sudah memiliki wali kelas (${existingWaliKelas.nama})`
+          });
+        }
+      }
     }
 
     if (!updatedUser) {
@@ -487,22 +502,24 @@ export const createUser = async (req, res) => {
         kelas,
         email
       });
-    } else if (req.body.role === 'walikelas') {
+    } else if (req.body.role === 'guru') {
+      // Cek apakah kelas sudah memiliki wali kelas
       const existingWaliKelas = await Guru.findOne({
-        $or: [{ nip }, { email }, { kelas }]
+        kelas: req.body.kelas
       });
+      
       if (existingWaliKelas) {
         return res.status(400).json({
           success: false,
-          message: 'NIP, email, atau kelas sudah memiliki wali kelas'
+          message: `Kelas ${req.body.kelas} sudah memiliki wali kelas (${existingWaliKelas.nama})`
         });
       }
 
       user = new Guru({
-        nip,
-        nama,
-        email,
-        kelas,
+        nip: req.body.nip,
+        nama: req.body.nama,
+        email: req.body.email,
+        kelas: req.body.kelas,
         mataPelajaran: req.body.mataPelajaran
       });
     }

@@ -13,6 +13,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initCronJobs } from './services/cronService.js';
 import kelasAbsensiRoutes from './routes/kelasAbsensi.routes.js';
+import kelasRoutes from './routes/kelas.routes.js';
 dotenv.config();
 
 const app = express();
@@ -38,7 +39,7 @@ app.use('/api/siswa', siswaRoutes);
 app.use('/api/guru', guruRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/kelas-absensi', kelasAbsensiRoutes);
-
+app.use('/api/kelas', kelasRoutes);
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'public/uploads');
 if (!fs.existsSync(uploadsDir)){
