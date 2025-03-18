@@ -544,4 +544,28 @@ export const createUser = async (req, res) => {
       error: error.message
     });
   }
+};
+
+// Get all kelas from Guru collection
+export const getAllKelas = async (req, res) => {
+  try {
+    // Ambil semua kelas unik dari collection Guru
+    const kelasList = await Guru.distinct('kelas');
+    
+    // Filter out null/empty values dan urutkan
+    const filteredKelas = kelasList
+      .filter(kelas => kelas)
+      .sort();
+    
+    res.status(200).json({
+      success: true,
+      data: filteredKelas
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil daftar kelas',
+      error: error.message
+    });
+  }
 }; 

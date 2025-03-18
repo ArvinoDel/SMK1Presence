@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { registerAdmin, getProfile, updateProfile, getAllAdmins, getAllUsers, updateUser, deleteUser, createUser } from '../controllers/admin.controller.js';
+import { registerAdmin, getProfile, updateProfile, getAllAdmins, getAllUsers, updateUser, deleteUser, createUser, getAllKelas } from '../controllers/admin.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -57,5 +57,6 @@ router.get('/users', authMiddleware, getAllUsers);
 router.put('/users/:id', authMiddleware, updateUser);
 router.delete('/users/:id', authMiddleware, deleteUser);
 router.post('/users', authMiddleware, createUser);
+router.get('/kelas', authMiddleware, getAllKelas);
 
 export default router; 

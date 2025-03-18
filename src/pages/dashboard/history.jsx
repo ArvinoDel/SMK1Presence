@@ -231,7 +231,7 @@ export function History() {
     setEditFormData({
       nama: user.nama,
       email: user.email,
-      role: user.isGuru ? 'walikelas' : 'siswa',
+      role: user.nip ? 'guru' : 'siswa',
       nis: user.nis || '',
       nisn: user.nisn || '',
       nip: user.nip || '',
@@ -272,19 +272,19 @@ export function History() {
       const storedToken = localStorage.getItem("token");
       const endpoint = `${API_BASE_URL}/api/admin/users/${selectedUser._id}`;
       const payload = {
-        role: editFormData.role,
         nama: editFormData.nama,
         email: editFormData.email,
+        role: editFormData.role,
         ...(editFormData.role === 'siswa' ? {
           nis: editFormData.nis,
           nisn: editFormData.nisn,
           kelas: editFormData.kelas,
           mataPelajaran: editFormData.mataPelajaran
-        } : {
+        } : editFormData.role === 'guru' ? {
           nip: editFormData.nip,
           kelas: editFormData.kelas,
           mataPelajaran: editFormData.mataPelajaran
-        })
+        } : {}) // Empty object for admin role
       };
 
       if (editFormData.password) {
@@ -707,7 +707,7 @@ export function History() {
   // Function to fetch attendance data grouped by class
   const fetchKelasAbsensi = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/absensi/per-kelas`, {
+      const response = await fetch(`${API_BASE_BASE_URL}/api/absensi/per-kelas`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`
         }
@@ -855,24 +855,29 @@ export function History() {
     }
   }, [userRole]);
 
-  // Gunakan state untuk kelasList
+  // Tambahkan state untuk daftar kelas
   const [kelasList, setKelasList] = useState([]);
 
-  // Tambahkan useEffect untuk fetch daftar kelas
+  // Tambahkan useEffect untuk mengambil daftar kelas
   useEffect(() => {
-    const fetchKelas = async () => {
+    const fetchKelasList = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/kelas`);
+        const storedToken = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/admin/kelas`, {
+          headers: {
+            Authorization: `Bearer ${storedToken}`
+          }
+        });
         const data = await response.json();
-        if (data.success) {
+        if (response.ok) {
           setKelasList(data.data);
         }
       } catch (error) {
-        console.error('Error fetching kelas:', error);
+        console.error('Error fetching kelas list:', error);
       }
     };
 
-    fetchKelas();
+    fetchKelasList();
   }, []);
 
   if (loading) return SkeletonRow();
@@ -1525,18 +1530,23 @@ export function History() {
                         <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                           Kelas
                         </Typography>
-                        <Input
+                        <Select
                           required
                           color="gray"
                           size="lg"
                           name="kelas"
                           value={formData.kelas}
-                          onChange={handleInputChange}
-                          placeholder="Enter Kelas (e.g. XII RPL 2)"
+                          onChange={(value) => handleInputChange({ target: { name: 'kelas', value } })}
                           className="placeholder:opacity-100 focus:!border-t-gray-900"
                           containerProps={{ className: "!min-w-full" }}
                           labelProps={{ className: "hidden" }}
-                        />
+                        >
+                          {kelasList.map((kelas) => (
+                            <Option key={kelas} value={kelas}>
+                              {kelas}
+                            </Option>
+                          ))}
+                        </Select>
                       </div>
                     </>
                   )}
@@ -1548,14 +1558,16 @@ export function History() {
                           NIP
                         </Typography>
                         <Input
-                          type="text"
+                          required
+                          color="gray"
+                          size="lg"
                           name="nip"
                           value={formData.nip}
                           onChange={handleInputChange}
-                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                          labelProps={{
-                            className: "before:content-none after:content-none",
-                          }}
+                          placeholder="Enter NIP"
+                          className="placeholder:opacity-100 focus:!border-t-gray-900"
+                          containerProps={{ className: "!min-w-full" }}
+                          labelProps={{ className: "hidden" }}
                         />
                       </div>
 
@@ -1843,7 +1855,7 @@ export function History() {
                 size="lg"
                 name="role"
                 value={editFormData.role}
-                onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
+                onChange={(value) => handleEditInputChange({ target: { name: 'role', value } })}
                 className="placeholder:opacity-100 focus:!border-t-gray-900"
                 containerProps={{ className: "!min-w-full" }}
                 labelProps={{ className: "hidden" }}
@@ -1893,18 +1905,23 @@ export function History() {
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                     Kelas
                   </Typography>
-                  <Input
+                  <Select
                     required
                     color="gray"
                     size="lg"
                     name="kelas"
                     value={editFormData.kelas}
-                    onChange={handleEditInputChange}
-                    placeholder="Enter Kelas (e.g. XII RPL 2)"
+                    onChange={(value) => handleEditInputChange({ target: { name: 'kelas', value } })}
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
-                  />
+                  >
+                    {kelasList.map((kelas) => (
+                      <Option key={kelas} value={kelas}>
+                        {kelas}
+                      </Option>
+                    ))}
+                  </Select>
                 </div>
               </>
             ) : (
