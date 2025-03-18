@@ -320,6 +320,10 @@ export function History() {
       });
 
     } catch (error) {
+       // Close modal and refresh data
+       handleCloseEdit();
+       fetchData();
+ 
       console.error('Error updating user:', error);
       Swal.fire({
         title: 'Error!',
