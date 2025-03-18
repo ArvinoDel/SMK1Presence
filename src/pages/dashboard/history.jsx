@@ -493,6 +493,10 @@ export function History() {
 
     } catch (error) {
       console.error('Error adding user:', error);
+      handleOpen();
+
+      // Refresh user list
+      fetchData();
       Swal.fire({
         title: 'Error!',
         text: error.message,
@@ -785,7 +789,6 @@ export function History() {
 
       // Convert response to blob
       const blob = await response.blob();
-      
       // Create download link and trigger download
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
