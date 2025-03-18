@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import moment from 'moment-timezone';
 import { generateKelasAbsensi } from '../controllers/kelasAbsensi.controller.js';
 import Siswa from '../models/Siswa.models.js';
 import Absensi from '../models/Absensi.models.js';
@@ -11,12 +12,11 @@ export const initCronJobs = async () => {
     await generateKelasAbsensi();
   });
 
-  // Save ALFA status at 8 AM WIB (1 AM UTC) every day
-  cron.schedule('0 1 * * *', async () => {
+  // Save ALFA status at 8 AM WIB
+  cron.schedule('0 8 * * *', async () => {
     console.log('Running ALFA status recording at 8 AM WIB...');
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = moment.tz('Asia/Jakarta').startOf('day').toDate();
 
       // Get all students
       const allStudents = await Siswa.find();
@@ -35,7 +35,7 @@ export const initCronJobs = async () => {
           const alfaRecord = new Absensi({
             siswa: student._id,
             tanggal: today,
-            jamMasuk: new Date(),
+            jamMasuk: moment.tz('Asia/Jakarta').toDate(),
             status: 'ALFA',
             keterangan: 'Tidak hadir tanpa keterangan'
           });
@@ -49,6 +49,9 @@ export const initCronJobs = async () => {
     } catch (error) {
       console.error('Error recording ALFA status:', error);
     }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Jakarta"
   });
 
   // Additional immediate check for ALFA status if after 8 AM

@@ -1,5 +1,6 @@
 import Siswa from '../models/Siswa.models.js';
 import Absensi from '../models/Absensi.models.js';
+import moment from 'moment-timezone';
 
 // ... existing code ...
 
@@ -19,13 +20,11 @@ export const scanQRCode = async (req, res) => {
       });
     }
 
-    // Set timezone ke WIB (UTC+7)
-    const now = new Date();
-    const waktuAbsen = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    // Get current time in WIB
+    const waktuAbsen = moment.tz('Asia/Jakarta').toDate();
     
     // Set tanggal untuk hari ini (reset jam ke 00:00:00)
-    const tanggal = new Date(waktuAbsen);
-    tanggal.setHours(0, 0, 0, 0);
+    const tanggal = moment.tz('Asia/Jakarta').startOf('day').toDate();
 
     // Cek apakah sudah absen hari ini
     const absensiHariIni = await Absensi.findOne({
@@ -41,8 +40,10 @@ export const scanQRCode = async (req, res) => {
     }
 
     // Set batas waktu (07:00 WIB)
-    const batasWaktu = new Date(tanggal);
-    batasWaktu.setHours(7, 0, 0, 0);
+    const batasWaktu = moment.tz('Asia/Jakarta')
+      .startOf('day')
+      .hour(7)
+      .toDate();
 
     // Tentukan status absensi
     const status = waktuAbsen > batasWaktu ? 'TERLAMBAT' : 'HADIR';

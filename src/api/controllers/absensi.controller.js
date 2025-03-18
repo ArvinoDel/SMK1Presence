@@ -4,6 +4,7 @@ import cloudinary from '../config/cloudinary.js';
 import { updateKelasAbsensiOnChange } from './kelasAbsensi.controller.js';
 import Guru from '../models/Guru.models.js';
 import ExcelJS from 'exceljs';
+import moment from 'moment-timezone';
 
 export const prosesAbsensi = async (req, res) => {
   try {
@@ -864,12 +865,13 @@ export const downloadRekapanSemester = async (req, res) => {
 export const processAlfa = async (req, res) => {
   try {
     const { kodeKelas } = req.params;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = moment.tz('Asia/Jakarta').startOf('day').toDate();
 
     // Set default time for ALFA (08:00)
-    const defaultTime = new Date(today);
-    defaultTime.setHours(8, 0, 0, 0);
+    const defaultTime = moment.tz('Asia/Jakarta')
+      .startOf('day')
+      .hour(8)
+      .toDate();
 
     // Get all students in the class
     const siswaKelas = await Siswa.find({ 
