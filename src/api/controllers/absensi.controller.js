@@ -867,6 +867,10 @@ export const processAlfa = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Set default time for ALFA (08:00)
+    const defaultTime = new Date(today);
+    defaultTime.setHours(8, 0, 0, 0);
+
     // Get all students in the class
     const siswaKelas = await Siswa.find({ 
       kelas: { $regex: new RegExp(kodeKelas, 'i') }
@@ -907,7 +911,7 @@ export const processAlfa = async (req, res) => {
             const alfaRecord = new Absensi({
               siswa: siswa._id,
               tanggal: today,
-              jamMasuk: new Date(),
+              jamMasuk: defaultTime,
               status: 'ALFA',
               keterangan: 'Tidak hadir tanpa keterangan'
             });
