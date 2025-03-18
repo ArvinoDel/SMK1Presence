@@ -649,7 +649,7 @@ export function History() {
       case 'SAKIT':
         return 'orange';
       default:
-        return 'gray';
+        return 'red';
     }
   };
 
