@@ -813,6 +813,40 @@ export function History() {
     }
   };
 
+  // Tambahkan state baru untuk menyimpan daftar kelas
+  const [availableClasses, setAvailableClasses] = useState([]);
+
+  // Fungsi untuk mengambil daftar kelas
+  const fetchAvailableClasses = async () => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/api/absensi/classes`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch classes');
+      
+      const result = await response.json();
+      setAvailableClasses(result.data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'Gagal mengambil daftar kelas',
+        icon: 'error',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  // Panggil fungsi fetch saat komponen dimount
+  useEffect(() => {
+    if (userRole === "admin") {
+      fetchAvailableClasses();
+    }
+  }, [userRole]);
+
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
 
@@ -1002,7 +1036,7 @@ export function History() {
           </Typography>
 
           <div className="flex flex-wrap gap-3 mt-4">
-            {kelasList.map((kelas) => (
+            {availableClasses.map((kelas) => (
               <Button
                 key={kelas}
                 variant="gradient"

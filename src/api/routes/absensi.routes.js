@@ -14,7 +14,8 @@ import {
   downloadRekapanSemester,
   processAlfa,
   getAbsensiPerKelas,
-  downloadRekapanUsers
+  downloadRekapanUsers,
+  getAvailableClasses
 } from '../controllers/absensi.controller.js';
 import { upload, uploadSuratIzin } from '../middleware/upload.middleware.js';
 
@@ -51,5 +52,7 @@ router.get('/per-kelas', authMiddleware, getAbsensiPerKelas);
 
 // Download user records (admin only)
 router.get('/users/download', authMiddleware, downloadRekapanUsers);
+
+router.get('/classes', authMiddleware, getAvailableClasses);
 
 export default router; 

@@ -1136,4 +1136,25 @@ export const downloadRekapanUsers = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const getAvailableClasses = async (req, res) => {
+  try {
+    // Ambil daftar kelas unik dari collection Siswa
+    const classes = await Siswa.distinct('kelas');
+    
+    // Sort kelas untuk memastikan urutan yang konsisten
+    classes.sort();
+
+    res.status(200).json({
+      success: true,
+      data: classes
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil daftar kelas',
+      error: error.message
+    });
+  }
 }; 
