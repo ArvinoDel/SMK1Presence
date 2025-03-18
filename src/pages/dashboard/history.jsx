@@ -1525,23 +1525,70 @@ export function History() {
                         <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
                           Kelas
                         </Typography>
-                        <Select
+                        <Input
                           required
                           color="gray"
                           size="lg"
                           name="kelas"
                           value={formData.kelas}
-                          onChange={(value) => handleInputChange({ target: { name: 'kelas', value } })}
+                          onChange={handleInputChange}
+                          placeholder="Enter Kelas (e.g. XII RPL 2)"
                           className="placeholder:opacity-100 focus:!border-t-gray-900"
                           containerProps={{ className: "!min-w-full" }}
                           labelProps={{ className: "hidden" }}
-                        >
-                          {kelasList.map((kelas) => (
-                            <Option key={kelas} value={kelas}>
-                              {kelas}
-                            </Option>
-                          ))}
-                        </Select>
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {formData.role === 'guru' && (
+                    <>
+                      <div>
+                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                          NIP
+                        </Typography>
+                        <Input
+                          type="text"
+                          name="nip"
+                          value={formData.nip}
+                          onChange={handleInputChange}
+                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                          labelProps={{
+                            className: "before:content-none after:content-none",
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                          Mata Pelajaran
+                        </Typography>
+                        <Input
+                          type="text"
+                          name="mataPelajaran"
+                          value={formData.mataPelajaran}
+                          onChange={handleInputChange}
+                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                          labelProps={{
+                            className: "before:content-none after:content-none",
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                          Kelas yang Diwalikan
+                        </Typography>
+                        <Input
+                          type="text"
+                          name="kelas"
+                          value={formData.kelas}
+                          onChange={handleInputChange}
+                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                          labelProps={{
+                            className: "before:content-none after:content-none",
+                          }}
+                        />
                       </div>
                     </>
                   )}
