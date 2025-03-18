@@ -340,6 +340,15 @@ export function Home() {
 
     if (webcamRef.current && webcamRef.current.video) {
       const video = webcamRef.current.video;
+      
+      // Tambahkan logging untuk debug
+      console.log("Video Ready State:", {
+        readyState: video.readyState,
+        isEnoughData: video.readyState === video.HAVE_ENOUGH_DATA,
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight
+      });
+
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         try {
           const canvas = document.createElement("canvas");
@@ -349,13 +358,17 @@ export function Home() {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
           if (code) {
+            console.log("QR Code detected:", code.data); // Tambahkan log ketika QR terdeteksi
             setScannedData(code.data);
             sendToBackend(code.data);
           }
         } catch (err) {
           console.error("Error scanning QR code:", err);
         }
+      } else {
+        console.log("Waiting for video data..."); // Tambahkan log ketika menunggu data
       }
     }
   };
