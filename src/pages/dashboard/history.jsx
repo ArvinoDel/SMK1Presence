@@ -231,7 +231,7 @@ export function History() {
     setEditFormData({
       nama: user.nama,
       email: user.email,
-      role: user.isGuru ? 'guru' : 'siswa',
+      role: user.isGuru ? 'walikelas' : 'siswa',
       nis: user.nis || '',
       nisn: user.nisn || '',
       nip: user.nip || '',
@@ -278,9 +278,11 @@ export function History() {
         ...(editFormData.role === 'siswa' ? {
           nis: editFormData.nis,
           nisn: editFormData.nisn,
-          kelas: editFormData.kelas
+          kelas: editFormData.kelas,
+          mataPelajaran: editFormData.mataPelajaran
         } : {
           nip: editFormData.nip,
+          kelas: editFormData.kelas,
           mataPelajaran: editFormData.mataPelajaran
         })
       };
@@ -435,7 +437,8 @@ export function History() {
           nama: formData.nama,
           email: formData.email,
           password: formData.password,
-          kelas: formData.kelas
+          kelas: formData.kelas,
+          mataPelajaran: formData.mataPelajaran
         };
       } else if (formData.role === 'guru') {
         payload = {
@@ -444,8 +447,8 @@ export function History() {
           nama: formData.nama,
           email: formData.email,
           password: formData.password,
-          mataPelajaran: formData.mataPelajaran,
-          kelas: formData.kelas
+          kelas: formData.kelas,
+          mataPelajaran: formData.mataPelajaran
         };
       }
 
@@ -1532,16 +1535,16 @@ export function History() {
                       </div>
                       <div>
                         <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          Mata Pelajaran
+                          Kelas
                         </Typography>
                         <Input
                           required
                           color="gray"
                           size="lg"
-                          name="mataPelajaran"
-                          value={formData.mataPelajaran}
+                          name="kelas"
+                          value={formData.kelas}
                           onChange={handleInputChange}
-                          placeholder="Enter Mata Pelajaran"
+                          placeholder="Enter Kelas (e.g. XII RPL 2)"
                           className="placeholder:opacity-100 focus:!border-t-gray-900"
                           containerProps={{ className: "!min-w-full" }}
                           labelProps={{ className: "hidden" }}
@@ -1671,23 +1674,6 @@ export function History() {
                           {user.kelas}
                         </Typography>
                       </td>
-                      {user.isGuru ? <> <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {user.mataPelajaran}
-                        </Typography>
-                      </td></> : <> <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal text-center"
-                        >
-                          -
-                        </Typography>
-                      </td></>}
                       <td className={classes}>
                         <div className="w-max">
                           <Chip
@@ -1912,23 +1898,6 @@ export function History() {
                     value={editFormData.kelas}
                     onChange={handleEditInputChange}
                     placeholder="Enter Kelas (e.g. XII RPL 2)"
-                    className="placeholder:opacity-100 focus:!border-t-gray-900"
-                    containerProps={{ className: "!min-w-full" }}
-                    labelProps={{ className: "hidden" }}
-                  />
-                </div>
-                <div>
-                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    Mata Pelajaran
-                  </Typography>
-                  <Input
-                    required
-                    color="gray"
-                    size="lg"
-                    name="mataPelajaran"
-                    value={editFormData.mataPelajaran}
-                    onChange={handleEditInputChange}
-                    placeholder="Enter Mata Pelajaran"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}

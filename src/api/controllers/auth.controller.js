@@ -179,13 +179,22 @@ export const login = async (req, res) => {
 // Register guru
 export const registerGuru = async (req, res) => {
   try {
-    const { nip, password, nama, jenisKelamin, tanggalLahir, alamat, noTelp, mataPelajaran, pendidikanTerakhir, email } = req.body;
+    const { nip, password, nama, jenisKelamin, tanggalLahir, alamat, noTelp, kelas, mataPelajaran, pendidikanTerakhir, email } = req.body;
 
     // Validasi input
-    if (!nip || !password || !nama || !email) {
+    if (!nip || !password || !nama || !email || !kelas || !mataPelajaran) {
       return res.status(400).json({
         success: false,
-        message: 'NIP, password, nama, dan email harus diisi'
+        message: 'NIP, password, nama, email, kelas, dan mata pelajaran harus diisi'
+      });
+    }
+
+    // Cek apakah kelas sudah memiliki wali kelas
+    const existingWaliKelas = await Guru.findOne({ kelas });
+    if (existingWaliKelas) {
+      return res.status(400).json({
+        success: false,
+        message: `Kelas ${kelas} sudah memiliki wali kelas`
       });
     }
 
@@ -212,12 +221,12 @@ export const registerGuru = async (req, res) => {
     // Buat akun auth dengan NIP sebagai username
     const hashedPassword = await bcrypt.hash(password, 10);
     const auth = new Auth({
-      nis: nip, // menggunakan field nis untuk menyimpan nip
+      nis: nip,
       password: hashedPassword,
-      role: 'guru' // tambahkan role guru
+      role: 'walikelas' // Ubah role menjadi walikelas
     });
 
-    // Buat data guru
+    // Buat data walikelas
     const guru = new Guru({
       nip,
       nama,
@@ -226,6 +235,7 @@ export const registerGuru = async (req, res) => {
       tanggalLahir,
       alamat,
       noTelp,
+      kelas,
       mataPelajaran,
       pendidikanTerakhir
     });
@@ -235,11 +245,12 @@ export const registerGuru = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Registrasi guru berhasil',
+      message: 'Registrasi wali kelas berhasil',
       data: {
         nip: guru.nip,
         nama: guru.nama,
         email: guru.email,
+        kelas: guru.kelas,
         mataPelajaran: guru.mataPelajaran
       }
     });

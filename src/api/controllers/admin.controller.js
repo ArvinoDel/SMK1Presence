@@ -279,41 +279,20 @@ export const getAllUsers = async (req, res) => {
       });
     }
 
-    // Ambil semua siswa dan guru
     const siswa = await Siswa.find().select('-__v');
-    const guru = await Guru.find().select('-__v');
+    const waliKelas = await Guru.find().select('-__v');
 
-    // Base URL untuk foto
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-
-    // Gabungkan dan format data
     const users = [
-      ...siswa.map(s => {
-        const userData = s.toObject();
-        return {
-          ...userData,
-          isGuru: false,
-          role: s.kelas,
-          photo: userData.photo ? 
-            (userData.photo.startsWith('http') ? 
-              userData.photo : 
-              `${baseUrl}/uploads/profilepicture/${userData.photo.split('/').pop()}`
-            ) : null
-        };
-      }),
-      ...guru.map(g => {
-        const userData = g.toObject();
-        return {
-          ...userData,
-          isGuru: true,
-          role: g.mataPelajaran || 'Guru',
-          photo: userData.photo ? 
-            (userData.photo.startsWith('http') ? 
-              userData.photo : 
-              `${baseUrl}/uploads/profilepicture/${userData.photo.split('/').pop()}`
-            ) : null
-        };
-      })
+      ...siswa.map(s => ({
+        ...s.toObject(),
+        isGuru: false,
+        role: s.kelas
+      })),
+      ...waliKelas.map(g => ({
+        ...g.toObject(),
+        isGuru: true,
+        role: `Wali Kelas ${g.kelas}`
+      }))
     ];
     
     res.status(200).json({
@@ -508,15 +487,14 @@ export const createUser = async (req, res) => {
         kelas,
         email
       });
-    } else if (req.body.role === 'guru') {
-      // Cek duplikat untuk guru
-      const existingGuru = await Guru.findOne({
-        $or: [{ nip }, { email }]
+    } else if (req.body.role === 'walikelas') {
+      const existingWaliKelas = await Guru.findOne({
+        $or: [{ nip }, { email }, { kelas }]
       });
-      if (existingGuru) {
+      if (existingWaliKelas) {
         return res.status(400).json({
           success: false,
-          message: 'NIP atau email sudah terdaftar'
+          message: 'NIP, email, atau kelas sudah memiliki wali kelas'
         });
       }
 
@@ -524,7 +502,8 @@ export const createUser = async (req, res) => {
         nip,
         nama,
         email,
-        mataPelajaran
+        kelas,
+        mataPelajaran: req.body.mataPelajaran
       });
     }
 
