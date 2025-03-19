@@ -1159,4 +1159,37 @@ export const getAvailableClasses = async (req, res) => {
       error: error.message
     });
   }
+};
+
+export const approveAbsensi = async (req, res) => {
+  try {
+    const { absensiId } = req.params;
+    const userId = req.user.id; // From auth middleware
+
+    const absensi = await Absensi.findById(absensiId);
+    if (!absensi) {
+      return res.status(404).json({
+        success: false,
+        message: 'Absensi tidak ditemukan'
+      });
+    }
+
+    // Update approval status
+    absensi.isApproved = true;
+    absensi.approvedBy = userId;
+    absensi.approvedAt = new Date();
+    await absensi.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Absensi berhasil disetujui',
+      data: absensi
+    });
+  } catch (error) {
+    console.error('Error approving absensi:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal menyetujui absensi'
+    });
+  }
 }; 

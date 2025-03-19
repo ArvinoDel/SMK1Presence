@@ -22,7 +22,7 @@ import {
   Option,
 } from "@material-tailwind/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { PencilIcon, UserPlusIcon, TrashIcon, XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, UserPlusIcon, TrashIcon, XMarkIcon, ArrowDownTrayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { authorsTableData, projectsTableData } from "@/data";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -801,7 +801,6 @@ export function History() {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
 
       // Show success message
       Swal.fire({
@@ -879,6 +878,42 @@ export function History() {
 
     fetchKelasList();
   }, []);
+
+  // Add approval handler
+  const handleApprove = async (absensiId) => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/api/absensi/approve/${absensiId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal menyetujui absensi');
+      }
+
+      // Refresh data after approval
+      fetchData();
+
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Absensi berhasil disetujui!",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text: error.message,
+        icon: "error",
+        showConfirmButton: false,
+        timer: 3000
+      });
+    }
+  };
 
   if (loading) return SkeletonRow();
   if (error) return <div>Error: {error}</div>;
@@ -1234,6 +1269,16 @@ export function History() {
                                   </Typography>
                                 </th>
                               ))}
+                              {userRole === "guru" && (
+                                <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
+                                  <Typography
+                                    variant="small"
+                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
+                                  >
+                                    Approval
+                                  </Typography>
+                                </th>
+                              )}
                             </tr>
                           </thead>
                           <tbody>
@@ -1286,6 +1331,36 @@ export function History() {
                                     {siswa.keterangan || '-'}
                                   </Typography>
                                 </td>
+                                {userRole === "guru" && (
+                                  <td className="py-3 px-4">
+                                    {siswa.status === 'SAKIT' || siswa.status === 'IZIN' ? (
+                                      siswa.isApproved ? (
+                                        <div className="flex items-center gap-2">
+                                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                                          <Typography className="text-sm text-green-500">
+                                            Disetujui
+                                          </Typography>
+                                        </div>
+                                      ) : (
+                                        <Button
+                                          color="blue"
+                                          size="sm"
+                                          variant="gradient"
+                                          className="flex items-center gap-2"
+                                          onClick={() => handleApprove(siswa.id)}
+                                        >
+                                          <span>Setujui</span>
+                                        </Button>
+                                      )
+                                    ) : (
+                                      <Typography className="text-sm text-gray-500">
+                                        {siswa.status === 'HADIR' ? 'Hadir' : 
+                                         siswa.status === 'TERLAMBAT' ? 'Terlambat' : 
+                                         'Alfa'}
+                                      </Typography>
+                                    )}
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>

@@ -15,7 +15,8 @@ import {
   processAlfa,
   getAbsensiPerKelas,
   downloadRekapanUsers,
-  getAvailableClasses
+  getAvailableClasses,
+  approveAbsensi
 } from '../controllers/absensi.controller.js';
 import { upload, uploadSuratIzin } from '../middleware/upload.middleware.js';
 
@@ -54,5 +55,7 @@ router.get('/per-kelas', authMiddleware, getAbsensiPerKelas);
 router.get('/users/download', authMiddleware, downloadRekapanUsers);
 
 router.get('/classes', authMiddleware, getAvailableClasses);
+
+router.patch('/approve/:absensiId', authMiddleware, approveAbsensi);
 
 export default router; 
