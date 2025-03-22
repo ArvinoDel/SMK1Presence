@@ -266,6 +266,16 @@ export function History() {
     }));
   };
 
+
+// NANTI INI DISESUAIKAN AJA DI API ABSENSI UPDATE NYA YA, INI ITU DROPDOWN STATUS
+  const handleStatusChange = (id, newStatus) => {
+    setSiswaList(prevState =>
+      prevState.map(s =>
+        s.id === id ? { ...s, status: newStatus } : s
+      )
+    );
+  };  
+
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
@@ -320,10 +330,10 @@ export function History() {
       });
 
     } catch (error) {
-       // Close modal and refresh data
-       handleCloseEdit();
-       fetchData();
- 
+      // Close modal and refresh data
+      handleCloseEdit();
+      fetchData();
+
       console.error('Error updating user:', error);
       Swal.fire({
         title: 'Error!',
@@ -707,7 +717,7 @@ export function History() {
   // Function to fetch attendance data grouped by class
   const fetchKelasAbsensi = async () => {
     try {
-      const response = await fetch(`${API_BASE_BASE_URL}/api/absensi/per-kelas`, {
+      const response = await fetch(`${API_BASE_URL}/api/absensi/per-kelas`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("token")}`
         }
@@ -830,9 +840,9 @@ export function History() {
       const response = await fetch(`${API_BASE_URL}/api/absensi/classes`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch classes');
-      
+
       const result = await response.json();
       setAvailableClasses(result.data);
     } catch (error) {
@@ -1305,18 +1315,22 @@ export function History() {
                                   </Typography>
                                 </td>
                                 <td className="py-3 px-6">
-                                  <Chip
-                                    variant="gradient"
-                                    color={
-                                      siswa.status === 'HADIR' ? 'green' :
-                                        siswa.status === 'SAKIT' ? 'yellow' :
-                                          siswa.status === 'IZIN' ? 'orange' :
-                                            'red'
-                                    }
+                                  <select
                                     value={siswa.status}
-                                    className="py-0.5 px-2 text-[11px] font-medium"
-                                  />
+                                    onChange={(e) => handleStatusChange(siswa.id, e.target.value)}
+                                    className={`py-0.5 px-2 text-[11px] font-medium rounded-md
+      ${siswa.status === 'HADIR' ? 'bg-green-500 text-white' :
+                                        siswa.status === 'SAKIT' ? 'bg-yellow-500 text-black' :
+                                          siswa.status === 'IZIN' ? 'bg-orange-500 text-white' :
+                                            'bg-red-500 text-white'}`}
+                                  >
+                                    <option value="HADIR" className="bg-white text-black">Hadir</option>
+                                    <option value="SAKIT" className="bg-white text-black">Sakit</option>
+                                    <option value="IZIN" className="bg-white text-black">Izin</option>
+                                    <option value="ALPHA" className="bg-white text-black">Alpha</option>
+                                  </select>
                                 </td>
+
                                 <td className="py-3 px-6">
                                   <Typography className="text-sm font-medium text-blue-gray-600">
                                     {siswa.status === 'ALFA' ? '-' :
@@ -1354,9 +1368,9 @@ export function History() {
                                       )
                                     ) : (
                                       <Typography className="text-sm text-gray-500">
-                                        {siswa.status === 'HADIR' ? 'Hadir' : 
-                                         siswa.status === 'TERLAMBAT' ? 'Terlambat' : 
-                                         'Alfa'}
+                                        {siswa.status === 'HADIR' ? 'Hadir' :
+                                          siswa.status === 'TERLAMBAT' ? 'Terlambat' :
+                                            'Alfa'}
                                       </Typography>
                                     )}
                                   </td>
@@ -1393,17 +1407,17 @@ export function History() {
             </CardBody>
           </Card>
 
-        <Card className="h-full w-full">
-          <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-            <div className="flex items-center justify-between gap-8">
-              <div>
-                <Typography variant="h6" color="white">
-                  Users list
-                </Typography>
-                <Typography color="white" className="mt-1 font-normal">
-                  Lihat Semua Informasi Siswa dan Guru.
-                </Typography>
-              </div>
+          <Card className="h-full w-full">
+            <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+              <div className="flex items-center justify-between gap-8">
+                <div>
+                  <Typography variant="h6" color="white">
+                    Users list
+                  </Typography>
+                  <Typography color="white" className="mt-1 font-normal">
+                    Lihat Semua Informasi Siswa dan Guru.
+                  </Typography>
+                </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   {/* Button Download */}
@@ -1416,7 +1430,7 @@ export function History() {
                   >
                     <ArrowDownTrayIcon strokeWidth={2} className="h-4 w-4" />
                     Download Rekapan Users
-                </Button>
+                  </Button>
 
                   {/* Button Add User */}
                   <Button
@@ -1466,607 +1480,616 @@ export function History() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
+                <DialogHeader className="relative m-0 block">
+                  <Typography variant="h4" color="blue-gray">
+                    Add New User
+                  </Typography>
+                  <Typography className="mt-1 font-normal text-gray-600">
+                    Fill in the details below to add a new user.
+                  </Typography>
+                  <IconButton
+                    size="sm"
+                    variant="text"
+                    className="!absolute right-3.5 top-3.5"
+                    onClick={handleOpen}
+                  >
+                    <XMarkIcon className="h-4 w-4 stroke-2" />
+                  </IconButton>
+                </DialogHeader>
+
+                <form onSubmit={handleAddUser}>
+                  <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Full Name
+                      </Typography>
+                      <Input
+                        required
+                        color="gray"
+                        size="lg"
+                        name="nama"
+                        value={formData.nama}
+                        onChange={handleInputChange}
+                        placeholder="Enter full name"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Email
+                      </Typography>
+                      <Input
+                        required
+                        type="email"
+                        color="gray"
+                        size="lg"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="Enter email"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Password
+                      </Typography>
+                      <Input
+                        required
+                        type="password"
+                        color="gray"
+                        size="lg"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        placeholder="Enter password"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Role
+                      </Typography>
+                      <Select
+                        required
+                        color="gray"
+                        size="lg"
+                        name="role"
+                        value={formData.role}
+                        onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      >
+                        <Option value="siswa">Siswa</Option>
+                        <Option value="guru">Guru</Option>
+                      </Select>
+                    </div>
+
+                    {formData.role === 'siswa' && (
+                      <>
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            NIS
+                          </Typography>
+                          <Input
+                            required
+                            color="gray"
+                            size="lg"
+                            name="nis"
+                            value={formData.nis}
+                            onChange={handleInputChange}
+                            placeholder="Enter NIS"
+                            className="placeholder:opacity-100 focus:!border-t-gray-900"
+                            containerProps={{ className: "!min-w-full" }}
+                            labelProps={{ className: "hidden" }}
+                          />
+                        </div>
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            NISN
+                          </Typography>
+                          <Input
+                            required
+                            color="gray"
+                            size="lg"
+                            name="nisn"
+                            value={formData.nisn}
+                            onChange={handleInputChange}
+                            placeholder="Enter NISN"
+                            className="placeholder:opacity-100 focus:!border-t-gray-900"
+                            containerProps={{ className: "!min-w-full" }}
+                            labelProps={{ className: "hidden" }}
+                          />
+                        </div>
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            Kelas
+                          </Typography>
+                          <Select
+                            required
+                            color="gray"
+                            size="lg"
+                            name="kelas"
+                            value={formData.kelas}
+                            onChange={(value) => handleInputChange({ target: { name: 'kelas', value } })}
+                            className="placeholder:opacity-100 focus:!border-t-gray-900"
+                            containerProps={{ className: "!min-w-full" }}
+                            labelProps={{ className: "hidden" }}
+                          >
+                            {kelasList.map((kelas) => (
+                              <Option key={kelas} value={kelas}>
+                                {kelas}
+                              </Option>
+                            ))}
+                          </Select>
+                        </div>
+                      </>
+                    )}
+
+                    {formData.role === 'guru' && (
+                      <>
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            NIP
+                          </Typography>
+                          <Input
+                            required
+                            color="gray"
+                            size="lg"
+                            name="nip"
+                            value={formData.nip}
+                            onChange={handleInputChange}
+                            placeholder="Enter NIP"
+                            className="placeholder:opacity-100 focus:!border-t-gray-900"
+                            containerProps={{ className: "!min-w-full" }}
+                            labelProps={{ className: "hidden" }}
+                          />
+                        </div>
+
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            Mata Pelajaran
+                          </Typography>
+                          <Input
+                            type="text"
+                            name="mataPelajaran"
+                            value={formData.mataPelajaran}
+                            onChange={handleInputChange}
+                            className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                            labelProps={{
+                              className: "before:content-none after:content-none",
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                            Kelas yang Diwalikan
+                          </Typography>
+                          <Input
+                            type="text"
+                            name="kelas"
+                            value={formData.kelas}
+                            onChange={handleInputChange}
+                            className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                            labelProps={{
+                              className: "before:content-none after:content-none",
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </DialogBody>
+
+                  <DialogFooter>
+                    <Button variant="text" onClick={handleOpen} className="mr-2">
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="ml-auto">
+                      Add User
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Dialog>
+            </CardHeader>
+
+            <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
+              <Tabs value={selectedFilter} className="w-full md:w-max">
+                <TabsHeader>
+                  {TABS.map(({ label, value }) => (
+                    <Tab
+                      key={value}
+                      value={value}
+                      onClick={() => {
+                        setSelectedFilter(value);
+                        setPageIndex(0);
+                      }}
+                    >
+                      {label}
+                    </Tab>
+                  ))}
+                </TabsHeader>
+              </Tabs>
+
+              <div className="w-full md:w-72">
+                <Input
+                  label="Search"
+                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPageIndex(0); }}
+                />
               </div>
             </div>
 
-            <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
-              <DialogHeader className="relative m-0 block">
-                <Typography variant="h4" color="blue-gray">
-                  Add New User
-                </Typography>
-                <Typography className="mt-1 font-normal text-gray-600">
-                  Fill in the details below to add a new user.
-                </Typography>
-                <IconButton
-                  size="sm"
-                  variant="text"
-                  className="!absolute right-3.5 top-3.5"
-                  onClick={handleOpen}
-                >
-                  <XMarkIcon className="h-4 w-4 stroke-2" />
-                </IconButton>
-              </DialogHeader>
-
-              <form onSubmit={handleAddUser}>
-                <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
-                  <div>
-                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                      Full Name
-                    </Typography>
-                    <Input
-                      required
-                      color="gray"
-                      size="lg"
-                      name="nama"
-                      value={formData.nama}
-                      onChange={handleInputChange}
-                      placeholder="Enter full name"
-                      className="placeholder:opacity-100 focus:!border-t-gray-900"
-                      containerProps={{ className: "!min-w-full" }}
-                      labelProps={{ className: "hidden" }}
-                    />
-                  </div>
-
-                  <div>
-                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                      Email
-                    </Typography>
-                    <Input
-                      required
-                      type="email"
-                      color="gray"
-                      size="lg"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter email"
-                      className="placeholder:opacity-100 focus:!border-t-gray-900"
-                      containerProps={{ className: "!min-w-full" }}
-                      labelProps={{ className: "hidden" }}
-                    />
-                  </div>
-
-                  <div>
-                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                      Password
-                    </Typography>
-                    <Input
-                      required
-                      type="password"
-                      color="gray"
-                      size="lg"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="Enter password"
-                      className="placeholder:opacity-100 focus:!border-t-gray-900"
-                      containerProps={{ className: "!min-w-full" }}
-                      labelProps={{ className: "hidden" }}
-                    />
-                  </div>
-
-                  <div>
-                    <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                      Role
-                    </Typography>
-                    <Select
-                      required
-                      color="gray"
-                      size="lg"
-                      name="role"
-                      value={formData.role}
-                      onChange={(value) => handleInputChange({ target: { name: 'role', value } })}
-                      className="placeholder:opacity-100 focus:!border-t-gray-900"
-                      containerProps={{ className: "!min-w-full" }}
-                      labelProps={{ className: "hidden" }}
-                    >
-                      <Option value="siswa">Siswa</Option>
-                      <Option value="guru">Guru</Option>
-                    </Select>
-                  </div>
-
-                  {formData.role === 'siswa' && (
-                    <>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          NIS
-                        </Typography>
-                        <Input
-                          required
-                          color="gray"
-                          size="lg"
-                          name="nis"
-                          value={formData.nis}
-                          onChange={handleInputChange}
-                          placeholder="Enter NIS"
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        />
-                      </div>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          NISN
-                        </Typography>
-                        <Input
-                          required
-                          color="gray"
-                          size="lg"
-                          name="nisn"
-                          value={formData.nisn}
-                          onChange={handleInputChange}
-                          placeholder="Enter NISN"
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        />
-                      </div>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          Kelas
-                        </Typography>
-                        <Select
-                          required
-                          color="gray"
-                          size="lg"
-                          name="kelas"
-                          value={formData.kelas}
-                          onChange={(value) => handleInputChange({ target: { name: 'kelas', value } })}
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        >
-                          {kelasList.map((kelas) => (
-                            <Option key={kelas} value={kelas}>
-                              {kelas}
-                            </Option>
-                          ))}
-                        </Select>
-                      </div>
-                    </>
-                  )}
-
-                  {formData.role === 'guru' && (
-                    <>
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          NIP
-                        </Typography>
-                        <Input
-                          required
-                          color="gray"
-                          size="lg"
-                          name="nip"
-                          value={formData.nip}
-                          onChange={handleInputChange}
-                          placeholder="Enter NIP"
-                          className="placeholder:opacity-100 focus:!border-t-gray-900"
-                          containerProps={{ className: "!min-w-full" }}
-                          labelProps={{ className: "hidden" }}
-                        />
-                      </div>
-
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          Mata Pelajaran
-                        </Typography>
-                        <Input
-                          type="text"
-                          name="mataPelajaran"
-                          value={formData.mataPelajaran}
-                          onChange={handleInputChange}
-                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                          labelProps={{
-                            className: "before:content-none after:content-none",
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                          Kelas yang Diwalikan
-                        </Typography>
-                        <Input
-                          type="text"
-                          name="kelas"
-                          value={formData.kelas}
-                          onChange={handleInputChange}
-                          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                          labelProps={{
-                            className: "before:content-none after:content-none",
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </DialogBody>
-
-                <DialogFooter>
-                  <Button variant="text" onClick={handleOpen} className="mr-2">
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="ml-auto">
-                    Add User
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Dialog>
-          </CardHeader>
-
-          <div className="flex flex-col items-center justify-between mx-3 gap-4 md:flex-row">
-            <Tabs value={selectedFilter} className="w-full md:w-max">
-              <TabsHeader>
-                {TABS.map(({ label, value }) => (
-                  <Tab
-                    key={value}
-                    value={value}
-                    onClick={() => {
-                      setSelectedFilter(value);
-                      setPageIndex(0);
-                    }}
-                  >
-                    {label}
-                  </Tab>
-                ))}
-              </TabsHeader>
-            </Tabs>
-
-            <div className="w-full md:w-72">
-              <Input
-                label="Search"
-                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPageIndex(0); }}
-              />
-            </div>
-          </div>
-
-          <CardBody className="overflow-x-scroll px-0">
-            <table className="mt-4 w-full min-w-max table-auto text-left">
-              <thead>
-                <tr>
-                  {TABLE_HEAD.map((head) => (
-                    <th
-                      key={head}
-                      className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
-                    >
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal leading-none opacity-70"
+            <CardBody className="overflow-x-scroll px-0">
+              <table className="mt-4 w-full min-w-max table-auto text-left">
+                <thead>
+                  <tr>
+                    {TABLE_HEAD.map((head) => (
+                      <th
+                        key={head}
+                        className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4"
                       >
-                        {head}
-                      </Typography>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map((user, index) => {
-                  const isLast = index === paginatedData.length - 1;
-                  const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-normal leading-none opacity-70"
+                        >
+                          {head}
+                        </Typography>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.map((user, index) => {
+                    const isLast = index === paginatedData.length - 1;
+                    const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
 
-                  return (
-                    <tr key={user._id || index}>
-                      <td className={classes}>
-                        <div className="flex items-center gap-3">
-                          <Avatar
+                    return (
+                      <tr key={user._id || index}>
+                        <td className={classes}>
+                          <div className="flex items-center gap-3">
+                            <Avatar
                               src={getProfilePhotoUrl(user.photo)}
-                            alt={user.nama}
-                            size="sm"
-                            className="object-cover"
-                          />
-                          <div className="flex flex-col">
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal"
-                            >
-                              {user.nama}
-                            </Typography>
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-normal opacity-70"
-                            >
-                              {user.isGuru ? `NIP: ${user.nip}` : `NIS: ${user.nis}`}
-                            </Typography>
-                            {!user.isGuru && (
+                              alt={user.nama}
+                              size="sm"
+                              className="object-cover"
+                            />
+                            <div className="flex flex-col">
+                              <Typography
+                                variant="small"
+                                color="blue-gray"
+                                className="font-normal"
+                              >
+                                {user.nama}
+                              </Typography>
                               <Typography
                                 variant="small"
                                 color="blue-gray"
                                 className="font-normal opacity-70"
                               >
-                                NISN: {user.nisn}
+                                {user.isGuru ? `NIP: ${user.nip}` : `NIS: ${user.nis}`}
                               </Typography>
-                            )}
+                              {!user.isGuru && (
+                                <Typography
+                                  variant="small"
+                                  color="blue-gray"
+                                  className="font-normal opacity-70"
+                                >
+                                  NISN: {user.nisn}
+                                </Typography>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {user.email}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {user.kelas}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <div className="w-max">
-                          <Chip
-                            variant="ghost"
-                            size="sm"
-                            value={user.isGuru ? "Guru" : "Siswa"}
-                            color={user.isGuru ? "green" : "blue-gray"}
-                          />
-                        </div>
-                      </td>
-                      <td className={classes}>
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </td>
-                      <td className={classes}>
-                        <Tooltip content="Edit User">
-                          <IconButton variant="text" onClick={() => handleOpenEdit(user)}>
-                            <PencilIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip content="Delete User">
-                          <IconButton variant="text" onClick={() => handleDeleteUser(user)}>
-                            <TrashIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </CardBody>
-          <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
-            <Typography variant="small" color="blue-gray" className="font-normal">
-              Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
-            </Typography>
-            <div className="flex gap-2">
-              <Button
-                variant="outlined"
+                        </td>
+                        <td className={classes}>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal"
+                          >
+                            {user.email}
+                          </Typography>
+                        </td>
+                        <td className={classes}>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal"
+                          >
+                            {user.kelas}
+                          </Typography>
+                        </td>
+                        <td className={classes}>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal text-center"
+                          >
+                            {user.mataPelajaran ? user.mataPelajaran : "-"}
+                          </Typography>
+                        </td>
+                        <td className={classes}>
+                          <div className="w-max">
+                            <Chip
+                              variant="ghost"
+                              size="sm"
+                              value={user.isGuru ? "Guru" : "Siswa"}
+                              color={user.isGuru ? "green" : "blue-gray"}
+                            />
+                          </div>
+                        </td>
+                        <td className={classes}>
+                          <Typography
+                            variant="small"
+                            color="blue-gray"
+                            className="font-normal"
+                          >
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </td>
+                        <td className={classes}>
+                          <Tooltip content="Edit User">
+                            <IconButton variant="text" onClick={() => handleOpenEdit(user)}>
+                              <PencilIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip content="Delete User">
+                            <IconButton variant="text" onClick={() => handleDeleteUser(user)}>
+                              <TrashIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </CardBody>
+            <CardFooter className="flex items-center justify-between border-t border-blue-gray-50 p-4">
+              <Typography variant="small" color="blue-gray" className="font-normal">
+                Page {pageIndex + 1} of {Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
+              </Typography>
+              <div className="flex gap-2">
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  disabled={pageIndex === 0}
+                  onClick={() => setPageIndex(pageIndex - 1)}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length}
+                  onClick={() => setPageIndex(pageIndex + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+          {/* Edit User Dialog */}
+          <Dialog size="sm" open={openEdit} handler={handleCloseEdit} className="p-4">
+            <DialogHeader className="relative m-0 block">
+              <Typography variant="h4" color="blue-gray">
+                Edit User
+              </Typography>
+              <Typography className="mt-1 font-normal text-gray-600">
+                Update user information below.
+              </Typography>
+              <IconButton
                 size="sm"
-                disabled={pageIndex === 0}
-                onClick={() => setPageIndex(pageIndex - 1)}
+                variant="text"
+                className="!absolute right-3.5 top-3.5"
+                onClick={handleCloseEdit}
               >
-                Previous
-              </Button>
-              <Button
-                variant="outlined"
-                size="sm"
-                disabled={(pageIndex + 1) * ITEMS_PER_PAGE >= filteredData.length}
-                onClick={() => setPageIndex(pageIndex + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
-      {/* Edit User Dialog */}
-      <Dialog size="sm" open={openEdit} handler={handleCloseEdit} className="p-4">
-        <DialogHeader className="relative m-0 block">
-          <Typography variant="h4" color="blue-gray">
-            Edit User
-          </Typography>
-          <Typography className="mt-1 font-normal text-gray-600">
-            Update user information below.
-          </Typography>
-          <IconButton
-            size="sm"
-            variant="text"
-            className="!absolute right-3.5 top-3.5"
-            onClick={handleCloseEdit}
-          >
-            <XMarkIcon className="h-4 w-4 stroke-2" />
-          </IconButton>
-        </DialogHeader>
+                <XMarkIcon className="h-4 w-4 stroke-2" />
+              </IconButton>
+            </DialogHeader>
 
-        <form onSubmit={handleEditUser}>
-          <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
-            <div>
-              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                Full Name
-              </Typography>
-              <Input
-                required
-                color="gray"
-                size="lg"
-                name="nama"
-                value={editFormData.nama}
-                onChange={handleEditInputChange}
-                placeholder="Enter full name"
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{ className: "!min-w-full" }}
-                labelProps={{ className: "hidden" }}
-              />
-            </div>
-
-            <div>
-              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                Email
-              </Typography>
-              <Input
-                required
-                type="email"
-                color="gray"
-                size="lg"
-                name="email"
-                value={editFormData.email}
-                onChange={handleEditInputChange}
-                placeholder="Enter email"
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{ className: "!min-w-full" }}
-                labelProps={{ className: "hidden" }}
-              />
-            </div>
-
-            <div>
-              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                Role
-              </Typography>
-              <Select
-                required
-                color="gray"
-                size="lg"
-                name="role"
-                value={editFormData.role}
-                onChange={(value) => handleEditInputChange({ target: { name: 'role', value } })}
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{ className: "!min-w-full" }}
-                labelProps={{ className: "hidden" }}
-              >
-                <Option value="siswa">Siswa</Option>
-                <Option value="guru">Guru</Option>
-              </Select>
-            </div>
-
-            {editFormData.role === 'siswa' ? (
-              <>
+            <form onSubmit={handleEditUser}>
+              <DialogBody className="space-y-4 pb-6 max-h-[60vh] overflow-y-auto">
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    NIS
+                    Full Name
                   </Typography>
                   <Input
                     required
                     color="gray"
                     size="lg"
-                    name="nis"
-                    value={editFormData.nis}
+                    name="nama"
+                    value={editFormData.nama}
                     onChange={handleEditInputChange}
-                    placeholder="Enter NIS"
+                    placeholder="Enter full name"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
                   />
                 </div>
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    NISN
+                    Email
                   </Typography>
                   <Input
                     required
+                    type="email"
                     color="gray"
                     size="lg"
-                    name="nisn"
-                    value={editFormData.nisn}
+                    name="email"
+                    value={editFormData.email}
                     onChange={handleEditInputChange}
-                    placeholder="Enter NISN"
+                    placeholder="Enter email"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
                   />
                 </div>
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    Kelas
+                    Role
                   </Typography>
                   <Select
                     required
                     color="gray"
                     size="lg"
-                    name="kelas"
-                    value={editFormData.kelas}
-                    onChange={(value) => handleEditInputChange({ target: { name: 'kelas', value } })}
+                    name="role"
+                    value={editFormData.role}
+                    onChange={(value) => handleEditInputChange({ target: { name: 'role', value } })}
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
                   >
-                    {kelasList.map((kelas) => (
-                      <Option key={kelas} value={kelas}>
-                        {kelas}
-                      </Option>
-                    ))}
+                    <Option value="siswa">Siswa</Option>
+                    <Option value="guru">Guru</Option>
                   </Select>
                 </div>
-              </>
-            ) : (
-              <>
+
+                {editFormData.role === 'siswa' ? (
+                  <>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NIS
+                      </Typography>
+                      <Input
+                        required
+                        color="gray"
+                        size="lg"
+                        name="nis"
+                        value={editFormData.nis}
+                        onChange={handleEditInputChange}
+                        placeholder="Enter NIS"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NISN
+                      </Typography>
+                      <Input
+                        required
+                        color="gray"
+                        size="lg"
+                        name="nisn"
+                        value={editFormData.nisn}
+                        onChange={handleEditInputChange}
+                        placeholder="Enter NISN"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Kelas
+                      </Typography>
+                      <Select
+                        required
+                        color="gray"
+                        size="lg"
+                        name="kelas"
+                        value={editFormData.kelas}
+                        onChange={(value) => handleEditInputChange({ target: { name: 'kelas', value } })}
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      >
+                        {kelasList.map((kelas) => (
+                          <Option key={kelas} value={kelas}>
+                            {kelas}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        NIP
+                      </Typography>
+                      <Input
+                        required
+                        color="gray"
+                        size="lg"
+                        name="nip"
+                        value={editFormData.nip}
+                        onChange={handleEditInputChange}
+                        placeholder="Enter NIP"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+                    <div>
+                      <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
+                        Kelas
+                      </Typography>
+                      <Input
+                        required
+                        color="gray"
+                        size="lg"
+                        name="kelas"
+                        value={editFormData.kelas}
+                        onChange={handleEditInputChange}
+                        placeholder="Enter Kelas (e.g. XII RPL 2)"
+                        className="placeholder:opacity-100 focus:!border-t-gray-900"
+                        containerProps={{ className: "!min-w-full" }}
+                        labelProps={{ className: "hidden" }}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    NIP
+                    Password
                   </Typography>
                   <Input
-                    required
+                    type="password"
                     color="gray"
                     size="lg"
-                    name="nip"
-                    value={editFormData.nip}
+                    name="password"
+                    value={editFormData.password}
                     onChange={handleEditInputChange}
-                    placeholder="Enter NIP"
+                    placeholder="Enter new password (leave empty to keep current)"
                     className="placeholder:opacity-100 focus:!border-t-gray-900"
                     containerProps={{ className: "!min-w-full" }}
                     labelProps={{ className: "hidden" }}
                   />
                 </div>
-                <div>
-                  <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                    Kelas
-                  </Typography>
-                  <Input
-                    required
-                    color="gray"
-                    size="lg"
-                    name="kelas"
-                    value={editFormData.kelas}
-                    onChange={handleEditInputChange}
-                    placeholder="Enter Kelas (e.g. XII RPL 2)"
-                    className="placeholder:opacity-100 focus:!border-t-gray-900"
-                    containerProps={{ className: "!min-w-full" }}
-                    labelProps={{ className: "hidden" }}
-                  />
-                </div>
-              </>
-            )}
+              </DialogBody>
 
-            <div>
-              <Typography variant="small" color="blue-gray" className="mb-2 text-left font-medium">
-                Password
-              </Typography>
-              <Input
-                type="password"
-                color="gray"
-                size="lg"
-                name="password"
-                value={editFormData.password}
-                onChange={handleEditInputChange}
-                placeholder="Enter new password (leave empty to keep current)"
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{ className: "!min-w-full" }}
-                labelProps={{ className: "hidden" }}
-              />
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button variant="text" onClick={handleCloseEdit} className="mr-2">
-              Cancel
-            </Button>
-            <Button type="submit" className="ml-auto">
-              Update User
-            </Button>
-          </DialogFooter>
-        </form>
-      </Dialog>
+              <DialogFooter>
+                <Button variant="text" onClick={handleCloseEdit} className="mr-2">
+                  Cancel
+                </Button>
+                <Button type="submit" className="ml-auto">
+                  Update User
+                </Button>
+              </DialogFooter>
+            </form>
+          </Dialog>
         </>
 
       )}
