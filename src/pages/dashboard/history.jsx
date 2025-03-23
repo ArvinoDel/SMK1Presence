@@ -267,14 +267,14 @@ export function History() {
   };
 
 
-// NANTI INI DISESUAIKAN AJA DI API ABSENSI UPDATE NYA YA, INI ITU DROPDOWN STATUS
+  // NANTI INI DISESUAIKAN AJA DI API ABSENSI UPDATE NYA YA, INI ITU DROPDOWN STATUS
   const handleStatusChange = (id, newStatus) => {
     setSiswaList(prevState =>
       prevState.map(s =>
         s.id === id ? { ...s, status: newStatus } : s
       )
     );
-  };  
+  };
 
   const handleEditUser = async (e) => {
     e.preventDefault();
@@ -1269,22 +1269,16 @@ export function History() {
                         <table className="w-full min-w-[640px] table-auto">
                           <thead>
                             <tr>
-                              {["No", "Nama", "NIS", "Status", "Jam Masuk", "Keterangan"].map((el) => (
-                                <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
-                                  <Typography
-                                    variant="small"
-                                    className="text-[11px] font-medium uppercase text-blue-gray-400"
-                                  >
+                              {["No", "Siswa", "Status", "Jam Masuk", "Keterangan"].map((el) => (
+                                <th key={el} className="border-b border-blue-gray-50 py-2 px-2 sm:py-3 sm:px-6 text-left">
+                                  <Typography className="text-xs sm:text-sm font-medium uppercase text-blue-gray-400">
                                     {el}
                                   </Typography>
                                 </th>
                               ))}
                               {userRole === "guru" && (
-                                <th className="border-b border-blue-gray-50 py-3 px-4 text-left">
-                                  <Typography
-                                    variant="small"
-                                    className="text-[11px] font-bold uppercase text-blue-gray-400"
-                                  >
+                                <th className="border-b border-blue-gray-50 py-2 px-2 sm:py-3 sm:px-4 text-left">
+                                  <Typography className="text-xs sm:text-sm font-bold uppercase text-blue-gray-400">
                                     Approval
                                   </Typography>
                                 </th>
@@ -1292,86 +1286,68 @@ export function History() {
                             </tr>
                           </thead>
                           <tbody>
+                            {/* CEK KENAPA INI ADA YANG GAK KE FETCH */}
                             {currentRecords.map((siswa, index) => (
                               <tr key={index}>
-                                <td className="py-3 px-6">
-                                  <Typography className="text-sm font-medium text-blue-gray-600">
+                                <td className="py-2 px-2 sm:py-3 sm:px-6">
+                                  <Typography className="text-xs sm:text-sm font-medium text-blue-gray-600">
                                     {index + 1}
                                   </Typography>
                                 </td>
-                                <td className="py-3 px-6">
-                                  <div className="flex items-center gap-4">
-                                    <Typography
-                                      variant="small"
-                                      className="text-sm font-medium text-blue-gray-600"
-                                    >
-                                      {siswa.siswa.nama}
-                                    </Typography>
+                                <td className="py-2 px-2 sm:py-3 sm:px-6">
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    <Avatar src={getProfilePhotoUrl(siswa.siswa.photo)} alt={siswa.siswa.nama} size="sm" />
+                                    <div className="flex flex-col">
+                                      <Typography className="text-xs sm:text-sm font-normal">{siswa.siswa.nama}</Typography>
+                                      <Typography className="text-[10px] sm:text-xs opacity-70">NIS: {siswa.siswa.nis}</Typography>
+                                      <Typography className="text-[10px] sm:text-xs opacity-70">NISN: {siswa.siswa.nisn}</Typography>
+                                    </div>
                                   </div>
                                 </td>
-                                <td className="py-3 px-6">
-                                  <Typography className="text-sm font-medium text-blue-gray-600">
-                                    {siswa.siswa.nis}
-                                  </Typography>
-                                </td>
-                                <td className="py-3 px-6">
+                                <td className="py-2 px-2 sm:py-3 sm:px-6">
                                   <select
                                     value={siswa.status}
                                     onChange={(e) => handleStatusChange(siswa.id, e.target.value)}
-                                    className={`py-0.5 px-2 text-[11px] font-medium rounded-md
-      ${siswa.status === 'HADIR' ? 'bg-green-500 text-white' :
+                                    className={`py-1 px-2 sm:py-2 sm:px-3 text-xs sm:text-sm font-medium rounded-md 
+                ${siswa.status === 'HADIR' ? 'bg-green-500 text-white' :
                                         siswa.status === 'SAKIT' ? 'bg-yellow-500 text-black' :
                                           siswa.status === 'IZIN' ? 'bg-orange-500 text-white' :
                                             'bg-red-500 text-white'}`}
                                   >
-                                    <option value="HADIR" className="bg-white text-black">Hadir</option>
-                                    <option value="SAKIT" className="bg-white text-black">Sakit</option>
-                                    <option value="IZIN" className="bg-white text-black">Izin</option>
-                                    <option value="ALPHA" className="bg-white text-black">Alpha</option>
+                                    <option value="HADIR" className="text-black bg-white">Hadir</option>
+                                    <option value="SAKIT" className="text-black bg-white">Sakit</option>
+                                    <option value="IZIN" className="text-black bg-white">Izin</option>
+                                    <option value="ALPHA" className="text-black bg-white">Alpha</option>
                                   </select>
                                 </td>
-
-                                <td className="py-3 px-6">
-                                  <Typography className="text-sm font-medium text-blue-gray-600">
+                                <td className="py-2 px-2 sm:py-3 sm:px-6">
+                                  <Typography className="text-xs sm:text-sm font-medium text-blue-gray-600">
                                     {siswa.status === 'ALFA' ? '-' :
                                       siswa.jamMasuk ? new Date(siswa.jamMasuk).toLocaleTimeString('id-ID', {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
+                                        hour: '2-digit', minute: '2-digit'
                                       }) : '-'}
                                   </Typography>
                                 </td>
-                                <td className="py-3 px-6">
-                                  <Typography className="text-sm font-medium text-blue-gray-600">
+                                <td className="py-2 px-2 sm:py-3 sm:px-6">
+                                  <Typography className="text-xs sm:text-sm font-medium text-blue-gray-600">
                                     {siswa.keterangan || '-'}
                                   </Typography>
                                 </td>
                                 {userRole === "guru" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-2 px-2 sm:py-3 sm:px-4">
                                     {siswa.status === 'SAKIT' || siswa.status === 'IZIN' ? (
                                       siswa.isApproved ? (
                                         <div className="flex items-center gap-2">
-                                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                                          <Typography className="text-sm text-green-500">
-                                            Disetujui
-                                          </Typography>
+                                          <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                                          <Typography className="text-xs sm:text-sm text-green-500">Disetujui</Typography>
                                         </div>
                                       ) : (
-                                        <Button
-                                          color="blue"
-                                          size="sm"
-                                          variant="gradient"
-                                          className="flex items-center gap-2"
-                                          onClick={() => handleApprove(siswa.id)}
-                                        >
+                                        <Button color="blue" size="sm" variant="gradient" onClick={() => handleApprove(siswa.id)}>
                                           <span>Setujui</span>
                                         </Button>
                                       )
                                     ) : (
-                                      <Typography className="text-sm text-gray-500">
-                                        {siswa.status === 'HADIR' ? 'Hadir' :
-                                          siswa.status === 'TERLAMBAT' ? 'Terlambat' :
-                                            'Alfa'}
-                                      </Typography>
+                                      <Typography className="text-xs sm:text-sm text-gray-500">{siswa.status}</Typography>
                                     )}
                                   </td>
                                 )}
@@ -1380,25 +1356,27 @@ export function History() {
                           </tbody>
                         </table>
 
-                        <div className="flex justify-end items-center gap-2 mt-4 px-6">
-                          <button
-                            onClick={() => setCurrentDateIndex(prev => prev - 1)}
-                            className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
-                            disabled={currentDateIndex === 0}
-                          >
-                            PREVIOUS
-                          </button>
-                          <span className="px-3 py-1 border rounded-md bg-gray-100">
-                            {currentDateIndex + 1} / {dates.length}
-                          </span>
-                          <button
-                            onClick={() => setCurrentDateIndex(prev => prev + 1)}
-                            className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
-                            disabled={currentDateIndex >= dates.length - 1}
-                          >
-                            NEXT
-                          </button>
-                        </div>
+
+
+                      </div>
+                      <div className="flex justify-center items-center gap-2 mt-4 px-6">
+                        <button
+                          onClick={() => setCurrentDateIndex(prev => prev - 1)}
+                          className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                          disabled={currentDateIndex === 0}
+                        >
+                          PREVIOUS
+                        </button>
+                        <span className="px-3 py-1 border rounded-md bg-gray-100">
+                          {currentDateIndex + 1} / {dates.length}
+                        </span>
+                        <button
+                          onClick={() => setCurrentDateIndex(prev => prev + 1)}
+                          className="px-3 py-1 border rounded-md hover:bg-gray-200 disabled:opacity-50"
+                          disabled={currentDateIndex >= dates.length - 1}
+                        >
+                          NEXT
+                        </button>
                       </div>
                     </div>
                   </div>
