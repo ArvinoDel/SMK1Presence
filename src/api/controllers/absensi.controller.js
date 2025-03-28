@@ -1046,92 +1046,112 @@ export const getAbsensiPerKelas = async (req, res) => {
 
 export const downloadRekapanUsers = async (req, res) => {
   try {
-    const { role } = req.user;
-    if (role !== 'admin') {
-      res.setHeader('Content-Type', 'application/json');
+    const { role: userRole } = req.user;
+    const { role: selectedRole } = req.query;
+
+    if (userRole !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Akses ditolak. Hanya admin yang dapat mengunduh rekapan users.'
       });
     }
 
-    // Buat workbook baru
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Rekapan Users');
 
     // Styling untuk header
     worksheet.getRow(1).font = { bold: true };
-
-    // Header tabel
-    worksheet.getRow(1).values = [
-      'No', 
-      'NIS/NIP', 
-      'NISN/NUPTK', 
-      'Nama', 
-      'Email', 
-      'Kelas', 
-      'Role', 
-      'Status'
+    
+    // Set lebar kolom
+    worksheet.columns = [
+      { header: 'No', key: 'no', width: 5 },
+      { header: selectedRole.toLowerCase() === 'siswa' ? 'NIS' : 'NIP', key: 'identifier', width: 15 },
+      { header: selectedRole.toLowerCase() === 'siswa' ? 'NISN' : 'NUPTK', key: 'nationalId', width: 15 },
+      { header: 'Nama', key: 'nama', width: 30 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Kelas', key: 'kelas', width: 15 },
+      { header: 'Role', key: 'role', width: 10 },
+      { header: 'Status', key: 'status', width: 10 }
     ];
 
-    // Set lebar kolom
-    worksheet.getColumn('A').width = 5;  // No
-    worksheet.getColumn('B').width = 15; // NIS/NIP
-    worksheet.getColumn('C').width = 15; // NISN/NUPTK
-    worksheet.getColumn('D').width = 30; // Nama
-    worksheet.getColumn('E').width = 30; // Email
-    worksheet.getColumn('F').width = 15; // Kelas
-    worksheet.getColumn('G').width = 10; // Role
-    worksheet.getColumn('H').width = 10; // Status
+    if (selectedRole.toLowerCase() === 'siswa') {
+      // Ambil data siswa
+      const siswaList = await Siswa.find();
+      
+      // Urutkan berdasarkan kelas dan NIS
+      const sortedSiswaList = siswaList.sort((a, b) => {
+        // Ekstrak tingkat kelas (X, XI, XII)
+        const tingkatA = a.kelas.split(' ')[0];
+        const tingkatB = b.kelas.split(' ')[0];
+        
+        // Bandingkan tingkat
+        if (tingkatA !== tingkatB) {
+          return tingkatA.localeCompare(tingkatB);
+        }
+        
+        // Jika tingkat sama, bandingkan jurusan+nomor kelas
+        const kelasA = a.kelas.split(' ').slice(1).join(' ');
+        const kelasB = b.kelas.split(' ').slice(1).join(' ');
+        if (kelasA !== kelasB) {
+          return kelasA.localeCompare(kelasB);
+        }
+        
+        // Jika kelas sama, urutkan NIS secara numerik
+        return parseInt(a.nis) - parseInt(b.nis);
+      });
 
-    // Ambil data siswa
-    const siswaList = await Siswa.find().sort({ nama: 1 });
-    let rowNumber = 2;
-    
-    // Isi data siswa
-    for (const [index, siswa] of siswaList.entries()) {
-      worksheet.getRow(rowNumber).values = [
-        index + 1,
-        siswa.nis,
-        siswa.nisn,
-        siswa.nama,
-        siswa.email,
-        siswa.kelas,
-        'SISWA',
-        siswa.status || 'AKTIF'
-      ];
-      rowNumber++;
+      let currentKelas = '';
+      let counter = 1;
+
+      sortedSiswaList.forEach((siswa, index) => {
+        // Reset counter ketika kelas berubah
+        if (currentKelas !== siswa.kelas) {
+          currentKelas = siswa.kelas;
+          counter = 1;
+        }
+
+        worksheet.addRow({
+          no: counter++,
+          identifier: siswa.nis,
+          nationalId: siswa.nisn, // NISN dibiarkan apa adanya tanpa pengurutan
+          nama: siswa.nama,
+          email: siswa.email,
+          kelas: siswa.kelas,
+          role: 'SISWA',
+          status: siswa.status || 'AKTIF'
+        });
+      });
+    } else if (selectedRole.toLowerCase() === 'guru') {
+      // Ambil data guru dan urutkan berdasarkan kelas dan NIP
+      const guruList = await Guru.find()
+        .sort({ kelas: 1, nip: 1 }); // Urutkan berdasarkan kelas dulu, kemudian NIP
+
+      guruList.forEach((guru, index) => {
+        worksheet.addRow({
+          no: index + 1,
+          identifier: guru.nip,
+          nationalId: guru.nuptk || '-',
+          nama: guru.nama,
+          email: guru.email,
+          kelas: guru.kelas || '-',
+          role: 'GURU',
+          status: guru.status || 'AKTIF'
+        });
+      });
     }
 
-    // Ambil data guru
-    const guruList = await Guru.find().sort({ nama: 1 });
-    
-    // Isi data guru
-    for (const [index, guru] of guruList.entries()) {
-      worksheet.getRow(rowNumber).values = [
-        rowNumber - 1,
-        guru.nip,
-        guru.nuptk || '-',
-        guru.nama,
-        guru.email,
-        guru.kelas || '-',
-        'GURU',
-        guru.status || 'AKTIF'
-      ];
-      rowNumber++;
-    }
-
-    // Set response headers untuk file Excel
+    // Set response headers
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=rekapan_users_${new Date().toISOString().split('T')[0]}.xlsx`);
+    res.setHeader(
+      'Content-Disposition', 
+      `attachment; filename=rekapan_${selectedRole.toLowerCase()}_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
 
-    // Kirim workbook ke response
     await workbook.xlsx.write(res);
     res.end();
 
   } catch (error) {
     console.error('Error:', error);
-    res.setHeader('Content-Type', 'application/json');
     res.status(500).json({
       success: false,
       message: 'Gagal mengunduh rekapan users',

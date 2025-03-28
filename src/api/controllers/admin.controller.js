@@ -484,6 +484,22 @@ export const createUser = async (req, res) => {
     // Buat data user berdasarkan role
     let user;
     if (req.body.role === 'siswa') {
+      // Validasi format NIS
+      if (!/^\d{8}$/.test(nis)) {
+        return res.status(400).json({
+          success: false,
+          message: 'NIS harus terdiri dari 8 digit angka'
+        });
+      }
+
+      // Validasi format NISN
+      if (!/^\d{10}$/.test(nisn)) {
+        return res.status(400).json({
+          success: false,
+          message: 'NISN harus terdiri dari 10 digit angka'
+        });
+      }
+
       // Cek duplikat untuk siswa
       const existingSiswa = await Siswa.findOne({
         $or: [{ nis }, { nisn }, { email }]

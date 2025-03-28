@@ -18,6 +18,22 @@ export const register = async (req, res) => {
       });
     }
 
+    // Validasi format NIS
+    if (!/^\d{8}$/.test(nis)) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIS harus terdiri dari 8 digit angka'
+      });
+    }
+
+    // Validasi format NISN
+    if (!/^\d{10}$/.test(nisn)) {
+      return res.status(400).json({
+        success: false,
+        message: 'NISN harus terdiri dari 10 digit angka'
+      });
+    }
+
     // Cek apakah NIS atau NISN sudah terdaftar
     const existingAuth = await Auth.findOne({ nis: nis });
     if (existingAuth) {

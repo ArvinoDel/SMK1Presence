@@ -4,12 +4,30 @@ const siswaSchema = new mongoose.Schema({
   nis: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    validate: {
+      validator: function(v) {
+        // Validasi NIS:
+        // 1. Harus berupa string angka
+        // 2. Harus tepat 8 digit
+        return /^\d{8}$/.test(v);
+      },
+      message: props => `${props.value} bukan NIS yang valid! NIS harus terdiri dari 8 digit angka.`
+    }
   },
   nisn: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    validate: {
+      validator: function(v) {
+        // Validasi NISN:
+        // 1. Harus berupa string angka
+        // 2. Harus tepat 10 digit
+        return /^\d{10}$/.test(v);
+      },
+      message: props => `${props.value} bukan NISN yang valid! NISN harus terdiri dari 10 digit angka.`
+    }
   },
   nama: {
     type: String,
